@@ -12,13 +12,14 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import time
 import sys
+import time
+
 
 # ctx is imported and used in operations
 from cloudify import ctx
-from cloudify import manager
 from cloudify import exceptions
+from cloudify import manager
 
 from cloudify.decorators import operation
 

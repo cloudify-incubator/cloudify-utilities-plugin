@@ -1,5 +1,4 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +33,7 @@ setuptools.setup(
     description='plugin that defines dependencies between deployments',
 
     # This must correspond to the actual packages in the plugin.
-    packages=['deployment_proxy'],
+    packages=['proxy'],
 
     license='LICENSE',
     install_requires=[
