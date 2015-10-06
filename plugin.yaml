@@ -3,7 +3,7 @@ plugins:
   # mappings.
   dproxy:
     executor: central_deployment_agent
-    source: proxy
+    source: https://github.com/denismakogon/cloudify-deployment-proxy-plugin/archive/master.zip
 
 node_types:
   cloudify.nodes.DeploymentProxy:
