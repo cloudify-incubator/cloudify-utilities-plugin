@@ -37,6 +37,9 @@ def create_validation(**kwargs):
         ctx.logger.error("Error during obtaining deployment {0}. "
                          "Reason: {1}."
                          .format(deployment_id, str(ex)))
+        raise exceptions.NonRecoverableError(
+            "Error during obtaining deployment {0}. "
+            "Reason: {1}.".format(deployment_id, str(ex)))
 
 
 @operation
@@ -73,15 +76,14 @@ def obtain_outputs(**kwargs):
             ctx.instance.runtime_properties['outputs'].update(
                 {key: deployment_outputs.get(key)})
     except Exception as ex:
-        ctx.logger.info(
+        ctx.logger.error(
             "Caught exception during obtaining "
             "deployment outputs {0} {1}"
             .format(sys.exc_info()[0], str(ex)))
-        raise ex
-
-    raise exceptions.NonRecoverableError("Timed out waiting for "
-                                         "deployment {0}."
-                                         .format(deployment_id))
+        raise exceptions.NonRecoverableError(
+            "Caught exception during obtaining "
+            "deployment outputs {0} {1}"
+            .format(sys.exc_info()[0], str(ex)))
 
 
 def poll_until(pollster, expected_result=None, sleep_time=5, timeout=30):
