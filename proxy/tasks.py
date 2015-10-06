@@ -79,7 +79,9 @@ def obtain_outputs(**kwargs):
             .format(sys.exc_info()[0], str(ex)))
         raise ex
 
-    raise exceptions.RecoverableError("timed out waiting for deployment")
+    raise exceptions.NonRecoverableError("Timed out waiting for "
+                                         "deployment {0}."
+                                         .format(deployment_id))
 
 
 def poll_until(pollster, expected_result=None, sleep_time=5, timeout=30):
@@ -88,5 +90,5 @@ def poll_until(pollster, expected_result=None, sleep_time=5, timeout=30):
     while time.time() <= time.time() + timeout:
         if pollster() != expected_result:
             time.sleep(sleep_time)
-    raise exceptions.RecoverableError("Timed out waiting for deployment "
-                                      "to reach appropriate state.")
+    raise exceptions.NonRecoverableError("Timed out waiting for deployment "
+                                         "to reach appropriate state.")
