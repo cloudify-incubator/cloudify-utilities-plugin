@@ -1,26 +1,33 @@
 plugins:
-  # Name could be anything, this name is what appears on the beginning of operation
-  # mappings.
-  deployment:
+  proxy:
     executor: central_deployment_agent
     source: https://github.com/denismakogon/cloudify-deployment-proxy-plugin/archive/master.zip
 
 node_types:
+
   cloudify.nodes.DeploymentProxy:
     derived_from: cloudify.nodes.Root
     properties:
       deployment_id:
         default: ''
+        description: The deployment to build proxy object from.
       inherit_outputs:
         default: []
+        description: A list of proxy deployment outputs to inherit.
       timeout:
         default: 30
+        description: The time to wait for deployment executions to finish.
+      inherit_inputs:
+        default: False
+        description: Flag that indicated if it is necessary to inherit deployment inputs.
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: deployment.proxy.tasks.wait_for_deployment
+          implementation: proxy.deployments.tasks.wait_for_deployment
         start:
-          implementation: deployment.proxy.tasks.obtain_outputs
+          implementation: proxy.deployments.tasks.inherit_deployment_attributes
+        stop:
+          implementation: proxy.deployments.tasks.cleanup
       cloudify.interfaces.validation:
           creation:
-              implementation: deployment.proxy.tasks.creation_validation
+              implementation: proxy.deployments.tasks.create_validation

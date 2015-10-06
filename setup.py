@@ -33,7 +33,9 @@ setuptools.setup(
     description='plugin that defines dependencies between deployments',
 
     # This must correspond to the actual packages in the plugin.
-    packages=['proxy'],
+    packages=[
+        'deployments',
+    ],
 
     license='LICENSE',
     install_requires=[

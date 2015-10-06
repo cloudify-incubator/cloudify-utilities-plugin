@@ -1,0 +1,11 @@
+common_network_name: proxy_deployment
+vcloud_username: ****************
+vcloud_password: ****************
+vcloud_url: https://vchs.vmware.com
+vcloud_service: ****************
+vcloud_org: ****************
+vcloud_vdc: ****************
+edge_gateway: ****************
+mongo_ip_address: ****************
+mongo_ssh: 23
+network_use_existing: false
