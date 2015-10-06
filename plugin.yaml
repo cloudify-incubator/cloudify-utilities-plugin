@@ -1,7 +1,7 @@
 plugins:
   # Name could be anything, this name is what appears on the beginning of operation
   # mappings.
-  dproxy:
+  deployment:
     executor: central_deployment_agent
     source: https://github.com/denismakogon/cloudify-deployment-proxy-plugin/archive/master.zip
 
@@ -11,20 +11,16 @@ node_types:
     properties:
       deployment_id:
         default: ''
-      # wait_for can be either 'exists' or 'expr'
-      wait_for:
-        default: ''
       inherit_outputs:
         default: []
-      # timeout in seconds.  0 = wait forever
       timeout:
         default: 30
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: deployment_proxy.tasks.wait_for_deployment
+          implementation: deployment.proxy.tasks.wait_for_deployment
         start:
-          implementation: deployment_proxy.tasks.obtain_outputs
+          implementation: deployment.proxy.tasks.obtain_outputs
       cloudify.interfaces.validation:
           creation:
-              implementation: deployment_proxy.tasks.creation_validation
+              implementation: deployment.proxy.tasks.creation_validation
