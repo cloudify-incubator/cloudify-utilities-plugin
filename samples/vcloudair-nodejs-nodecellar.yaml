@@ -4,7 +4,7 @@ imports:
     - http://s3.amazonaws.com/vcloud-score/types.yaml
     - https://raw.githubusercontent.com/cloudify-cosmo/tosca-vcloud-plugin/1.2.1m5/plugin.yaml
     - http://s3.amazonaws.com/vcloud-score/cloudify-fabric-plugin/1.2/plugin.yaml
-    - https://raw.githubusercontent.com/denismakogon/cloudify-deployment-proxy-plugin/master/plugin.yaml
+    - https://raw.githubusercontent.com/cloudify-examples/cloudify-proxy-plugin/master/plugin.yaml
     - types/agentless.yaml
 
 inputs:
