@@ -13,8 +13,8 @@
 #    * limitations under the License.
 
 import sys
-import time
 
+import proxy_common
 
 from cloudify import ctx
 from cloudify import exceptions
@@ -67,7 +67,7 @@ def wait_for_deployment(**kwargs):
             [str(_e['status']) == "terminated" for _e in _execs]))
         return any([str(_e['status']) == "terminated" for _e in _execs])
 
-    poll_until_with_timeout(
+    proxy_common.poll_until_with_timeout(
         _check_if_deployment_is_ready,
         expected_result=True,
         timeout=timeout)
@@ -128,15 +128,37 @@ def cleanup(**kwargs):
     ctx.logger.info("Exiting cleanup_outputs event.")
 
 
-def poll_until_with_timeout(pollster, expected_result=None,
-                            sleep_time=5, timeout=30):
-    if not callable(pollster):
+@operation
+def install_deployment(**kwargs):
+    ctx.logger.info("Entering install_deployment event.")
+    if 'deployment_id' not in ctx.instance.runtime_properties:
         raise exceptions.NonRecoverableError(
-            "%s is not callable" % pollster.__name__)
-    while time.time() <= time.time() + timeout:
-        if pollster() != expected_result:
-            time.sleep(sleep_time)
-        else:
-            return True
-    raise exceptions.NonRecoverableError("Timed out waiting for deployment "
-                                         "to reach appropriate state.")
+            "Deployment ID as runtime property not specified.")
+
+    client = manager.get_rest_client()
+    deployment_id = ctx.instance.runtime_properties[
+        'deployment_id']
+
+    proxy_common.execute_workflow(deployment_id,
+                                  'install')
+
+    ctx.instance.runtime_properties[
+        'outputs'] = (client.deployments.get(
+                      deployment_id).outputs)
+    ctx.logger.info("Exiting install_deployment event.")
+
+
+@operation
+def uninstall_deployment(**kwargs):
+    ctx.logger.info("Entering uninstall_deployment event.")
+    if 'deployment_id' not in ctx.instance.runtime_properties:
+        raise exceptions.NonRecoverableError(
+            "Deployment ID as runtime property not specified.")
+
+    deployment_id = ctx.instance.runtime_properties[
+        'deployment_id']
+
+    proxy_common.execute_workflow(deployment_id,
+                                  'uninstall')
+
+    ctx.logger.info("Exiting uninstall_deployment event.")

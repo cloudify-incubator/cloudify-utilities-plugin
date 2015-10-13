@@ -26,7 +26,7 @@ with open('test-requirements.txt') as f:
 setuptools.setup(
 
     # Do not use underscores in the plugin name.
-    name='cloudify-deployment-proxy-plugin',
+    name='cloudify-proxy-plugin',
     version='0.1',
     author='Gigaspaces.com',
     author_email='Gigaspaces.com',
@@ -35,6 +35,8 @@ setuptools.setup(
     # This must correspond to the actual packages in the plugin.
     packages=[
         'deployments',
+        'blueprints',
+        'proxy_common',
     ],
 
     license='LICENSE',
