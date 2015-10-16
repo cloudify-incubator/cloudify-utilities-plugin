@@ -280,6 +280,14 @@ node_types:
         properties:
             vcloud_config: {}
 
+    database_type:
+        derived_from: cloudify.nodes.Database
+        properties:
+            internal_ip:
+                default: ''
+            external_ip:
+                default: ''
+
 node_templates:
 
     common_keypair:
@@ -299,6 +307,15 @@ node_templates:
            inherit_outputs:
                 - 'mongodb_internal_ip'
                 - 'mongodb_public_ip'
+
+    mongo_database_instance:
+        type: database_type
+        properties:
+            internal_ip: { get_attribute: [mongodb_proxy_deployment, mongodb_internal_ip] }
+            external_ip: { get_attribute: [mongodb_proxy_deployment, mongodb_public_ip] }
+        relationships:
+            - target: mongodb_proxy_deployment
+              type: cloudify.relationships.contained_in
 
     vcloud_configuration:
         type: vcloud_configuration

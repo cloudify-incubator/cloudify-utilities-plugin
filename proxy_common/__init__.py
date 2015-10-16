@@ -33,15 +33,50 @@ def poll_until_with_timeout(pollster, expected_result=None,
                                          "to reach appropriate state.")
 
 
+def get_latest_workflow(items, columns):
+    from operator import itemgetter
+    comps = [((itemgetter(col[1:].strip()), -1)
+              if col.startswith('-') else
+              (itemgetter(col.strip()), 1))
+             for col in columns]
+
+    def comparator(left, right):
+        for fn, m in comps:
+            result = cmp(fn(left), fn(right))
+            if result:
+                return m * result
+        else:
+            return 0
+    executions = sorted(items, cmp=comparator)
+    return executions[0]['workflow_id'], executions[0]['status']
+
+
+def is_installed(client, deployment_id):
+    _execs = client.executions.list(
+        deployment_id=deployment_id)
+    ctx.logger.info("Deployment executions statuses: {0}.".format(
+        str([[_e['workflow_id'],
+              _e['status']] for _e in _execs])
+    ))
+    for e in _execs:
+        e['created_at'] = time.strptime(e['created_at'][:-7],
+                                        '%Y-%m-%d %H:%M:%S')
+
+    latest_workflow, status = get_latest_workflow(
+        _execs, ['created_at'])
+    return 'install' in latest_workflow and 'terminated' in status
+
+
 def check_if_deployment_is_ready(client, deployment_id):
-
-    def _pollster():
-        _execs = client.executions.list(deployment_id=deployment_id)
-        ctx.logger.info("Deployment execution objects: {0}."
-                        .format(str(_execs)))
-        return any([_e['status'] == 'terminated' for _e in _execs])
-
-    return _pollster
+    _execs = client.executions.list(
+        deployment_id=deployment_id)
+    ctx.logger.info("Deployment executions statuses: {0}.".format(
+        str([[_e['workflow_id'],
+              _e['status']] for _e in _execs])
+    ))
+    ctx.logger.info("Are all executions were finished? {0}".format(
+        [str(_e['status']) == "terminated" for _e in _execs]))
+    return any([str(_e['status']) == "terminated" for _e in _execs])
 
 
 def poll_until(pollster, expected_result=None, sleep_time=5):

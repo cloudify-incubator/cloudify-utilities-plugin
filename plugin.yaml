@@ -44,6 +44,12 @@ node_types:
       ignore_live_nodes_on_delete:
         default: False
         description: Ignore live nodes while deleting a deployment
+      use_existing_deployment:
+        default: False
+        description: Use external deployment ID
+      existing_deployment_id:
+        default: ''
+        description: Existing deployment ID
     interfaces:
       cloudify.interfaces.lifecycle:
         create:

@@ -28,20 +28,23 @@ def create_validation(**kwargs):
     ctx.logger.info("Entering create_validation event.")
     client = manager.get_rest_client()
     blueprint_id = ctx.node.properties['blueprint_id']
-    if not blueprint_id or blueprint_id == '':
-        ctx.logger.error("Malformed blueprint ID.")
-        raise exceptions.NonRecoverableError(
-            "Blueprint ID is not specified.")
-    try:
-        client.blueprints.get(blueprint_id)
-        ctx.logger.info("Success, blueprint exists.")
-    except Exception as ex:
-        ctx.logger.error("Error during obtaining blueprint {0}. "
-                         "Reason: {1}."
-                         .format(blueprint_id, str(ex)))
-        raise exceptions.NonRecoverableError(
-            "Error during obtaining blueprint {0}. "
-            "Reason: {1}.".format(blueprint_id, str(ex)))
+    use_existing_deployment = ctx.node.properties[
+        'use_existing_deployment']
+    if not use_existing_deployment:
+        if not blueprint_id or blueprint_id == '':
+            ctx.logger.error("Malformed blueprint ID.")
+            raise exceptions.NonRecoverableError(
+                "Blueprint ID is not specified.")
+        try:
+            client.blueprints.get(blueprint_id)
+            ctx.logger.info("Success, blueprint exists.")
+        except Exception as ex:
+            ctx.logger.error("Error during obtaining blueprint {0}. "
+                             "Reason: {1}."
+                             .format(blueprint_id, str(ex)))
+            raise exceptions.NonRecoverableError(
+                "Error during obtaining blueprint {0}. "
+                "Reason: {1}.".format(blueprint_id, str(ex)))
 
     ctx.logger.info("Exiting create_validation event.")
 
@@ -55,14 +58,20 @@ def create_deployment(**kwargs):
     inputs = ctx.node.properties['inputs']
     deployment_id = "{0}-{1}".format(blueprint_id,
                                      str(uuid.uuid4()))
+    use_existing_deployment = ctx.node.properties['use_existing_deployment']
+    existing_deployment_id = ctx.node.properties['existing_deployment_id']
     try:
-        ctx.logger.info("deployment ID to create: %s" % deployment_id)
-        deployment = client.deployments.create(
-            blueprint_id,
-            deployment_id,
-            inputs=inputs)
-        ctx.logger.info("Deployment object {0}."
-                        .format(str(deployment)))
+        if not use_existing_deployment:
+            ctx.logger.info("deployment ID to create: %s" % deployment_id)
+            deployment = client.deployments.create(
+                blueprint_id,
+                deployment_id,
+                inputs=inputs)
+            ctx.logger.info("Deployment object {0}."
+                            .format(str(deployment)))
+        else:
+            client.deployments.get(existing_deployment_id)
+            deployment_id = existing_deployment_id
         ctx.instance.runtime_properties.update(
             {'deployment_id': deployment_id})
         ctx.logger.info("Instance runtime properties %s"

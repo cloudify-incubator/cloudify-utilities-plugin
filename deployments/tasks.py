@@ -54,21 +54,10 @@ def wait_for_deployment(**kwargs):
 
     client = manager.get_rest_client()
     timeout = ctx.node.properties['timeout']
-    deployment_id = ctx.node.properties['deployment_id']
-
-    def _check_if_deployment_is_ready():
-        _execs = client.executions.list(
-            deployment_id=deployment_id)
-        ctx.logger.info("Deployment executions statuses: {0}.".format(
-            str([[_e['workflow_id'],
-                  _e['status']] for _e in _execs])
-        ))
-        ctx.logger.info("Are all executions were finished? {0}".format(
-            [str(_e['status']) == "terminated" for _e in _execs]))
-        return any([str(_e['status']) == "terminated" for _e in _execs])
-
+    deployment_id = ctx.target.instance.runtime_properties.get(
+        'deployment_id')
     proxy_common.poll_until_with_timeout(
-        _check_if_deployment_is_ready,
+        proxy_common.check_if_deployment_is_ready(client, deployment_id),
         expected_result=True,
         timeout=timeout)
 
@@ -83,7 +72,7 @@ def inherit_deployment_attributes(**kwargs):
     ctx.logger.info("Outputs to inherit: {0}."
                     .format(str(outputs)))
     deployment_id = ctx.node.properties['deployment_id']
-    inherit_inputs = ctx.nodes.properties['inherit_inputs']
+    inherit_inputs = ctx.node.properties['inherit_inputs']
     ctx.instance.runtime_properties.update({
         'inherit_outputs': outputs
     })
@@ -139,9 +128,15 @@ def install_deployment(**kwargs):
     client = manager.get_rest_client()
     deployment_id = ctx.instance.runtime_properties[
         'deployment_id']
+    proxy_common.poll_until_with_timeout(
+        proxy_common.check_if_deployment_is_ready(
+            client, deployment_id),
+        expected_result=True,
+        timeout=900)
 
-    proxy_common.execute_workflow(deployment_id,
-                                  'install')
+    if not proxy_common.is_installed(client, deployment_id):
+        proxy_common.execute_workflow(deployment_id,
+                                      'install')
 
     ctx.instance.runtime_properties[
         'outputs'] = (client.deployments.get(
