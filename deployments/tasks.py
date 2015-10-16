@@ -46,18 +46,18 @@ def create_validation(**kwargs):
 
 
 @operation
-def wait_for_deployment(**kwargs):
+def wait_for_deployment(deployment_id, **kwargs):
     ctx.logger.info("Entering wait_for_deployment event.")
-    if 'deployment_id' not in ctx.node.properties:
+    ctx.logger.info("Using deployment %s" % deployment_id)
+    if not deployment_id:
         raise exceptions.NonRecoverableError(
             "Deployment ID not specified.")
 
     client = manager.get_rest_client()
     timeout = ctx.node.properties['timeout']
-    deployment_id = ctx.target.instance.runtime_properties.get(
-        'deployment_id')
     proxy_common.poll_until_with_timeout(
-        proxy_common.check_if_deployment_is_ready(client, deployment_id),
+        proxy_common.check_if_deployment_is_ready(
+            client, deployment_id),
         expected_result=True,
         timeout=timeout)
 
@@ -65,16 +65,17 @@ def wait_for_deployment(**kwargs):
 
 
 @operation
-def inherit_deployment_attributes(**kwargs):
+def inherit_deployment_attributes(deployment_id, **kwargs):
     ctx.logger.info("Entering obtain_outputs event.")
     client = manager.get_rest_client()
     outputs = ctx.node.properties['inherit_outputs']
     ctx.logger.info("Outputs to inherit: {0}."
                     .format(str(outputs)))
-    deployment_id = ctx.node.properties['deployment_id']
+    ctx.logger.info('deployment id %s' % deployment_id)
     inherit_inputs = ctx.node.properties['inherit_inputs']
     ctx.instance.runtime_properties.update({
-        'inherit_outputs': outputs
+        'inherit_outputs': outputs,
+        'deployment_id': deployment_id
     })
     try:
         if inherit_inputs:
@@ -134,7 +135,7 @@ def install_deployment(**kwargs):
         expected_result=True,
         timeout=900)
 
-    if not proxy_common.is_installed(client, deployment_id):
+    if not ctx.node.properties['use_existing_deployment']:
         proxy_common.execute_workflow(deployment_id,
                                       'install')
 

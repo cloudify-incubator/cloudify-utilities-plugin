@@ -303,10 +303,21 @@ node_templates:
     mongodb_proxy_deployment:
         type: cloudify.nodes.DeploymentProxy
         properties:
-           deployment_id: { get_input: mongodb_deployment_id }
            inherit_outputs:
                 - 'mongodb_internal_ip'
                 - 'mongodb_public_ip'
+        interfaces:
+          cloudify.interfaces.lifecycle:
+            create:
+              inputs:
+                deployment_id: { get_input: mongodb_deployment_id }
+            start:
+              inputs:
+                deployment_id: { get_input: mongodb_deployment_id }
+            stop:
+              inputs:
+                deployment_id: { get_input: mongodb_deployment_id }
+
 
     mongo_database_instance:
         type: database_type

@@ -60,6 +60,7 @@ def create_deployment(**kwargs):
                                      str(uuid.uuid4()))
     use_existing_deployment = ctx.node.properties['use_existing_deployment']
     existing_deployment_id = ctx.node.properties['existing_deployment_id']
+    ctx.logger.info(ctx.node.properties)
     try:
         if not use_existing_deployment:
             ctx.logger.info("deployment ID to create: %s" % deployment_id)
@@ -72,8 +73,6 @@ def create_deployment(**kwargs):
         else:
             client.deployments.get(existing_deployment_id)
             deployment_id = existing_deployment_id
-        ctx.instance.runtime_properties.update(
-            {'deployment_id': deployment_id})
         ctx.logger.info("Instance runtime properties %s"
                         % str(ctx.instance.runtime_properties))
         proxy_common.poll_until_with_timeout(
@@ -81,6 +80,8 @@ def create_deployment(**kwargs):
                 client, deployment_id),
             expected_result=True,
             timeout=900)
+        ctx.instance.runtime_properties.update(
+            {'deployment_id': deployment_id})
     except Exception as ex:
         ctx.logger.error(str(ex))
         raise exceptions.NonRecoverableError(str(ex))
@@ -101,16 +102,13 @@ def delete_deployment(**kwargs):
         'deployment_id']
     ignore = ctx.node.properties['ignore_live_nodes_on_delete']
     try:
-        if ignore:
-            client.deployments.delete(deployment_id,
-                                      ignore_live_nodes=ignore)
-        else:
-            proxy_common.poll_until_with_timeout(
-                proxy_common.check_if_deployment_is_ready(
-                    client, deployment_id),
-                expected_result=True,
-                timeout=900)
-
+        proxy_common.poll_until_with_timeout(
+            proxy_common.check_if_deployment_is_ready(
+                client, deployment_id),
+            expected_result=True,
+            timeout=900)
+        client.deployments.delete(deployment_id,
+                                  ignore_live_nodes=ignore)
     except Exception as ex:
         ctx.logger.error("Error during deployment deletion {0}. "
                          "Reason: {1}."

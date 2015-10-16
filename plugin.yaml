@@ -8,9 +8,6 @@ node_types:
   cloudify.nodes.DeploymentProxy:
     derived_from: cloudify.nodes.Root
     properties:
-      deployment_id:
-        default: ''
-        description: The deployment to build proxy object from.
       inherit_outputs:
         default: []
         description: A list of proxy deployment outputs to inherit.
