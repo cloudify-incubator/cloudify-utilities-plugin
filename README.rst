@@ -78,11 +78,14 @@ Next node consumes that deployment id as an input for next blueprint deployment:
     type: cloudify.nodes.BlueprintDeployment
     properties:
       blueprint_id: { get_input: mongodb_application_blueprint_id }
-      inputs:
-        mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
+    cloudify.interfaces.lifecycle:
+      create:
+        inputs:
+          deployment_inputs:
+            mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
     relationships:
       - target: mongodb_host_deployment
-        type: cloudify.relationships.connected_to
+        type: cloudify.relationships.depends_on
 
 In given case it was decided to split VM and networking provisioning into one blueprint with defined outputs.
 Next blueprint describes software installation within Fabric plugin.
@@ -115,6 +118,10 @@ within TOSCA functions in the next manner::
 If it is necessary to access proxy deployment outputs it is possible to do in the next manner::
 
     network_name: { get_attribute: [ mongodb_proxy_deployment, proxy_deployment_inputs, common_network_name ] }
+
+
+
+NOTE!! get_property function of TOSCA doesn't work with node properties.
 
 ==========
 Disclaimer

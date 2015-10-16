@@ -154,8 +154,8 @@ def uninstall_deployment(**kwargs):
 
     deployment_id = ctx.instance.runtime_properties[
         'deployment_id']
-
-    proxy_common.execute_workflow(deployment_id,
-                                  'uninstall')
+    if not ctx.node.properties['use_existing_deployment']:
+        proxy_common.execute_workflow(deployment_id,
+                                      'uninstall')
 
     ctx.logger.info("Exiting uninstall_deployment event.")

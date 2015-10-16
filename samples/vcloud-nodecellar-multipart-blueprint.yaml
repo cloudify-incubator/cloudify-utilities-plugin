@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_0
 
 imports:
-  - http://s3.amazonaws.com/vcloud-score/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.2.1-build/resources/rest-service/cloudify/types/types.yaml
   - https://raw.githubusercontent.com/cloudify-examples/cloudify-proxy-plugin/master/plugin.yaml
 
 inputs:
@@ -295,31 +295,34 @@ node_templates:
     type: cloudify.nodes.BlueprintDeployment
     properties:
       blueprint_id: { get_input: mongodb_host_blueprint_id }
-      inputs:
-        vcloud_username: { get_input: vcloud_username }
-        vcloud_password: { get_input: vcloud_password }
-        vcloud_token: { get_input: vcloud_token }
-        vcloud_url: { get_input: vcloud_url }
-        vcloud_service: { get_input: vcloud_service }
-        vcloud_service_type: { get_input: vcloud_service_type }
-        vcloud_instance: { get_input: vcloud_instance }
-        vcloud_api_version: { get_input: vcloud_api_version }
-        mongo_ssh: { get_input: mongo_ssh }
-        vcloud_org_url: { get_input: vcloud_org_url }
-        vcloud_org: { get_input: vcloud_org }
-        vcloud_vdc: { get_input: vcloud_vdc }
-        catalog: { get_input: catalog}
-        template: { get_input: template }
-        server_cpu: { get_input: server_cpu }
-        server_memory: { get_input: server_memory }
-        network_use_existing: { get_input: network_use_existing }
-        common_network_name: { get_input: common_network_name }
-        mongo_ip_address: { get_input: mongo_ip_address }
-        common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
-        edge_gateway: { get_input: edge_gateway }
-        server_user: { get_input: server_user }
-        user_public_key: { get_input: user_public_key }
-        user_private_key: { get_input: user_private_key }
+    cloudify.interfaces.lifecycle:
+      create:
+        inputs:
+          deployment_inputs:
+            vcloud_username: { get_input: vcloud_username }
+            vcloud_password: { get_input: vcloud_password }
+            vcloud_token: { get_input: vcloud_token }
+            vcloud_url: { get_input: vcloud_url }
+            vcloud_service: { get_input: vcloud_service }
+            vcloud_service_type: { get_input: vcloud_service_type }
+            vcloud_instance: { get_input: vcloud_instance }
+            vcloud_api_version: { get_input: vcloud_api_version }
+            mongo_ssh: { get_input: mongo_ssh }
+            vcloud_org_url: { get_input: vcloud_org_url }
+            vcloud_org: { get_input: vcloud_org }
+            vcloud_vdc: { get_input: vcloud_vdc }
+            catalog: { get_input: catalog}
+            template: { get_input: template }
+            server_cpu: { get_input: server_cpu }
+            server_memory: { get_input: server_memory }
+            network_use_existing: { get_input: network_use_existing }
+            common_network_name: { get_input: common_network_name }
+            mongo_ip_address: { get_input: mongo_ip_address }
+            common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
+            edge_gateway: { get_input: edge_gateway }
+            server_user: { get_input: server_user }
+            user_public_key: { get_input: user_public_key }
+            user_private_key: { get_input: user_private_key }
 
 ###########################################################################
 
@@ -327,11 +330,14 @@ node_templates:
     type: cloudify.nodes.BlueprintDeployment
     properties:
       blueprint_id: { get_input: mongodb_application_blueprint_id }
-      inputs:
-        mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
+    cloudify.interfaces.lifecycle:
+      create:
+        inputs:
+          deployment_inputs:
+            mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
     relationships:
       - target: mongodb_host_deployment
-        type: cloudify.relationships.connected_to
+        type: cloudify.relationships.depends_on
 
 ###########################################################################
 
@@ -339,32 +345,35 @@ node_templates:
     type: cloudify.nodes.BlueprintDeployment
     properties:
       blueprint_id: { get_input: nodejs_host_blueprint_id }
-      inputs:
-          vcloud_username: { get_input: vcloud_username }
-          vcloud_password: { get_input: vcloud_password }
-          vcloud_token: { get_input: vcloud_token }
-          vcloud_url: { get_input: vcloud_url }
-          vcloud_service: { get_input: vcloud_service }
-          vcloud_service_type: { get_input: vcloud_service_type }
-          vcloud_instance: { get_input: vcloud_instance }
-          vcloud_api_version: { get_input: vcloud_api_version }
-          nodejs_ssh: { get_input: nodejs_ssh }
-          nodejs_http: { get_input: nodejs_http }
-          vcloud_org_url: { get_input: vcloud_org_url }
-          vcloud_org: { get_input: vcloud_org }
-          vcloud_vdc: { get_input: vcloud_vdc }
-          catalog: { get_input: catalog}
-          template: { get_input: template }
-          server_cpu: { get_input: server_cpu }
-          server_memory: { get_input: server_memory }
-          network_use_existing: true
-          common_network_name: { get_input: common_network_name }
-          mongo_ip_address: { get_input: mongo_ip_address }
-          common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
-          edge_gateway: { get_input: edge_gateway }
-          server_user: { get_input: server_user }
-          user_public_key: { get_input: user_public_key }
-          user_private_key: { get_input: user_private_key }
+    cloudify.interfaces.lifecycle:
+      create:
+        inputs:
+          deployment_inputs:
+            vcloud_username: { get_input: vcloud_username }
+            vcloud_password: { get_input: vcloud_password }
+            vcloud_token: { get_input: vcloud_token }
+            vcloud_url: { get_input: vcloud_url }
+            vcloud_service: { get_input: vcloud_service }
+            vcloud_service_type: { get_input: vcloud_service_type }
+            vcloud_instance: { get_input: vcloud_instance }
+            vcloud_api_version: { get_input: vcloud_api_version }
+            nodejs_ssh: { get_input: nodejs_ssh }
+            nodejs_http: { get_input: nodejs_http }
+            vcloud_org_url: { get_input: vcloud_org_url }
+            vcloud_org: { get_input: vcloud_org }
+            vcloud_vdc: { get_input: vcloud_vdc }
+            catalog: { get_input: catalog}
+            template: { get_input: template }
+            server_cpu: { get_input: server_cpu }
+            server_memory: { get_input: server_memory }
+            network_use_existing: true
+            common_network_name: { get_input: common_network_name }
+            mongo_ip_address: { get_input: mongo_ip_address }
+            common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
+            edge_gateway: { get_input: edge_gateway }
+            server_user: { get_input: server_user }
+            user_public_key: { get_input: user_public_key }
+            user_private_key: { get_input: user_private_key }
     relationships:
       - target: mongodb_host_deployment
         type: cloudify.relationships.connected_to
@@ -375,13 +384,20 @@ node_templates:
     type: cloudify.nodes.BlueprintDeployment
     properties:
       blueprint_id: { get_input: nodejs_application_blueprint_id }
-      inputs:
-        nodejs_host_deployment_id: { get_attribute: [ nodejs_host_deployment, deployment_id ]}
-        mongodb_application_deployment_id: { get_attribute: [ mongodb_application_deployment, deployment_id ]}
+    cloudify.interfaces.lifecycle:
+      create:
+        inputs:
+          deployment_inputs:
+            nodejs_host_deployment_id: { get_attribute: [ nodejs_host_deployment, deployment_id ]}
+            mongodb_application_deployment_id: { get_attribute: [ mongodb_application_deployment, deployment_id ]}
     relationships:
       - target: mongodb_application_deployment
         type: cloudify.relationships.connected_to
+      - target: mongodb_application_deployment
+        type: cloudify.relationships.depends_on
       - target: nodejs_host_deployment
         type: cloudify.relationships.contained_in
+      - target: nodejs_host_deployment
+        type: cloudify.relationships.depends_on
 
 ###########################################################################

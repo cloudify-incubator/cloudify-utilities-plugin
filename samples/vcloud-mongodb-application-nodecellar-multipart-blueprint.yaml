@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_0
 
 imports:
-    - http://s3.amazonaws.com/vcloud-score/types.yaml
+    - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.2.1-build/resources/rest-service/cloudify/types/types.yaml
     - http://s3.amazonaws.com/vcloud-score/cloudify-fabric-plugin/1.2/plugin.yaml
     - https://raw.githubusercontent.com/cloudify-examples/cloudify-proxy-plugin/master/plugin.yaml
     - types/agentless.yaml
@@ -16,7 +16,6 @@ node_templates:
     mongodb_proxy_deployment:
         type: cloudify.nodes.DeploymentProxy
         properties:
-           deployment_id: { get_input: mongodb_host_deployment_id }
            inherit_outputs:
                 - 'mongodb_internal_ip'
                 - 'mongodb_public_ip'
@@ -25,6 +24,16 @@ node_templates:
                 - 'common_private_key'
                 - 'mongodb_ssh_translated_port'
                 - 'vcloud_config'
+        cloudify.interfaces.lifecycle:
+          create:
+            inputs:
+              deployment_id: { get_input: mongodb_host_deployment_id }
+          start:
+            inputs:
+              deployment_id: { get_input: mongodb_host_deployment_id }
+          stop:
+            inputs:
+              deployment_id: { get_input: mongodb_host_deployment_id }
 
     mongod:
         type: agentless.nodes.MongoDatabase
@@ -44,6 +53,9 @@ node_templates:
                             port: { get_attribute: [ mongodb_proxy_deployment, mongodb_ssh_translated_port ] }
                             connection_attempts: 10
                             timeout: 90
+        ralationships:
+            - type: cloudify.relationships.depends_on
+              target: mongodb_proxy_deployment
 
 
 outputs:

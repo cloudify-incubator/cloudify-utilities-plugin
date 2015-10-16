@@ -50,24 +50,22 @@ def create_validation(**kwargs):
 
 
 @operation
-def create_deployment(**kwargs):
+def create_deployment(deployment_inputs=None, **kwargs):
     ctx.logger.info("Entering create_deployment event.")
     client = manager.get_rest_client()
     blueprint_id = ctx.node.properties['blueprint_id']
     ctx.logger.info("Blueprint ID: %s" % blueprint_id)
-    inputs = ctx.node.properties['inputs']
     deployment_id = "{0}-{1}".format(blueprint_id,
                                      str(uuid.uuid4()))
     use_existing_deployment = ctx.node.properties['use_existing_deployment']
     existing_deployment_id = ctx.node.properties['existing_deployment_id']
-    ctx.logger.info(ctx.node.properties)
     try:
         if not use_existing_deployment:
             ctx.logger.info("deployment ID to create: %s" % deployment_id)
             deployment = client.deployments.create(
                 blueprint_id,
                 deployment_id,
-                inputs=inputs)
+                inputs=deployment_inputs)
             ctx.logger.info("Deployment object {0}."
                             .format(str(deployment)))
         else:

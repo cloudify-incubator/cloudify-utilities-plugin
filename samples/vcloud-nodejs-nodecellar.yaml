@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_0
 
 imports:
-    - http://s3.amazonaws.com/vcloud-score/types.yaml
+    - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.2.1-build/resources/rest-service/cloudify/types/types.yaml
     - https://raw.githubusercontent.com/cloudify-cosmo/tosca-vcloud-plugin/1.2.1m5/plugin.yaml
     - http://s3.amazonaws.com/vcloud-score/cloudify-fabric-plugin/1.2/plugin.yaml
     - https://raw.githubusercontent.com/cloudify-examples/cloudify-proxy-plugin/master/plugin.yaml
@@ -280,14 +280,6 @@ node_types:
         properties:
             vcloud_config: {}
 
-    database_type:
-        derived_from: cloudify.nodes.Database
-        properties:
-            internal_ip:
-                default: ''
-            external_ip:
-                default: ''
-
 node_templates:
 
     common_keypair:
@@ -298,7 +290,6 @@ node_templates:
                 key: { get_input: user_public_key }
             private_key:
                 key: { get_input: user_private_key }
-
 
     mongodb_proxy_deployment:
         type: cloudify.nodes.DeploymentProxy
@@ -317,16 +308,6 @@ node_templates:
             stop:
               inputs:
                 deployment_id: { get_input: mongodb_deployment_id }
-
-
-    mongo_database_instance:
-        type: database_type
-        properties:
-            internal_ip: { get_attribute: [mongodb_proxy_deployment, mongodb_internal_ip] }
-            external_ip: { get_attribute: [mongodb_proxy_deployment, mongodb_public_ip] }
-        relationships:
-            - target: mongodb_proxy_deployment
-              type: cloudify.relationships.contained_in
 
     vcloud_configuration:
         type: vcloud_configuration
