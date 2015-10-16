@@ -84,7 +84,9 @@ def inherit_deployment_attributes(**kwargs):
                     .format(str(outputs)))
     deployment_id = ctx.node.properties['deployment_id']
     inherit_inputs = ctx.nodes.properties['inherit_inputs']
-
+    ctx.instance.runtime_properties.update({
+        'inherit_outputs': outputs
+    })
     try:
         if inherit_inputs:
             _inputs = client.deployments.get(deployment_id)['inputs']
@@ -117,9 +119,8 @@ def inherit_deployment_attributes(**kwargs):
 @operation
 def cleanup(**kwargs):
     ctx.logger.info("Entering cleanup_outputs event.")
-    outputs = ctx.node.properties['inherit_outputs']
-    inherit_inputs = ctx.nodes.properties['inherit_inputs']
-    if (inherit_inputs and 'proxy_deployment_inputs' in
+    outputs = ctx.instance.runtime_properties.get('inherit_outputs', [])
+    if ('proxy_deployment_inputs' in
             ctx.instance.runtime_properties):
         del ctx.instance.runtime_properties['proxy_deployment_inputs']
     for key in outputs:
