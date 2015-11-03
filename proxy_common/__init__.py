@@ -82,7 +82,7 @@ def check_if_deployment_is_ready(client, deployment_id):
             [str(_e['status']) == "terminated" for _e in _execs]))
         ctx.logger.info(any([str(_e['status']) ==
                              "terminated" for _e in _execs]))
-        return any([str(_e['status']) == "terminated" for _e in _execs])
+        return all([str(_e['status']) == "terminated" for _e in _execs])
 
     return _poll
 
