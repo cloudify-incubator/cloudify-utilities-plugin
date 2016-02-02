@@ -41,7 +41,7 @@ setuptools.setup(
 
     license='LICENSE',
     install_requires=[
-        'cloudify-plugins-common>=3.3.1',
-        'requests==2.8.0'
+        'cloudify-plugins-common>=3.3.1'
+        # 'requests==2.8.0'
     ]
 )
