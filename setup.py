@@ -27,7 +27,7 @@ setuptools.setup(
 
     # Do not use underscores in the plugin name.
     name='cloudify-proxy-plugin',
-    version='0.1',
+    version='0.2',
     author='Gigaspaces.com',
     author_email='Gigaspaces.com',
     description='plugin that defines dependencies between deployments',
@@ -41,8 +41,7 @@ setuptools.setup(
 
     license='LICENSE',
     install_requires=[
-        'cloudify-plugins-common==3.2',
+        'cloudify-plugins-common>=3.3.1',
         'requests==2.8.0'
-    ],
-    test_requires=test_required,
+    ]
 )
