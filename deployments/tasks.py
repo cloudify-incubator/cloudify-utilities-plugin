@@ -159,3 +159,11 @@ def uninstall_deployment(**kwargs):
                                       'uninstall')
 
     ctx.logger.info("Exiting uninstall_deployment event.")
+
+@operation
+def get_outputs(**kwargs):
+#  if (ctx.target.node._node.type!='cloudify.nodes.DeploymentProxy'):
+#    raise (NonRecoverableError('invalid target: must connect to DeploymentProxy type'))
+
+  for output in ctx.target.node.properties['inherit_outputs']:
+    ctx.source.instance.runtime_properties[output]=ctx.target.instance.runtime_properties[output]
