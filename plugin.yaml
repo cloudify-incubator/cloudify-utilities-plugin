@@ -1,0 +1,71 @@
+plugins:
+  proxy:
+    executor: central_deployment_agent
+    source: cloudify-proxy-plugin
+
+node_types:
+
+  cloudify.nodes.DeploymentProxy:
+    derived_from: cloudify.nodes.Root
+    properties:
+      inherit_outputs:
+        default: []
+        description: A list of proxy deployment outputs to inherit.
+      timeout:
+        default: 30
+        description: The time to wait for deployment executions to finish.
+      inherit_inputs:
+        default: False
+        description: Flag that indicated if it is necessary to inherit deployment inputs.
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: proxy.deployments.tasks.wait_for_deployment
+        start:
+          implementation: proxy.deployments.tasks.inherit_deployment_attributes
+        stop:
+          implementation: proxy.deployments.tasks.cleanup
+      cloudify.interfaces.validation:
+          creation:
+              implementation: proxy.deployments.tasks.create_validation
+
+  cloudify.nodes.BlueprintDeployment:
+    derived_from: cloudify.nodes.Root
+    properties:
+      blueprint_id:
+        default: ''
+        description: blueprint ID to work with
+      inputs:
+        default: {}
+        description: blueprint deployment inputs
+      ignore_live_nodes_on_delete:
+        default: False
+        description: Ignore live nodes while deleting a deployment
+      use_existing_deployment:
+        default: False
+        description: Use external deployment ID
+      existing_deployment_id:
+        default: ''
+        description: Existing deployment ID
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: proxy.blueprints.tasks.create_deployment
+        start:
+          implementation: proxy.deployments.tasks.install_deployment
+        stop:
+          implementation: proxy.deployments.tasks.uninstall_deployment
+        delete:
+          implementation: proxy.blueprints.tasks.delete_deployment
+      cloudify.interfaces.validation:
+          creation:
+              implementation: proxy.blueprints.tasks.create_validation
+
+relationships:
+  cloudify.relationships.connected_to_proxy:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        postconfigure:
+          implementation: proxy.deployments.tasks.get_outputs
+

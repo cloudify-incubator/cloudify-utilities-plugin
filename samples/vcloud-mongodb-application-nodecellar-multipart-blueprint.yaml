@@ -1,0 +1,73 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+imports:
+    - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.2.1-build/resources/rest-service/cloudify/types/types.yaml
+    - http://s3.amazonaws.com/vcloud-score/cloudify-fabric-plugin/1.2/plugin.yaml
+    - https://raw.githubusercontent.com/cloudify-examples/cloudify-proxy-plugin/master/plugin.yaml
+    - types/agentless.yaml
+
+inputs:
+
+    mongodb_host_deployment_id:
+        type: string
+
+node_templates:
+
+    mongodb_proxy_deployment:
+        type: cloudify.nodes.DeploymentProxy
+        properties:
+           inherit_outputs:
+                - 'mongodb_internal_ip'
+                - 'mongodb_public_ip'
+                - 'common_public_key'
+                - 'common_public_key_user'
+                - 'common_private_key'
+                - 'mongodb_ssh_translated_port'
+                - 'vcloud_config'
+        cloudify.interfaces.lifecycle:
+          create:
+            inputs:
+              deployment_id: { get_input: mongodb_host_deployment_id }
+          start:
+            inputs:
+              deployment_id: { get_input: mongodb_host_deployment_id }
+          stop:
+            inputs:
+              deployment_id: { get_input: mongodb_host_deployment_id }
+
+    mongod:
+        type: agentless.nodes.MongoDatabase
+        properties:
+            port: 27017
+        relationships:
+          - target: mongodb_proxy_deployment
+            type: cloudify.relationships.connected_to
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                start:
+                    inputs:
+                        fabric_env:
+                            user: { get_attribute: [ mongodb_proxy_deployment, mongodb_public_key_user ] }
+                            key:  { get_attribute: [ mongodb_proxy_deployment, mongodb_private_key ] }
+                            host_string: { get_attribute: [ mongodb_proxy_deployment, mongodb_public_ip ] }
+                            port: { get_attribute: [ mongodb_proxy_deployment, mongodb_ssh_translated_port ] }
+                            connection_attempts: 10
+                            timeout: 90
+        ralationships:
+            - type: cloudify.relationships.depends_on
+              target: mongodb_proxy_deployment
+
+
+outputs:
+    mongodb_internal_ip:
+        value: { get_attribute: [ mongodb_proxy_deployment, mongodb_internal_ip ] }
+    mongodb_public_ip:
+        value: { get_attribute: [ mongodb_proxy_deployment, mongodb_public_ip ] }
+    common_public_key:
+        value: { get_attribute: [ mongodb_proxy_deployment, mongodb_public_key ] }
+    common_public_key_user:
+        value: { get_attribute: [ mongodb_proxy_deployment, mongodb_public_key_user ] }
+    common_private_key:
+        value: { get_attribute: [ mongodb_proxy_deployment, mongodb_private_key ] }
+    vcloud_config:
+        value: { get_attribute: [ mongodb_proxy_deployment, vcloud_config ] }
