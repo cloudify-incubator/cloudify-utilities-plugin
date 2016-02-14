@@ -1,7 +1,7 @@
 plugins:
   proxy:
     executor: central_deployment_agent
-    source: cloudify-proxy-plugin
+    source: https://github.com/cloudify-examples/cloudify-proxy-plugin/archive/master.zip
 
 node_types:
 
@@ -21,8 +21,14 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: proxy.deployments.tasks.wait_for_deployment
+          inputs:
+            deployment_id:
+              default: ''
         start:
           implementation: proxy.deployments.tasks.inherit_deployment_attributes
+          inputs:
+            deployment_id:
+              default: ''
         stop:
           implementation: proxy.deployments.tasks.cleanup
       cloudify.interfaces.validation:
@@ -51,6 +57,9 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: proxy.blueprints.tasks.create_deployment
+          inputs:
+            deployment_inputs:
+              default: ""
         start:
           implementation: proxy.deployments.tasks.install_deployment
         stop:

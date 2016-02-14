@@ -8,56 +8,70 @@ for example a web tier that wants to depend on a database, includes the cloudify
 DeploymentProxy node in the blueprint and creates a depends-on or other relationship with it.
 The DeploymentProxy node waits until deployment will be in terminated state.
 
+<img src="proxy-plug-in.jpg" align="left" hspace="10" vspace="6">
+
+
 ===============
 Node properties
 ===============
 
 The DeploymentProxy node itself has the following properties that govern it's behavior::
 
-    - deployment_id          : the deployment to depend on
     - inherit_outputs        : a list of outputs that are should be inherited from depployment proxy outputs.
                                Default: empty list.
     - inherit_inputs         : Flag that indicated if it is necessary to inherit deployment inputs
     - timeout                : number of seconds to wait.  When timeout expires, a "RecoverableError" is thrown.
                                Default=30.
 
+The DeploymentProxy's Create and Start operations take the following inputs to the operations:
+
+    - deployment_id                : deployment ID to inherit from
+
+
 The BlueprintDeployment node has the following properties::
 
     - blueprint_id                : blueprint ID to create deployment from
-    - inputs                      : inputs for the deployment
     - ignore_live_nodes_on_delete : ignore live nodes during deletion for a deployment
+
+The BlueprintDeployment's Create operation takes the following inputs to the operations:
+
+    - deployment_inputs                : The inputs to use to create the new deployment.
 
 How it works? Let's take a look at multi-part Nodecellar blueprint nodes::
 
-  mongodb_host_deployment:
-    type: cloudify.nodes.BlueprintDeployment
-    properties:
-      blueprint_id: { get_input: mongodb_host_blueprint_id }
-      inputs:
-        vcloud_username: { get_input: vcloud_username }
-        vcloud_password: { get_input: vcloud_password }
-        vcloud_token: { get_input: vcloud_token }
-        vcloud_url: { get_input: vcloud_url }
-        vcloud_service: { get_input: vcloud_service }
-        vcloud_service_type: { get_input: vcloud_service_type }
-        vcloud_instance: { get_input: vcloud_instance }
-        vcloud_api_version: { get_input: vcloud_api_version }
-        mongo_ssh: { get_input: mongo_ssh }
-        vcloud_org_url: { get_input: vcloud_org_url }
-        vcloud_org: { get_input: vcloud_org }
-        vcloud_vdc: { get_input: vcloud_vdc }
-        catalog: { get_input: catalog}
-        template: { get_input: template }
-        server_cpu: { get_input: server_cpu }
-        server_memory: { get_input: server_memory }
-        network_use_existing: { get_input: network_use_existing }
-        common_network_name: { get_input: common_network_name }
-        mongo_ip_address: { get_input: mongo_ip_address }
-        common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
-        edge_gateway: { get_input: edge_gateway }
-        server_user: { get_input: server_user }
-        user_public_key: { get_input: user_public_key }
-        user_private_key: { get_input: user_private_key }
+    mongodb_host_deployment:
+        type: cloudify.nodes.BlueprintDeployment
+        properties:
+          blueprint_id: { get_input: mongodb_host_blueprint_id }
+        interfaces:
+          cloudify.interfaces.lifecycle:
+            create:
+              implementation: proxy.blueprints.tasks.create_deployment
+              inputs:
+                vcloud_username: { get_input: vcloud_username }
+                vcloud_password: { get_input: vcloud_password }
+                vcloud_token: { get_input: vcloud_token }
+                vcloud_url: { get_input: vcloud_url }
+                vcloud_service: { get_input: vcloud_service }
+                vcloud_service_type: { get_input: vcloud_service_type }
+                vcloud_instance: { get_input: vcloud_instance }
+                vcloud_api_version: { get_input: vcloud_api_version }
+                mongo_ssh: { get_input: mongo_ssh }
+                vcloud_org_url: { get_input: vcloud_org_url }
+                vcloud_org: { get_input: vcloud_org }
+                vcloud_vdc: { get_input: vcloud_vdc }
+                catalog: { get_input: catalog}
+                template: { get_input: template }
+                server_cpu: { get_input: server_cpu }
+                server_memory: { get_input: server_memory }
+                network_use_existing: { get_input: network_use_existing }
+                common_network_name: { get_input: common_network_name }
+                mongo_ip_address: { get_input: mongo_ip_address }
+                common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
+                edge_gateway: { get_input: edge_gateway }
+                server_user: { get_input: server_user }
+                user_public_key: { get_input: user_public_key }
+                user_private_key: { get_input: user_private_key }
 
 This node has specific implementation of the lifecycle::
 
@@ -74,18 +88,18 @@ it represents a deployment id of newly create deployment instance inside Cloudif
 
 Next node consumes that deployment id as an input for next blueprint deployment::
 
- mongodb_application_deployment:
-    type: cloudify.nodes.BlueprintDeployment
-    properties:
-      blueprint_id: { get_input: mongodb_application_blueprint_id }
-    cloudify.interfaces.lifecycle:
-      create:
-        inputs:
-          deployment_inputs:
-            mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
-    relationships:
-      - target: mongodb_host_deployment
-        type: cloudify.relationships.depends_on
+    mongodb_application_deployment:
+        type: cloudify.nodes.BlueprintDeployment
+        properties:
+          blueprint_id: { get_input: mongodb_application_blueprint_id }
+        cloudify.interfaces.lifecycle:
+          create:
+            inputs:
+              deployment_inputs:
+                mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
+        relationships:
+          - target: mongodb_host_deployment
+            type: cloudify.relationships.depends_on
 
 In given case it was decided to split VM and networking provisioning into one blueprint with defined outputs.
 Next blueprint describes software installation within Fabric plugin.
@@ -103,11 +117,20 @@ Here's how proxy object looks like::
     mongodb_proxy_deployment:
         type: cloudify.nodes.DeploymentProxy
         properties:
-           deployment_id: { get_input: mongodb_deployment_id }
            inherit_inputs: True
            inherit_outputs:
                 - 'mongodb_internal_ip'
                 - 'mongodb_public_ip'
+           interfaces:
+             cloudify.interfaces.lifecycle:
+               create:
+                 implementation: proxy.deployments.tasks.wait_for_deployment
+                 inputs:
+                   deployment_id: { get_input: mongodb_deployment_id }
+               start:
+                 implementation: proxy.deployments.tasks.inherit_deployment_attributes
+                 inputs:
+                   deployment_id: { get_input: mongodb_deployment_id }
 
 
 Within NodeJS example blueprint composers are able to access proxy deployment attributes
