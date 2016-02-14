@@ -1,7 +1,7 @@
 plugins:
   proxy:
     executor: central_deployment_agent
-    source: cloudify-proxy-plugin
+    source: https://github.com/EarthmanT/cloudify-deployment-proxy-plugin/archive/master.zip
 
 node_types:
 

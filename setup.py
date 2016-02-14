@@ -16,11 +16,11 @@ import os
 import setuptools
 
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+# def read(fname):
+#     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-with open('test-requirements.txt') as f:
-    test_required = f.read().splitlines()
+# with open('test-requirements.txt') as f:
+#     test_required = f.read().splitlines()
 
 
 setuptools.setup(
