@@ -85,18 +85,18 @@ it represents a deployment id of newly create deployment instance inside Cloudif
 
 Next node consumes that deployment id as an input for next blueprint deployment::
 
- mongodb_application_deployment:
-    type: cloudify.nodes.BlueprintDeployment
-    properties:
-      blueprint_id: { get_input: mongodb_application_blueprint_id }
-    cloudify.interfaces.lifecycle:
-      create:
-        inputs:
-          deployment_inputs:
-            mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
-    relationships:
-      - target: mongodb_host_deployment
-        type: cloudify.relationships.depends_on
+    mongodb_application_deployment:
+        type: cloudify.nodes.BlueprintDeployment
+        properties:
+          blueprint_id: { get_input: mongodb_application_blueprint_id }
+        cloudify.interfaces.lifecycle:
+          create:
+            inputs:
+              deployment_inputs:
+                mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
+        relationships:
+          - target: mongodb_host_deployment
+            type: cloudify.relationships.depends_on
 
 In given case it was decided to split VM and networking provisioning into one blueprint with defined outputs.
 Next blueprint describes software installation within Fabric plugin.
