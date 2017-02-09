@@ -59,7 +59,7 @@ node_types:
           implementation: proxy.blueprints.tasks.create_deployment
           inputs:
             deployment_inputs:
-              default: "'
+              default: ""
         start:
           implementation: proxy.deployments.tasks.install_deployment
         stop:
