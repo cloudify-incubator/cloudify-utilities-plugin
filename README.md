@@ -36,39 +36,39 @@ The BlueprintDeployment's Create operation takes the following inputs to the ope
 
 How it works? Let's take a look at multi-part Nodecellar blueprint nodes::
 
-  mongodb_host_deployment:
-    type: cloudify.nodes.BlueprintDeployment
-    properties:
-      blueprint_id: { get_input: mongodb_host_blueprint_id }
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: proxy.blueprints.tasks.create_deployment
-          inputs:
-            vcloud_username: { get_input: vcloud_username }
-            vcloud_password: { get_input: vcloud_password }
-            vcloud_token: { get_input: vcloud_token }
-            vcloud_url: { get_input: vcloud_url }
-            vcloud_service: { get_input: vcloud_service }
-            vcloud_service_type: { get_input: vcloud_service_type }
-            vcloud_instance: { get_input: vcloud_instance }
-            vcloud_api_version: { get_input: vcloud_api_version }
-            mongo_ssh: { get_input: mongo_ssh }
-            vcloud_org_url: { get_input: vcloud_org_url }
-            vcloud_org: { get_input: vcloud_org }
-            vcloud_vdc: { get_input: vcloud_vdc }
-            catalog: { get_input: catalog}
-            template: { get_input: template }
-            server_cpu: { get_input: server_cpu }
-            server_memory: { get_input: server_memory }
-            network_use_existing: { get_input: network_use_existing }
-            common_network_name: { get_input: common_network_name }
-            mongo_ip_address: { get_input: mongo_ip_address }
-            common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
-            edge_gateway: { get_input: edge_gateway }
-            server_user: { get_input: server_user }
-            user_public_key: { get_input: user_public_key }
-            user_private_key: { get_input: user_private_key }
+    mongodb_host_deployment:
+        type: cloudify.nodes.BlueprintDeployment
+        properties:
+          blueprint_id: { get_input: mongodb_host_blueprint_id }
+        interfaces:
+          cloudify.interfaces.lifecycle:
+            create:
+              implementation: proxy.blueprints.tasks.create_deployment
+              inputs:
+                vcloud_username: { get_input: vcloud_username }
+                vcloud_password: { get_input: vcloud_password }
+                vcloud_token: { get_input: vcloud_token }
+                vcloud_url: { get_input: vcloud_url }
+                vcloud_service: { get_input: vcloud_service }
+                vcloud_service_type: { get_input: vcloud_service_type }
+                vcloud_instance: { get_input: vcloud_instance }
+                vcloud_api_version: { get_input: vcloud_api_version }
+                mongo_ssh: { get_input: mongo_ssh }
+                vcloud_org_url: { get_input: vcloud_org_url }
+                vcloud_org: { get_input: vcloud_org }
+                vcloud_vdc: { get_input: vcloud_vdc }
+                catalog: { get_input: catalog}
+                template: { get_input: template }
+                server_cpu: { get_input: server_cpu }
+                server_memory: { get_input: server_memory }
+                network_use_existing: { get_input: network_use_existing }
+                common_network_name: { get_input: common_network_name }
+                mongo_ip_address: { get_input: mongo_ip_address }
+                common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
+                edge_gateway: { get_input: edge_gateway }
+                server_user: { get_input: server_user }
+                user_public_key: { get_input: user_public_key }
+                user_private_key: { get_input: user_private_key }
 
 This node has specific implementation of the lifecycle::
 
@@ -85,18 +85,18 @@ it represents a deployment id of newly create deployment instance inside Cloudif
 
 Next node consumes that deployment id as an input for next blueprint deployment::
 
- mongodb_application_deployment:
-    type: cloudify.nodes.BlueprintDeployment
-    properties:
-      blueprint_id: { get_input: mongodb_application_blueprint_id }
-    cloudify.interfaces.lifecycle:
-      create:
-        inputs:
-          deployment_inputs:
-            mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
-    relationships:
-      - target: mongodb_host_deployment
-        type: cloudify.relationships.depends_on
+    mongodb_application_deployment:
+        type: cloudify.nodes.BlueprintDeployment
+        properties:
+          blueprint_id: { get_input: mongodb_application_blueprint_id }
+        cloudify.interfaces.lifecycle:
+          create:
+            inputs:
+              deployment_inputs:
+                mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
+        relationships:
+          - target: mongodb_host_deployment
+            type: cloudify.relationships.depends_on
 
 In given case it was decided to split VM and networking provisioning into one blueprint with defined outputs.
 Next blueprint describes software installation within Fabric plugin.
