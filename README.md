@@ -8,6 +8,9 @@ for example a web tier that wants to depend on a database, includes the cloudify
 DeploymentProxy node in the blueprint and creates a depends-on or other relationship with it.
 The DeploymentProxy node waits until deployment will be in terminated state.
 
+<img src="proxy-plug-in.jpg" align="left" hspace="10" vspace="6">
+
+
 ===============
 Node properties
 ===============
