@@ -1,4 +1,4 @@
-# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,32 +15,13 @@
 import os
 import setuptools
 
-
-# def read(fname):
-#     return open(os.path.join(os.path.dirname(__file__), fname)).read()
-
-# with open('test-requirements.txt') as f:
-#     test_required = f.read().splitlines()
-
-
 setuptools.setup(
-
-    # Do not use underscores in the plugin name.
-    name='cloudify-proxy-plugin',
-    version='0.3',
+    name='cloudify-deployment-proxy-plugin',
+    version='1.0.0',
     author='Gigaspaces.com',
-    author_email='Gigaspaces.com',
-    description='plugin that defines dependencies between deployments',
-
-    # This must correspond to the actual packages in the plugin.
-    packages=[
-        'deployments',
-        'blueprints',
-        'proxy_common',
-    ],
-
+    author_email='hello@getcloudify.org',
+    description='A plugin for composing services between deployments',
+    packages=['cloudify_proxy_plugin'],
     license='LICENSE',
-    install_requires=[
-        'cloudify-plugins-common>=3.3.1'
-    ]
+    install_requires=['cloudify-plugins-common>=4.0']
 )
