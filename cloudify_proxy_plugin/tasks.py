@@ -14,7 +14,8 @@
 
 import sys
 
-import proxy_common
+from . import poll_until_with_timeout
+from . import check_if_deployment_is_ready
 
 from cloudify import ctx
 from cloudify import exceptions
@@ -24,22 +25,16 @@ from cloudify.decorators import operation
 
 
 @operation
-def wait_for_deployment(deployment_id, **kwargs):
-    ctx.logger.info("Entering wait_for_deployment event.")
-    ctx.logger.info("Using deployment %s" % deployment_id)
-    if not deployment_id:
-        raise exceptions.NonRecoverableError(
-            "Deployment ID not specified.")
+def wait_for_state(state, timeout, **_):
+
+    dep_id = _.get('id') or ctx.node.properties.get('resource_id')
 
     client = manager.get_rest_client()
-    timeout = ctx.node.properties['timeout']
-    proxy_common.poll_until_with_timeout(
-        proxy_common.check_if_deployment_is_ready(
-            client, deployment_id),
+
+    poll_until_with_timeout(
+        check_if_deployment_is_ready(client, dep_id),
         expected_result=True,
         timeout=timeout)
-
-    ctx.logger.info("Exiting wait_for_deployment event.")
 
 
 @operation
