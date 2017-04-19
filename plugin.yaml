@@ -31,9 +31,6 @@ node_types:
               default: ''
         stop:
           implementation: proxy.deployments.tasks.cleanup
-      cloudify.interfaces.validation:
-          creation:
-              implementation: proxy.deployments.tasks.create_validation
 
 relationships:
   cloudify.relationships.connected_to_proxy:

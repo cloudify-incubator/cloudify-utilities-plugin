@@ -24,28 +24,6 @@ from cloudify.decorators import operation
 
 
 @operation
-def create_validation(**kwargs):
-    ctx.logger.info("Entering create_validation event.")
-    client = manager.get_rest_client()
-    deployment_id = ctx.node.properties['deployment_id']
-    if not deployment_id or deployment_id == '':
-        ctx.logger.error("Malformed deployment ID.")
-        raise exceptions.NonRecoverableError(
-            "Deployment ID is not specified.")
-    try:
-        client.deployments.get(deployment_id)
-        ctx.logger.info("Success, deployment exists.")
-    except Exception as ex:
-        ctx.logger.error("Error during obtaining deployment {0}. "
-                         "Reason: {1}."
-                         .format(deployment_id, str(ex)))
-        raise exceptions.NonRecoverableError(
-            "Error during obtaining deployment {0}. "
-            "Reason: {1}.".format(deployment_id, str(ex)))
-    ctx.logger.info("Exiting create_validation event.")
-
-
-@operation
 def wait_for_deployment(deployment_id, **kwargs):
     ctx.logger.info("Entering wait_for_deployment event.")
     ctx.logger.info("Using deployment %s" % deployment_id)
