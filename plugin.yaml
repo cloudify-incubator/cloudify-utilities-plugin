@@ -3,6 +3,16 @@ plugins:
     executor: central_deployment_agent
     source: https://github.com/cloudify-incubator/cloudify-deployment-proxy-plugin/archive/v1.0.0.zip
 
+data_types:
+  cloudify.datatypes.Deployment:
+    properties:
+      outputs:
+        description: >
+          A dictionary of "{ key: value, key: value }".
+          Get "key" the deployment.
+          Set "value" runtime property to the value of the output.
+        required: false
+
 node_types:
 
   cloudify.nodes.DeploymentProxy:
