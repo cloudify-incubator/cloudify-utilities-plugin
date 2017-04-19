@@ -120,47 +120,6 @@ def cleanup(**kwargs):
 
 
 @operation
-def install_deployment(**kwargs):
-    ctx.logger.info("Entering install_deployment event.")
-    if 'deployment_id' not in ctx.instance.runtime_properties:
-        raise exceptions.NonRecoverableError(
-            "Deployment ID as runtime property not specified.")
-
-    client = manager.get_rest_client()
-    deployment_id = ctx.instance.runtime_properties[
-        'deployment_id']
-    proxy_common.poll_until_with_timeout(
-        proxy_common.check_if_deployment_is_ready(
-            client, deployment_id),
-        expected_result=True,
-        timeout=900)
-
-    if not ctx.node.properties['use_existing_deployment']:
-        proxy_common.execute_workflow(deployment_id,
-                                      'install')
-
-    ctx.instance.runtime_properties[
-        'outputs'] = (client.deployments.get(
-                      deployment_id).outputs)
-    ctx.logger.info("Exiting install_deployment event.")
-
-
-@operation
-def uninstall_deployment(**kwargs):
-    ctx.logger.info("Entering uninstall_deployment event.")
-    if 'deployment_id' not in ctx.instance.runtime_properties:
-        raise exceptions.NonRecoverableError(
-            "Deployment ID as runtime property not specified.")
-
-    deployment_id = ctx.instance.runtime_properties[
-        'deployment_id']
-    if not ctx.node.properties['use_existing_deployment']:
-        proxy_common.execute_workflow(deployment_id,
-                                      'uninstall')
-
-    ctx.logger.info("Exiting uninstall_deployment event.")
-
-@operation
 def get_outputs(**kwargs):
 #  if (ctx.target.node._node.type!='cloudify.nodes.DeploymentProxy'):
 #    raise (NonRecoverableError('invalid target: must connect to DeploymentProxy type'))
