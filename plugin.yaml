@@ -1,9 +1,10 @@
 plugins:
-  proxy:
+  dep_proxy:
     executor: central_deployment_agent
     source: https://github.com/cloudify-incubator/cloudify-deployment-proxy-plugin/archive/v1.0.0.zip
 
 data_types:
+
   cloudify.datatypes.Deployment:
     properties:
       outputs:
@@ -14,6 +15,7 @@ data_types:
         required: false
 
 node_types:
+
   cloudify.nodes.DeploymentProxy:
     derived_from: cloudify.nodes.Root
     properties:
@@ -22,36 +24,20 @@ node_types:
         default: true
       resource_id:
         type: string
+        description: The deployment ID.
         required: true
       resource_config:
         type: cloudify.datatypes.Deployment
-
-  cloudify.nodes.DeploymentProxy:
-    derived_from: cloudify.nodes.Root
-    properties:
-      inherit_outputs:
-        default: []
-        description: A list of proxy deployment outputs to inherit.
-      timeout:
-        default: 30
-        description: The time to wait for deployment executions to finish.
-      inherit_inputs:
-        default: False
-        description: Flag that indicated if it is necessary to inherit deployment inputs.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: proxy.deployments.tasks.wait_for_deployment
+          implementation: dep_proxy.cloudify_proxy_plugin.tasks.wait_for_state
           inputs:
-            deployment_id:
-              default: ''
-        start:
-          implementation: proxy.deployments.tasks.inherit_deployment_attributes
-          inputs:
-            deployment_id:
-              default: ''
-        stop:
-          implementation: proxy.deployments.tasks.cleanup
+            state:
+              default: 'terminated'
+            timeout:
+              default: 15
 
 relationships:
   cloudify.relationships.connected_to_proxy:
@@ -60,4 +46,3 @@ relationships:
       cloudify.interfaces.relationship_lifecycle:
         postconfigure:
           implementation: proxy.deployments.tasks.get_outputs
-
