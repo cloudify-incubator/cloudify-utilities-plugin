@@ -14,6 +14,17 @@ data_types:
         required: false
 
 node_types:
+  cloudify.nodes.DeploymentProxy:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        type: boolean
+        default: true
+      resource_id:
+        type: string
+        required: true
+      resource_config:
+        type: cloudify.datatypes.Deployment
 
   cloudify.nodes.DeploymentProxy:
     derived_from: cloudify.nodes.Root
