@@ -12,16 +12,12 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-# Built-in Imports
+import mock
 import testtools
 
-# Third Party Imports
-import mock
-
-# Cloudify Imports
-from cloudify.state import current_ctx
-from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
+from cloudify.mocks import MockCloudifyContext
+from cloudify.state import current_ctx
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 
@@ -31,9 +27,6 @@ class TestCloudifyRequests(testtools.TestCase):
                      test_name,
                      test_properties):
 
-        """ Creates a mock context for the base
-            tests
-        """
         test_node_id = test_name
         test_properties = test_properties
 
@@ -48,7 +41,7 @@ class TestCloudifyRequests(testtools.TestCase):
         return ctx
 
     def test_poll_with_timeout(self):
-        from ..tasks import poll_with_timeout
+        from cloudify_deployment_proxy.tasks import poll_with_timeout
 
         test_name = 'test_poll_with_timeout'
         test_properties = {
@@ -76,7 +69,8 @@ class TestCloudifyRequests(testtools.TestCase):
         error = self.assertEqual(False, output)
 
     def test_all_dep_workflows_in_state_pollster(self):
-        from ..tasks import all_dep_workflows_in_state_pollster
+        from cloudify_deployment_proxy.tasks import \
+            all_dep_workflows_in_state_pollster
 
         test_name = 'test_all_dep_workflows_in_state_pollster'
         test_properties = {
@@ -98,8 +92,11 @@ class TestCloudifyRequests(testtools.TestCase):
             mock_client_executions = mock.MagicMock
             setattr(mock_client_executions, 'list', _mock_list)
             setattr(mock_client, 'executions', mock_client_executions)
-            output = all_dep_workflows_in_state_pollster(mock_client, 'care bears', 'terminated')
-            error = self.assertEqual(False, output)
+            output = \
+                all_dep_workflows_in_state_pollster(mock_client,
+                                                    'care bears',
+                                                    'terminated')
+            self.assertEqual(False, output)
 
         # Test that all_dep_workflows.. returns False if not successful.
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
@@ -112,12 +109,14 @@ class TestCloudifyRequests(testtools.TestCase):
             mock_client_executions = mock.MagicMock
             setattr(mock_client_executions, 'list', _mock_list)
             setattr(mock_client, 'executions', mock_client_executions)
-            output = all_dep_workflows_in_state_pollster(mock_client, 'care bears', 'terminated')
+            output = \
+                all_dep_workflows_in_state_pollster(mock_client,
+                                                    'care bears',
+                                                    'terminated')
             self.assertEqual(True, output)
 
-
     def test_wait_for_deployment_ready(self):
-        from ..tasks import wait_for_deployment_ready
+        from cloudify_deployment_proxy.tasks import wait_for_deployment_ready
 
         test_name = 'test_wait_for_deployment_ready'
         test_properties = {
@@ -148,7 +147,7 @@ class TestCloudifyRequests(testtools.TestCase):
             self.assertIn('is not callable', error.message)
 
     def test_query_deployment_data(self):
-        from ..tasks import query_deployment_data
+        from cloudify_deployment_proxy.tasks import query_deployment_data
 
         deployment_outputs_expected = 0
         deployment_outputs_mapping = '_zero'
@@ -158,7 +157,7 @@ class TestCloudifyRequests(testtools.TestCase):
             'resource_id': 'test_query_deployment_data',
             'resource_config': {
                 'outputs': {
-                  'zero': deployment_outputs_mapping
+                    'zero': deployment_outputs_mapping
                 }
             }
         }
@@ -174,14 +173,17 @@ class TestCloudifyRequests(testtools.TestCase):
             _mock_dep_outputs_object = {
                 'deployment_id': 'test_query_deployment_data',
                 'outputs': {
-                  'zero': deployment_outputs_expected
+                    'zero': deployment_outputs_expected
                 }
             }
-            _mock_list = mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
+            _mock_list = \
+                mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
             mock_deployments = mock.MagicMock
             setattr(mock_client, 'deployments', mock_deployments)
             setattr(mock_deployments, 'get', _mock_list)
-            output = query_deployment_data(mock_daemonize, mock_interval, mock_timeout)
+            output = query_deployment_data(mock_daemonize,
+                                           mock_interval,
+                                           mock_timeout)
             self.assertEqual(True, output)
             self.assertNotIn(deployment_outputs_mapping,
                              _ctx.instance.runtime_properties.keys())
@@ -191,14 +193,16 @@ class TestCloudifyRequests(testtools.TestCase):
             _mock_dep_outputs_object = {
                 'deployment_id': 'test_query_deployment_data',
                 'outputs': {
-                  'zero': deployment_outputs_expected
+                    'zero': deployment_outputs_expected
                 }
             }
             _mock_list = mock.MagicMock(return_value=_mock_dep_outputs_object)
             mock_deployments = mock.MagicMock
             setattr(mock_client, 'deployments', mock_deployments)
             setattr(mock_deployments, 'get', _mock_list)
-            output = query_deployment_data(mock_daemonize, mock_interval, mock_timeout)
+            output = query_deployment_data(mock_daemonize,
+                                           mock_interval,
+                                           mock_timeout)
             self.assertEqual(True, output)
             self.assertEqual(
                 _ctx.instance.runtime_properties[deployment_outputs_mapping],

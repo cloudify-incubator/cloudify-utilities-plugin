@@ -12,14 +12,14 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import sys
 import time
 
 from cloudify import ctx
-from cloudify.exceptions import NonRecoverableError
 from cloudify import manager
-from cloudify_rest_client.exceptions import CloudifyClientError
+
 from cloudify.decorators import operation
+from cloudify.exceptions import NonRecoverableError
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 
 def poll_with_timeout(pollster,
@@ -77,10 +77,13 @@ def wait_for_deployment_ready(state, timeout, **_):
         .format(dep_id,
                 state))
 
-    success = poll_with_timeout(all_dep_workflows_in_state_pollster(client, dep_id, state), timeout=timeout)
+    success = \
+        poll_with_timeout(
+            all_dep_workflows_in_state_pollster(client, dep_id, state),
+            timeout=timeout)
     if not success:
         raise NonRecoverableError(
-            'Deployment not ready within specified timeout ({0} seconds).'.format(timeout))
+            'Deployment not ready. Timeout: {0} seconds.'.format(timeout))
     return True
 
 
@@ -96,21 +99,26 @@ def query_deployment_data(daemonize,
 
     client = _.get('client') or manager.get_rest_client()
     dep_id = _.get('id') or ctx.node.properties.get('resource_id')
-    resrc_cfg = _.get('resource_config') or ctx.node.properties.get('resource_config')
+    resrc_cfg = _.get('resource_config') or \
+        ctx.node.properties.get('resource_config')
 
     outputs = resrc_cfg.get('outputs')
 
-    ctx.logger.debug('Deployment {0} output mapping: {1}'.format(dep_id, outputs))
+    ctx.logger.debug(
+        'Deployment {0} output mapping: {1}'.format(dep_id, outputs))
 
     try:
         dep_outputs_response = client.deployments.outputs.get(dep_id)
     except CloudifyClientError as ex:
-        ctx.logger.error('Ignoring: Failed to query deployment outputs: {0}'.format(str(ex)))
+        ctx.logger.error(
+            'Ignoring: Failed to query deployment outputs: {0}'
+            .format(str(ex)))
     else:
 
         dep_outputs = dep_outputs_response.get('outputs')
 
-        ctx.logger.debug('Received these deployment outputs: {0}'.format(dep_outputs))
+        ctx.logger.debug(
+            'Received these deployment outputs: {0}'.format(dep_outputs))
         for key, val in outputs.items():
             ctx.instance.runtime_properties[val] = dep_outputs.get(key, '')
     return True
