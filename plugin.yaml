@@ -14,6 +14,8 @@ data_types:
           Get "key" the deployment.
           Set "value" runtime property to the value of the output.
         required: false
+      unvalidated:
+        default: {}
 
 node_types:
 
@@ -39,6 +41,15 @@ node_types:
               default: 'terminated'
             timeout:
               default: 60
+        start:
+          implementation: tools.cloudify_deployment_proxy.tasks.query_deployment_data
+          inputs:
+            daemonize:
+              default: false
+            interval:
+              required: false
+            timeout:
+              default: 15
 
 relationships:
   cloudify.relationships.connected_to_proxy:
