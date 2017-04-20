@@ -18,7 +18,7 @@ import time
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify import manager
-
+from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.decorators import operation
 
 
@@ -81,49 +81,39 @@ def wait_for_deployment_ready(state, timeout, **_):
     if not success:
         raise NonRecoverableError(
             'Deployment not ready within specified timeout ({0} seconds).'.format(timeout))
+    return True
 
 
 @operation
-def inherit_deployment_attributes(deployment_id, **kwargs):
-    ctx.logger.info("Entering obtain_outputs event.")
-    client = manager.get_rest_client()
-    outputs = ctx.node.properties['inherit_outputs']
-    ctx.logger.info("Outputs to inherit: {0}."
-                    .format(str(outputs)))
-    ctx.logger.info('deployment id %s' % deployment_id)
-    inherit_inputs = ctx.node.properties['inherit_inputs']
-    ctx.instance.runtime_properties.update({
-        'inherit_outputs': outputs,
-        'deployment_id': deployment_id
-    })
-    try:
-        if inherit_inputs:
-            _inputs = client.deployments.get(deployment_id)['inputs']
-            ctx.instance.runtime_properties.update(
-                {'proxy_deployment_inputs': _inputs})
-        deployment_outputs = client.deployments.outputs.get(
-            deployment_id)['outputs']
-        ctx.logger.info("Available deployment outputs {0}."
-                        .format(str(deployment_outputs)))
-        ctx.logger.info("Available runtime properties: {0}.".format(
-            str(ctx.instance.runtime_properties.keys())
-        ))
-        for key in outputs:
-            ctx.instance.runtime_properties.update(
-                {key: deployment_outputs.get(key)}
-            )
-    except Exception as ex:
-        ctx.logger.error(
-            "Caught exception during obtaining "
-            "deployment outputs {0} {1}"
-            .format(sys.exc_info()[0], str(ex)))
-        raise exceptions.NonRecoverableError(
-            "Caught exception during obtaining "
-            "deployment outputs {0} {1}. Available runtime properties {2}"
-            .format(sys.exc_info()[0], str(ex),
-                    str(ctx.instance.runtime_properties.keys())))
-    ctx.logger.info("Exiting obtain_outputs event.")
+def query_deployment_data(daemonize,
+                          interval,
+                          timeout,
+                          **_):
 
+    if daemonize:
+        raise NonRecoverableError(
+            'Option "daemonize" is not implemented.')
+
+    client = _.get('client') or manager.get_rest_client()
+    dep_id = _.get('id') or ctx.node.properties.get('resource_id')
+    resrc_cfg = _.get('resource_config') or ctx.node.properties.get('resource_config')
+
+    outputs = resrc_cfg.get('outputs')
+
+    ctx.logger.debug('Deployment {0} output mapping: {1}'.format(dep_id, outputs))
+
+    try:
+        dep_outputs_response = client.deployments.outputs.get(dep_id)
+    except CloudifyClientError as ex:
+        ctx.logger.error('Ignoring: Failed to query deployment outputs: {0}'.format(str(ex)))
+    else:
+
+        dep_outputs = dep_outputs_response.get('outputs')
+
+        ctx.logger.debug('Received these deployment outputs: {0}'.format(dep_outputs))
+        for key, val in outputs.items():
+            ctx.instance.runtime_properties[val] = dep_outputs.get(key, '')
+    return True
 
 @operation
 def cleanup(**kwargs):
