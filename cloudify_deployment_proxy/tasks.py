@@ -138,7 +138,7 @@ def upload_blueprint(tenant='default_tenant', **_):
     bp_id = _.get('blueprint_id') or config.get('blueprint_id') or ctx.instance.id
 
     try:
-        bp_upload_resource = client.blueprints._upload(blueprint_id=bp_id, archive_location=bp_archive, application_file_name=bp_name)
+        bp_upload_resource = client.blueprints._upload(blueprint_id=bp_id, archive_location=bp_archive, application_file_name=app_name)
     except CloudifyClientError as ex:
         raise NonRecoverableError('Blueprint failed {0}.'.format(str(ex)))
 
