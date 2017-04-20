@@ -114,24 +114,3 @@ def query_deployment_data(daemonize,
         for key, val in outputs.items():
             ctx.instance.runtime_properties[val] = dep_outputs.get(key, '')
     return True
-
-@operation
-def cleanup(**kwargs):
-    ctx.logger.info("Entering cleanup_outputs event.")
-    outputs = ctx.instance.runtime_properties.get('inherit_outputs', [])
-    if ('proxy_deployment_inputs' in
-            ctx.instance.runtime_properties):
-        del ctx.instance.runtime_properties['proxy_deployment_inputs']
-    for key in outputs:
-        if key in ctx.instance.runtime_properties:
-            del ctx.instance.runtime_properties[key]
-    ctx.logger.info("Exiting cleanup_outputs event.")
-
-
-@operation
-def get_outputs(**kwargs):
-#  if (ctx.target.node._node.type!='cloudify.nodes.DeploymentProxy'):
-#    raise (NonRecoverableError('invalid target: must connect to DeploymentProxy type'))
-
-  for output in ctx.target.node.properties['inherit_outputs']:
-    ctx.source.instance.runtime_properties[output]=ctx.target.instance.runtime_properties[output]

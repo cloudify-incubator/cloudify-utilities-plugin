@@ -50,11 +50,3 @@ node_types:
               required: false
             timeout:
               default: 15
-
-relationships:
-  cloudify.relationships.connected_to_proxy:
-    derived_from: cloudify.relationships.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        postconfigure:
-          implementation: proxy.deployments.tasks.get_outputs
