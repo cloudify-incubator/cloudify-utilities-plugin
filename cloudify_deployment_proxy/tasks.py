@@ -64,7 +64,9 @@ def all_dep_workflows_in_state_pollster(_client, _dep_id, _state):
 def wait_for_deployment_ready(state, timeout, **_):
 
     client = _.get('client') or manager.get_rest_client()
-    dep_id = _.get('id') or ctx.node.properties.get('resource_id')
+    config = _.get('resource_config') or \
+        ctx.node.properties.get('resource_config')
+    dep_id = _.get('id') or config.get('deployment_id')
 
     ctx.logger.info(
         'Waiting for all workflows in '
@@ -73,11 +75,16 @@ def wait_for_deployment_ready(state, timeout, **_):
         .format(dep_id,
                 state))
 
+    pollster_args = {
+        '_client': client,
+        '_dep_id': dep_id,
+        '_state': state
+    }
     success = \
         poll_with_timeout(
             all_dep_workflows_in_state_pollster,
             timeout=timeout,
-            pollster_args={'_client': client, '_dep_id': dep_id, '_state': state})
+            pollster_args=pollster_args)
     if not success:
         raise NonRecoverableError(
             'Deployment not ready. Timeout: {0} seconds.'.format(timeout))
@@ -95,11 +102,10 @@ def query_deployment_data(daemonize,
             'Option "daemonize" is not implemented.')
 
     client = _.get('client') or manager.get_rest_client()
-    dep_id = _.get('id') or ctx.node.properties.get('resource_id')
-    resrc_cfg = _.get('resource_config') or \
+    config = _.get('resource_config') or \
         ctx.node.properties.get('resource_config')
-
-    outputs = resrc_cfg.get('outputs')
+    dep_id = _.get('id') or config.get('deployment_id')
+    outputs = config.get('outputs')
 
     ctx.logger.debug(
         'Deployment {0} output mapping: {1}'.format(dep_id, outputs))
@@ -111,7 +117,6 @@ def query_deployment_data(daemonize,
             'Ignoring: Failed to query deployment outputs: {0}'
             .format(str(ex)))
     else:
-
         dep_outputs = dep_outputs_response.get('outputs')
 
         ctx.logger.debug(

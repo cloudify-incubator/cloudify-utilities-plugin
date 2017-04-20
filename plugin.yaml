@@ -8,6 +8,14 @@ data_types:
 
   cloudify.datatypes.Deployment:
     properties:
+      deployment_id:
+        description: >
+          This is the deployment that the node is a proxy to.
+        required: true
+      blueprint_id:
+        description: >
+          This is the blueprint_id that the deployment is created from.
+        required: false
       outputs:
         description: >
           A dictionary of "{ key: value, key: value }".
@@ -25,10 +33,6 @@ node_types:
       use_external_resource:
         type: boolean
         default: true
-      resource_id:
-        type: string
-        description: The deployment ID.
-        required: true
       resource_config:
         type: cloudify.datatypes.Deployment
         default: {}
@@ -56,8 +60,7 @@ node_types:
     properties:
       agent_config:
         default:
-          install_method: provided
-          user: ubuntu
+          install_method: none
       use_external_resource:
         type: boolean
         default: true

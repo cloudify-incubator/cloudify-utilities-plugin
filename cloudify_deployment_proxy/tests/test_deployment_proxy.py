@@ -15,7 +15,6 @@
 import mock
 import testtools
 
-from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -45,8 +44,7 @@ class TestCloudifyRequests(testtools.TestCase):
 
         test_name = 'test_poll_with_timeout'
         test_properties = {
-            'resource_id': 'test_poll_with_timeout',
-            'resource_config': {}
+            'resource_config': {'deployment_id': 'test_poll_with_timeout'}
         }
         _ctx = self.get_mock_ctx(test_name,
                                  test_properties)
@@ -59,7 +57,7 @@ class TestCloudifyRequests(testtools.TestCase):
         # Test that failed polling raises an error
         mock_pollster = mock.MagicMock
         output = poll_with_timeout(mock_pollster, mock_timeout, mock_interval)
-        error = self.assertEqual(False, output)
+        self.assertEqual(False, output)
 
     def test_all_dep_workflows_in_state_pollster(self):
         from cloudify_deployment_proxy.tasks import \
@@ -67,8 +65,9 @@ class TestCloudifyRequests(testtools.TestCase):
 
         test_name = 'test_all_dep_workflows_in_state_pollster'
         test_properties = {
-            'resource_id': 'test_all_dep_workflows_in_state_pollster',
-            'resource_config': {}
+            'resource_config': {
+                'deployment_id': 'test_all_dep_workflows_in_state_pollster'
+            }
         }
         _ctx = self.get_mock_ctx(test_name,
                                  test_properties)
@@ -108,20 +107,6 @@ class TestCloudifyRequests(testtools.TestCase):
                                                     'terminated')
             self.assertEqual(True, output)
 
-    def test_wait_for_deployment_ready(self):
-        from cloudify_deployment_proxy.tasks import wait_for_deployment_ready
-
-        test_name = 'test_wait_for_deployment_ready'
-        test_properties = {
-            'resource_id': 'test_wait_for_deployment_ready',
-            'resource_config': {}
-        }
-        _ctx = self.get_mock_ctx(test_name,
-                                 test_properties)
-        current_ctx.set(_ctx)
-        mock_state = 'terminated'
-        mock_timeout = .01
-
     def test_query_deployment_data(self):
         from cloudify_deployment_proxy.tasks import query_deployment_data
 
@@ -130,8 +115,8 @@ class TestCloudifyRequests(testtools.TestCase):
 
         test_name = 'test_query_deployment_data'
         test_properties = {
-            'resource_id': 'test_query_deployment_data',
             'resource_config': {
+                'deployment_id': 'test_query_deployment_data',
                 'outputs': {
                     'zero': deployment_outputs_mapping
                 }
