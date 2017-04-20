@@ -11,17 +11,3 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
-import os
-import setuptools
-
-setuptools.setup(
-    name='cloudify-utilities-plugin',
-    version='1.0.0',
-    author='Gigaspaces.com',
-    author_email='hello@getcloudify.org',
-    description='Utilities for Cloudify',
-    packages=['cloudify_deployment_proxy'],
-    license='LICENSE',
-    install_requires=['cloudify-plugins-common>=4.0']
-)
