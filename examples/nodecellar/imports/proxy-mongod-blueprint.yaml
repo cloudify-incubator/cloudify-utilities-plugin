@@ -3,10 +3,18 @@ inputs:
   mongod_host_deployment_id:
     type: string
 
+node_types:
+
+  nodecellar.nodes.MongoDatabase2:
+    derived_from: cloudify.nodes.DBMS
+    properties:
+      port:
+        default: 27017
+
 node_templates:
 
   mongod:
-    type: cloudify.nodes.DBMS
+    type: nodecellar.nodes.MongoDatabase2
     relationships:
       - type: cloudify.relationships.contained_in
         target: mongod_host
