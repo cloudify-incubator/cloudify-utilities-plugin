@@ -11,7 +11,6 @@ data_types:
       deployment_id:
         description: >
           This is the deployment that the node is a proxy to.
-          Will be generated if not provided.
         required: false
       outputs:
         description: >
@@ -44,6 +43,10 @@ data_types:
           If it already exists it will be used. 
           Will be generated if not provided.
         required: false
+      inputs:
+        description: >
+          The inputs to the deployment.
+        default: {}
       install_timeout:
         description: >
           How long to wait for the install workflow to exist.
@@ -120,8 +123,8 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.upload_blueprint
-        # configure:
-        #   implementation: cfy_util.cloudify_deployment_proxy.tasks.create_deployment
+        configure:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.create_deployment
         # start:
         #   implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_install
         # stop:

@@ -12,9 +12,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import tempfile
 import time
-import urllib
 
 from cloudify import ctx
 from cloudify import manager
@@ -129,17 +127,52 @@ def query_deployment_data(daemonize,
 
 
 @operation
-def upload_blueprint(tenant='default_tenant', **_):
+def upload_blueprint(**_):
     client = _.get('client') or manager.get_rest_client()
     config = _.get('resource_config') or \
         ctx.node.properties.get('resource_config')
-    app_name = _.get('application_file_name') or config.get('application_file_name')
-    bp_archive = _.get('blueprint_archive') or config.get('blueprint_archive')
-    bp_id = _.get('blueprint_id') or config.get('blueprint_id') or ctx.instance.id
+
+    app_name = _.get('application_file_name') or \
+        config.get('application_file_name')
+    bp_archive = _.get('blueprint_archive') or \
+        config.get('blueprint_archive')
+    bp_id = _.get('blueprint_id') or \
+        config.get('blueprint_id', ctx.instance.id)
 
     try:
-        bp_upload_resource = client.blueprints._upload(blueprint_id=bp_id, archive_location=bp_archive, application_file_name=app_name)
+        bp_upload_resource = \
+            client.blueprints._upload(blueprint_id=bp_id,
+                                      archive_location=bp_archive,
+                                      application_file_name=app_name)
     except CloudifyClientError as ex:
         raise NonRecoverableError('Blueprint failed {0}.'.format(str(ex)))
 
-    ctx.logger.info('Output {0}'.format(bp_upload_resource))
+    ctx.instance.runtime_properties['blueprint'] = {}
+    ctx.instance.runtime_properties['blueprint']['id'] = \
+        bp_upload_resource.get('id')
+
+
+@operation
+def create_deployment(**_):
+    client = _.get('client') or manager.get_rest_client()
+    config = _.get('resource_config') or \
+        ctx.node.properties.get('resource_config')
+
+    blueprint = _.get('blueprint') or \
+        ctx.instance.runtime_properties.get('blueprint')
+    bp_id = _.get('blueprint_id') or \
+        blueprint.get('id') or config.get('blueprint_id')
+    dep_id = _.get('deployment_id') or \
+        config.get('deployment_id', bp_id)
+    inputs = _.get('inputs') or config.get('inputs', {})
+
+    try:
+        dp_create_response = \
+            client.deployments.create(blueprint_id=bp_id,
+                                      deployment_id=dep_id,
+                                      inputs=inputs)
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Deployment create failed {0}.'.format(str(ex)))
+
+    ctx.logger.info('Output: {0}'.format(dp_create_response))
