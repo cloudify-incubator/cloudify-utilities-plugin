@@ -61,3 +61,7 @@ node_templates:
     properties:
       aws_config: *aws_config
       domain: vpc
+
+outputs:
+  endpoint:
+    value: { concat: [ 'http://', { get_attribute: [ nodecellar_ip, aws_resource_id, ] }, ':', { get_property: [ nodecellar, port ] } ] }

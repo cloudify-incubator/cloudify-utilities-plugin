@@ -1,6 +1,6 @@
 plugins:
 
-  tools:
+  cfy_util:
     executor: central_deployment_agent
     source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.0.0.zip
 
@@ -35,14 +35,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: tools.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
           inputs:
             state:
               default: 'terminated'
             timeout:
               default: 60
         start:
-          implementation: tools.cloudify_deployment_proxy.tasks.query_deployment_data
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.query_deployment_data
           inputs:
             daemonize:
               default: false
@@ -66,14 +66,14 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: tools.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
           inputs:
             state:
               default: 'terminated'
             timeout:
               default: 60
         start:
-          implementation: tools.cloudify_deployment_proxy.tasks.query_deployment_data
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.query_deployment_data
           inputs:
             daemonize:
               default: false

@@ -1,181 +1,115 @@
-README.md
+# Cloudify Deployment Proxy
 
-========
-Overview
-========
-
-The deployment proxy plugin connects two deployments in order to allow deployment coordination.
-The source blueprint that wishes to depend on another blueprint,
-for example a web tier that wants to depend on a database, includes the cloudify.nodes.
-DeploymentProxy node in the blueprint and creates a depends-on or other relationship with it.
-The DeploymentProxy node waits until deployment will be in terminated state.
-
-<img src="proxy-plug-in.jpg" align="left" hspace="10" vspace="6">
+This plugin enables a user to connect a deployment to another deployment, in effect enabling "chains" of applications or service.
 
 
-===============
-Node properties
-===============
+### Notes
 
-The DeploymentProxy node itself has the following properties that govern it's behavior::
-
-    - inherit_outputs        : a list of outputs that are should be inherited from depployment proxy outputs.
-                               Default: empty list.
-    - inherit_inputs         : Flag that indicated if it is necessary to inherit deployment inputs
-    - timeout                : number of seconds to wait.  When timeout expires, a "RecoverableError" is thrown.
-                               Default=30.
-
-The DeploymentProxy's Create and Start operations take the following inputs to the operations:
-
-    - deployment_id                : deployment ID to inherit from
+- Previously published as "Cloudify Proxy Plugin", the usage of which is deprecated.
+- A Cloudify Manager is required.
+- Tested with Cloudify Manager 4.0.
+- Example blueprint requires AWS + VPC. (No provider context.)
+- Example blueprint requires that AWS credentials are stored as secrets on the manager.
 
 
-The BlueprintDeployment node has the following properties::
+## Example Instructions
 
-    - blueprint_id                : blueprint ID to create deployment from
-    - ignore_live_nodes_on_delete : ignore live nodes during deletion for a deployment
+This example follows the [standard manager setup pattern](https://github.com/EarthmanT/installing-cloudify-4.0-manager).
 
-The BlueprintDeployment's Create operation takes the following inputs to the operations:
+The example demonstrates the following simple example:
 
-    - deployment_inputs                : The inputs to use to create the new deployment.
-
-How it works? Let's take a look at multi-part Nodecellar blueprint nodes::
-
-    mongodb_host_deployment:
-        type: cloudify.nodes.BlueprintDeployment
-        properties:
-          blueprint_id: { get_input: mongodb_host_blueprint_id }
-        interfaces:
-          cloudify.interfaces.lifecycle:
-            create:
-              implementation: proxy.blueprints.tasks.create_deployment
-              inputs:
-                vcloud_username: { get_input: vcloud_username }
-                vcloud_password: { get_input: vcloud_password }
-                vcloud_token: { get_input: vcloud_token }
-                vcloud_url: { get_input: vcloud_url }
-                vcloud_service: { get_input: vcloud_service }
-                vcloud_service_type: { get_input: vcloud_service_type }
-                vcloud_instance: { get_input: vcloud_instance }
-                vcloud_api_version: { get_input: vcloud_api_version }
-                mongo_ssh: { get_input: mongo_ssh }
-                vcloud_org_url: { get_input: vcloud_org_url }
-                vcloud_org: { get_input: vcloud_org }
-                vcloud_vdc: { get_input: vcloud_vdc }
-                catalog: { get_input: catalog}
-                template: { get_input: template }
-                server_cpu: { get_input: server_cpu }
-                server_memory: { get_input: server_memory }
-                network_use_existing: { get_input: network_use_existing }
-                common_network_name: { get_input: common_network_name }
-                mongo_ip_address: { get_input: mongo_ip_address }
-                common_network_public_nat_use_existing: { get_input: common_network_public_nat_use_existing }
-                edge_gateway: { get_input: edge_gateway }
-                server_user: { get_input: server_user }
-                user_public_key: { get_input: user_public_key }
-                user_private_key: { get_input: user_private_key }
-
-This node has specific implementation of the lifecycle::
-
-    On create: Creates a deployment with given inputs
-    On start: Installs a deployment
-    On stop: Uninstalls a deployment
-    On delete: Deletes a deployment
-
-Given node has runtime property::
-
-    deployment_id
-
-it represents a deployment id of newly create deployment instance inside Cloudify.
-
-Next node consumes that deployment id as an input for next blueprint deployment::
-
-    mongodb_application_deployment:
-        type: cloudify.nodes.BlueprintDeployment
-        properties:
-          blueprint_id: { get_input: mongodb_application_blueprint_id }
-        cloudify.interfaces.lifecycle:
-          create:
-            inputs:
-              deployment_inputs:
-                mongodb_host_deployment_id: { get_attribute: [ mongodb_host_deployment, deployment_id ]}
-        relationships:
-          - target: mongodb_host_deployment
-            type: cloudify.relationships.depends_on
-
-In given case it was decided to split VM and networking provisioning into one blueprint with defined outputs.
-Next blueprint describes software installation within Fabric plugin.
-
-=============
-Usage example
-=============
-
-First of all please take a look at samples folder to see blueprints examples.
-In most cases it is necessary to get deployment outputs in runtime during installing another deployment.
-In case of Nodecellar example, as user i want to attach MongoDB to NodeJS application, MongoDB is available within other deployment.
-As user i'd like to chain deployments within proxy pattern - define a deployment proxy node template and consume its attributes within blueprint.
-Here's how proxy object looks like::
-
-    mongodb_proxy_deployment:
-        type: cloudify.nodes.DeploymentProxy
-        properties:
-           inherit_inputs: True
-           inherit_outputs:
-                - 'mongodb_internal_ip'
-                - 'mongodb_public_ip'
-           interfaces:
-             cloudify.interfaces.lifecycle:
-               create:
-                 implementation: proxy.deployments.tasks.wait_for_deployment
-                 inputs:
-                   deployment_id: { get_input: mongodb_deployment_id }
-               start:
-                 implementation: proxy.deployments.tasks.inherit_deployment_attributes
-                 inputs:
-                   deployment_id: { get_input: mongodb_deployment_id }
+- Install blueprint A.
+- Blueprint A brings up a VM in the management environment and installs database on the VM.
+- Leave the deployment running and install blueprint B.
+- Blueprint B brings up another VM that "proxies" the previous deployment and installs a web application that uses the database.
 
 
-Within NodeJS example blueprint composers are able to access proxy deployment attributes
-within TOSCA functions in the next manner::
+#### AWS
 
-    MONGO_HOST: { get_attribute: [ mongodb_proxy_deployment, mongodb_internal_ip ] }
+1. Copy the example inputs file and edit it:
 
-If it is necessary to access proxy deployment outputs it is possible to do in the next manner::
+```shell
+$ cp examples/nodecellar/inputs/aws.yaml.example inputs.yaml
+```
 
-    network_name: { get_attribute: [ mongodb_proxy_deployment, proxy_deployment_inputs, common_network_name ] }
-
-
-
-NOTE!! get_property function of TOSCA doesn't work with node properties.
-
-==========
-Disclaimer
-==========
-
-Tested on::
-
-    Cloudify 3.2.1
+Make sure the variables match those of the Cloudify Manager 4.0 AWS environment.
 
 
-Available blueprints::
+2. Install the MongoDB deployment:
 
-    vCloud Air Nodecellar multi-blueprint application
+```shell
+$ cfy install examples/nodecellar/aws-mongo-blueprint.yaml -b mongo1 -i inputs.yaml
+Uploading blueprint examples/nodecellar/aws-mongo-blueprint.yaml...
+ aws-mongo-bluepri... |################################################| 100.0%
+Blueprint uploaded. The blueprint's id is mongo1
+Creating new deployment from blueprint mongo1...
+Deployment created. The deployment's id is mongo1
+Executing workflow install on deployment mongo1 [timeout=900 seconds]
+Deployment environment creation is pending...
+2017-04-20 00:00:00.000  CFY <mongo1> Starting 'create_deployment_environment' workflow execution
+...
+2017-04-20 00:00:00.000  CFY <mongo1> Starting 'install' workflow execution
+...
+2017-04-20 00:00:00.000  CFY <mongo1> 'install' workflow execution succeeded
+Finished executing workflow install on deployment mongo1
+```
 
-Operating system::
+This installed a MongoDB on a VM.
 
-    Given code OS-agnostic
 
-==========================================
-How to run multi-part Nodecellar blueprint
-==========================================
+3. Install the Nodecellar deployment:
 
-In order to test multi-part blueprint deployment you have to execute next operations::
+```shell
+$ cfy install examples/nodecellar/aws-proxy-blueprint.yaml \
+    -i inputs.yaml -b node1 -i "mongod_host_deployment_id=mongo1"
+Uploading blueprint examples/nodecellar/aws-proxy-blueprint.yaml...
+ aws-proxy-bluepri... |################################################| 100.0%
+Blueprint uploaded. The blueprint's id is node1
+Creating new deployment from blueprint node1...
+Deployment created. The deployment's id is node1
+Executing workflow install on deployment node1 [timeout=900 seconds]
+Deployment environment creation is pending...
+2017-04-20 00:00:00.000  CFY <node1> Starting 'create_deployment_environment' workflow execution
+...
+2017-04-20 00:00:00.000  CFY <node1> Starting 'install' workflow execution
+...
+2017-04-20 00:00:00.000  CFY <node1> 'install' workflow execution succeeded
+Finished executing workflow install on deployment node1
+```
 
-    upload blueprint vcloud-mongodb-host-nodecellar-multipart-blueprint.yaml
-    upload blueprint vcloud-mongodb-application-nodecellar-multipart-blueprint.yaml
-    upload blueprint vcloud-nodejs-host-nodecellar-multipart-blueprint.yaml
-    upload blueprint vcloud-nodejs-application-nodecellar-multipart-blueprint.yaml
-    upload blueprint vcloud-nodecellar-multipart-blueprint.yaml
-    create a deployment for blueprint vcloud-nodecellar-multipart-blueprint.yaml
-    run installation for deployment of the blueprint vcloud-nodecellar-multipart-blueprint.yaml
+This installed the Nodecellar web application and connected it to the database from the first deployment.
 
+
+4. Check the deployment outputs for the application endpoint:
+
+```shell
+$ cfy deployments outputs node1
+Retrieving outputs for deployment node1...
+ - "endpoint":
+     Description: Application UI
+     Value: http://123.45.67.89:8080
+```
+
+5. At this point, try installing another web application deployment like in step 3 and 4.
+
+*Hint: You will need to change the ```nodejs_host_key_name``` and ```nodejs_host_private_key_path``` input values since these will conflict with the step 3 deployment.**
+
+
+6. Uninstall the Nodecellar deployment:
+
+```shell
+$ cfy install node1 --allow-custom-parameters -p ignore_failure=true
+2017-04-20 00:00:00.000  CFY <node1> Starting 'uninstall' workflow execution
+...
+2017-04-20 00:00:00.000  CFY <node1> 'uninstall' workflow execution succeeded
+```
+
+
+7. Uninstall the Mongo deployment:
+
+```shell
+$ cfy install node1 --allow-custom-parameters -p ignore_failure=true
+2017-04-20 00:00:00.000  CFY <mongo1> Starting 'uninstall' workflow execution
+...
+2017-04-20 00:00:00.000  CFY <mongo1> 'uninstall' workflow execution succeeded
+```

@@ -19,7 +19,7 @@ setuptools.setup(
     version='1.0.0',
     author='Gigaspaces.com',
     author_email='hello@getcloudify.org',
-    description='Utilities for Cloudify',
+    description='Utilities for extending Cloudify',
     packages=['cloudify_deployment_proxy'],
     license='LICENSE',
     install_requires=[

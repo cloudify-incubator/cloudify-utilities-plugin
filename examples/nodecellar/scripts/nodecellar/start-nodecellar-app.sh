@@ -1,10 +1,6 @@
 #!/bin/bash
 
 set -e
-existing=$(ctx node properties use_external_resource)
-if [ ${existing} -eq "true" ] ; then
-    exit 0;
-fi
 
 function get_response_code() {
 
