@@ -1,0 +1,64 @@
+dsl_definitions:
+
+  aws_config: &aws_config
+    aws_access_key_id: { get_secret: aws_access_key_id }
+    aws_secret_access_key: { get_secret: aws_secret_access_key }
+    ec2_region_name: { get_input: ec2_region_name }
+    ec2_region_endpoint: { get_input: ec2_region_endpoint }
+
+node_templates:
+
+  mongod_host:
+    type: cloudify.aws.nodes.Instance
+    properties:
+      aws_config: *aws_config
+      agent_config:
+        install_method: remote
+        port: 22
+        user: ubuntu
+        key: { get_property: [ mongod_host_key, private_key_path ] }
+      image_id: { get_input: ami }
+      instance_type: { get_input: instance_type }
+      parameters:
+        placement: { get_property: [ private_subnet, availability_zone ] }
+    relationships:
+      - type: cloudify.aws.relationships.instance_connected_to_keypair
+        target: mongod_host_key
+      - type: cloudify.aws.relationships.instance_connected_to_security_group
+        target: mongod_security_group
+      - type: cloudify.aws.relationships.instance_contained_in_subnet
+        target: private_subnet
+
+  mongod_security_group:
+    type: cloudify.aws.nodes.SecurityGroup
+    properties:
+      aws_config: *aws_config
+      description: Security Group for Mongo VMs
+      rules:
+        - ip_protocol: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: { get_input: vpc_cidr_block }
+        - ip_protocol: tcp
+          from_port: { get_property: [ mongod, port ] }
+          to_port: { get_property: [ mongod, port ] }
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 28017
+          to_port: 28017
+          cidr_ip: 0.0.0.0/0
+    relationships:
+      - type: cloudify.aws.relationships.security_group_contained_in_vpc
+        target: vpc
+
+  mongod_host_key:
+    type: cloudify.aws.nodes.KeyPair
+    properties:
+      aws_config: *aws_config
+      resource_id: { get_input: mongod_host_key_name }
+      private_key_path: { get_input: mongod_host_private_key_path }
+
+outputs:
+  ip:
+    description: Mongo Database Host IP
+    value: { get_attribute: [ mongod_host, ip ] }

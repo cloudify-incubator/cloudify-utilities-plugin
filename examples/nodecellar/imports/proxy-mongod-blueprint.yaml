@@ -1,0 +1,14 @@
+inputs:
+
+  mongod_host_deployment_id:
+    type: string
+
+node_templates:
+
+  mongod_host:
+    type: cloudify.nodes.DeploymentProxy.Compute
+    properties:
+      resource_id: { get_input: mongod_host_deployment_id }
+      resource_config:
+        outputs:
+          ip: ip

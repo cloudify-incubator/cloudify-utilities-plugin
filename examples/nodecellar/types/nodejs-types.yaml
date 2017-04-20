@@ -1,0 +1,21 @@
+node_types:
+
+  nodecellar.nodes.NodeJSServer:
+    derived_from: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: scripts/nodejs/install-nodejs.sh
+
+relationships:
+
+  node_connected_to_mongo:
+    derived_from: cloudify.relationships.connected_to
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        postconfigure:
+          implementation: scripts/mongo/set-mongo-url.sh
+          inputs:
+            mongo_ip_address:
+              description: >
+                The ip mongo is deployed on.  If empty will be resolved at runtime to mongo\'s host ip.
+              default: ''

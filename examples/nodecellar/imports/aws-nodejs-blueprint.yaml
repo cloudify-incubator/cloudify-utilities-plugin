@@ -1,0 +1,63 @@
+dsl_definitions:
+
+  aws_config: &aws_config
+    aws_access_key_id: { get_secret: aws_access_key_id }
+    aws_secret_access_key: { get_secret: aws_secret_access_key }
+    ec2_region_name: { get_input: ec2_region_name }
+    ec2_region_endpoint: { get_input: ec2_region_endpoint }
+
+node_templates:
+
+  nodejs_host:
+    type: cloudify.aws.nodes.Instance
+    properties:
+      aws_config: *aws_config
+      agent_config:
+        install_method: remote
+        port: 22
+        user: ubuntu
+        key: { get_property: [ nodejs_host_key, private_key_path ] }
+      image_id: { get_input: ami }
+      instance_type: { get_input: instance_type }
+      parameters:
+        placement: { get_property: [ public_subnet, availability_zone ] }
+    relationships:
+      - type: cloudify.aws.relationships.instance_connected_to_keypair
+        target: nodejs_host_key
+      - type: cloudify.aws.relationships.instance_connected_to_security_group
+        target: nodecellar_security_group
+      - type: cloudify.aws.relationships.instance_contained_in_subnet
+        target: public_subnet
+      - type: cloudify.aws.relationships.instance_connected_to_elastic_ip
+        target: nodecellar_ip
+
+  nodecellar_security_group:
+    type: cloudify.aws.nodes.SecurityGroup
+    properties:
+      aws_config: *aws_config
+      description: Security Group for Nodecellar VMs
+      rules:
+        - ip_protocol: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: { get_input: vpc_cidr_block }
+        - ip_protocol: tcp
+          from_port: { get_property: [ nodecellar, port ] }
+          to_port: { get_property: [ nodecellar, port ] }
+          cidr_ip: 0.0.0.0/0
+    relationships:
+      - type: cloudify.aws.relationships.security_group_contained_in_vpc
+        target: vpc
+
+  nodejs_host_key:
+    type: cloudify.aws.nodes.KeyPair
+    properties:
+      aws_config: *aws_config
+      resource_id: { get_input: nodejs_host_key_name }
+      private_key_path: { get_input: nodejs_host_private_key_path }
+
+  nodecellar_ip:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      domain: vpc

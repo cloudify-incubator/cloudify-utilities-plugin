@@ -1,0 +1,8 @@
+imports:
+  - ../types/nodejs-types.yaml
+node_templates:
+  nodejs:
+    type: nodecellar.nodes.NodeJSServer
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: nodejs_host

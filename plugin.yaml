@@ -2,7 +2,7 @@ plugins:
 
   tools:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-deployment-proxy-plugin/archive/v1.0.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.0.0.zip
 
 data_types:
 
@@ -47,6 +47,42 @@ node_types:
             daemonize:
               default: false
             interval:
-              required: false
+              default: 1
+            timeout:
+              default: 15
+
+  cloudify.nodes.DeploymentProxy.Compute:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      agent_config:
+        default:
+          install_method: provided
+          user: ubuntu
+      use_external_resource:
+        type: boolean
+        default: true
+      resource_id:
+        type: string
+        description: The deployment ID.
+        required: true
+      resource_config:
+        type: cloudify.datatypes.Deployment
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: tools.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
+          inputs:
+            state:
+              default: 'terminated'
+            timeout:
+              default: 60
+        start:
+          implementation: tools.cloudify_deployment_proxy.tasks.query_deployment_data
+          inputs:
+            daemonize:
+              default: false
+            interval:
+              default: 1
             timeout:
               default: 15
