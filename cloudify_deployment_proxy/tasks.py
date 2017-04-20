@@ -1,4 +1,4 @@
-# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,28 +13,74 @@
 #    * limitations under the License.
 
 import sys
-
-from . import poll_until_with_timeout
-from . import check_if_deployment_is_ready
+import time
 
 from cloudify import ctx
-from cloudify import exceptions
+from cloudify.exceptions import NonRecoverableError
 from cloudify import manager
 
 from cloudify.decorators import operation
 
 
-@operation
-def wait_for_state(state, timeout, **_):
+def poll_with_timeout(pollster,
+                      timeout,
+                      interval=5,
+                      expected_result=None):
 
+    if not callable(pollster):
+        raise NonRecoverableError(
+            'pollster {0} is not callable'
+            .format(pollster))
+
+    ctx.logger.debug(
+        'pollster: {0}, '
+        'timeout: {1}, '
+        'interval: {2}, '
+        'expected_result: {3}.'
+        .format(pollster.__name__,
+                timeout,
+                interval,
+                expected_result))
+
+    current_time = time.time()
+
+    while time.time() <= current_time + timeout:
+        ctx.logger.info('Polling client...')
+        if pollster() != expected_result:
+            ctx.logger.debug(
+                'Still polling.')
+            time.sleep(interval)
+        else:
+            ctx.logger.info(
+                'Polling succeeded.')
+            return True
+
+    ctx.logger.error('Polling failed.')
+    return False
+
+
+def all_dep_workflows_in_state_pollster(_client, _dep_id, _state):
+    _execs = _client.executions.list(deployment_id=_dep_id)
+    return all([str(_e['status']) == _state for _e in _execs])
+
+
+@operation
+def wait_for_deployment_ready(state, timeout, **_):
+
+    client = _.get('client') or manager.get_rest_client()
     dep_id = _.get('id') or ctx.node.properties.get('resource_id')
 
-    client = manager.get_rest_client()
+    ctx.logger.info(
+        'Waiting for all workflows in '
+        'deployment {0} '
+        'to be in state {1}.'
+        .format(dep_id,
+                state))
 
-    poll_until_with_timeout(
-        check_if_deployment_is_ready(client, dep_id),
-        expected_result=True,
-        timeout=timeout)
+    success = poll_with_timeout(all_dep_workflows_in_state_pollster(client, dep_id, state), timeout=timeout)
+    if not success:
+        raise NonRecoverableError(
+            'Deployment not ready within specified timeout ({0} seconds).'.format(timeout))
 
 
 @operation

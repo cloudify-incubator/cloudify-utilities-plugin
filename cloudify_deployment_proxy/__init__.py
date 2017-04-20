@@ -15,24 +15,10 @@
 import time
 
 from cloudify import ctx
-from cloudify import exceptions
+from cloudify.exceptions import NonRecoverableError
 from cloudify import manager
 
 
-def poll_until_with_timeout(pollster, expected_result=None,
-                            sleep_time=5, timeout=30):
-    ctx.logger.info("Entering poll_until_with_timeout")
-    ctx.logger.info(pollster)
-    if not callable(pollster):
-        raise exceptions.NonRecoverableError(
-            "%s is not callable" % pollster.__name__)
-    while time.time() <= time.time() + timeout:
-        if pollster() != expected_result:
-            time.sleep(sleep_time)
-        else:
-            return True
-    raise exceptions.NonRecoverableError("Timed out waiting for deployment "
-                                         "to reach appropriate state.")
 
 
 def get_latest_workflow(items, columns):
@@ -67,25 +53,6 @@ def is_installed(client, deployment_id):
     latest_workflow, status = get_latest_workflow(
         _execs, ['created_at'])
     return 'install' in latest_workflow and 'terminated' in status
-
-
-def check_if_deployment_is_ready(client, deployment_id):
-
-    def _poll():
-        _execs = client.executions.list(
-            deployment_id=deployment_id)
-        ctx.logger.info("Deployment executions statuses: {0}.".format(
-            str([[_e['workflow_id'],
-                  _e['status']] for _e in _execs])
-        ))
-        ctx.logger.info("Are all executions were finished? {0}".format(
-            [str(_e['status']) == "terminated" for _e in _execs]))
-        ctx.logger.info(any([str(_e['status']) ==
-                             "terminated" for _e in _execs]))
-        return all([str(_e['status']) == "terminated" for _e in _execs])
-
-    return _poll
-
 
 def execute_workflow(deployment_id, workflow_id):
     ctx.logger.info("Entering execute_workflow event.")
