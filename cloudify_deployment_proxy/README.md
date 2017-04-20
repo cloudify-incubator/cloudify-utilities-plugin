@@ -29,7 +29,7 @@ The example demonstrates the following simple example:
 1. Copy the example inputs file and edit it:
 
 ```shell
-$ cp examples/nodecellar/inputs/aws.yaml.example inputs.yaml
+$ cp cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/inputs/aws.yaml.example inputs.yaml
 ```
 
 Make sure the variables match those of the Cloudify Manager 4.0 AWS environment.
@@ -38,8 +38,8 @@ Make sure the variables match those of the Cloudify Manager 4.0 AWS environment.
 2. Install the MongoDB deployment:
 
 ```shell
-$ cfy install examples/nodecellar/aws-mongo-blueprint.yaml -b mongo1 -i inputs.yaml
-Uploading blueprint examples/nodecellar/aws-mongo-blueprint.yaml...
+$ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/aws-mongo-blueprint.yaml -b mongo1 -i inputs.yaml
+Uploading blueprint cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/aws-mongo-blueprint.yaml...
  aws-mongo-bluepri... |################################################| 100.0%
 Blueprint uploaded. The blueprint's id is mongo1
 Creating new deployment from blueprint mongo1...
@@ -60,9 +60,9 @@ This installed a MongoDB on a VM.
 3. Install the Nodecellar deployment:
 
 ```shell
-$ cfy install examples/nodecellar/aws-proxy-blueprint.yaml \
+$ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/aws-proxy-blueprint.yaml \
     -i inputs.yaml -b node1 -i "mongod_host_deployment_id=mongo1"
-Uploading blueprint examples/nodecellar/aws-proxy-blueprint.yaml...
+Uploading blueprint cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/aws-proxy-blueprint.yaml...
  aws-proxy-bluepri... |################################################| 100.0%
 Blueprint uploaded. The blueprint's id is node1
 Creating new deployment from blueprint node1...
