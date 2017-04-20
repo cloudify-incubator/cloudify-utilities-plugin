@@ -23,5 +23,7 @@ setuptools.setup(
     description='Utilities for Cloudify',
     packages=['cloudify_deployment_proxy'],
     license='LICENSE',
-    install_requires=['cloudify-plugins-common>=4.0']
+    install_requires=[
+        'cloudify-plugins-common>=4.0',
+        'cloudify-rest-client>=4.0']
 )
