@@ -52,16 +52,9 @@ class TestCloudifyRequests(testtools.TestCase):
                                  test_properties)
         current_ctx.set(_ctx)
 
-        # Test that non-callable pollster raises error.
         mock_timeout = .1
         mock_interval = .1
         mock_pollster = None
-        error = self.assertRaises(NonRecoverableError,
-                                  poll_with_timeout,
-                                  mock_pollster,
-                                  mock_timeout,
-                                  mock_interval)
-        self.assertIn('is not callable', error.message)
 
         # Test that failed polling raises an error
         mock_pollster = mock.MagicMock
@@ -128,23 +121,6 @@ class TestCloudifyRequests(testtools.TestCase):
         current_ctx.set(_ctx)
         mock_state = 'terminated'
         mock_timeout = .01
-
-        # Test that wait_for_deployment_ready.. Fails if not succussessful.
-        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            _mock_execution_object = {
-                'execution_id': 'care bears care',
-                'deployment_id': 'care bears',
-                'status': 'failed',
-            }
-            _mock_list = mock.MagicMock(return_value=[_mock_execution_object])
-            mock_client_executions = mock.MagicMock
-            setattr(mock_client_executions, 'list', _mock_list)
-            setattr(mock_client, 'executions', mock_client_executions)
-            error = self.assertRaises(NonRecoverableError,
-                                      wait_for_deployment_ready,
-                                      mock_state,
-                                      mock_timeout)
-            self.assertIn('is not callable', error.message)
 
     def test_query_deployment_data(self):
         from cloudify_deployment_proxy.tasks import query_deployment_data

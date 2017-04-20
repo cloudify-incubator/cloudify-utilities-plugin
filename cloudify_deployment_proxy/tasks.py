@@ -25,12 +25,8 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 def poll_with_timeout(pollster,
                       timeout,
                       interval=5,
-                      expected_result=None):
-
-    if not callable(pollster):
-        raise NonRecoverableError(
-            'pollster {0} is not callable'
-            .format(pollster))
+                      pollster_args={},
+                      expected_result=True):
 
     ctx.logger.debug(
         'pollster: {0}, '
@@ -46,7 +42,7 @@ def poll_with_timeout(pollster,
 
     while time.time() <= current_time + timeout:
         ctx.logger.info('Polling client...')
-        if pollster() != expected_result:
+        if pollster(**pollster_args) != expected_result:
             ctx.logger.debug(
                 'Still polling.')
             time.sleep(interval)
@@ -79,8 +75,9 @@ def wait_for_deployment_ready(state, timeout, **_):
 
     success = \
         poll_with_timeout(
-            all_dep_workflows_in_state_pollster(client, dep_id, state),
-            timeout=timeout)
+            all_dep_workflows_in_state_pollster,
+            timeout=timeout,
+            pollster_args={'_client': client, '_dep_id': dep_id, '_state': state})
     if not success:
         raise NonRecoverableError(
             'Deployment not ready. Timeout: {0} seconds.'.format(timeout))
