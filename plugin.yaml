@@ -1,5 +1,6 @@
 plugins:
-  dep_proxy:
+
+  tools:
     executor: central_deployment_agent
     source: https://github.com/cloudify-incubator/cloudify-deployment-proxy-plugin/archive/v1.0.0.zip
 
@@ -32,12 +33,12 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: dep_proxy.cloudify_proxy_plugin.tasks.wait_for_state
+          implementation: tools.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
           inputs:
             state:
               default: 'terminated'
             timeout:
-              default: 15
+              default: 60
 
 relationships:
   cloudify.relationships.connected_to_proxy:
