@@ -3,6 +3,9 @@ inputs:
   mongod_host_deployment_id:
     type: string
 
+  mongod_host_cloudify_agent_name:
+    type: string
+
 node_templates:
 
   mongod_host:
@@ -10,5 +13,6 @@ node_templates:
     properties:
       resource_config:
         deployment_id: { get_input: mongod_host_deployment_id }
+        cloudify_agent_name: { get_input: mongod_host_cloudify_agent_name }
         outputs:
           ip: ip

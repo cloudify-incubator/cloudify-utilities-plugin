@@ -2,7 +2,7 @@ plugins:
 
   tools:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.0.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.0.0c.zip
 
 data_types:
 
@@ -15,6 +15,10 @@ data_types:
       blueprint_id:
         description: >
           This is the blueprint_id that the deployment is created from.
+        required: false
+      cloudify_agent_name:
+        description: >
+          If this is a compute node the name of the cloudify agent.
         required: false
       outputs:
         description: >
@@ -60,18 +64,29 @@ node_types:
     properties:
       agent_config:
         default:
-          install_method: none
+          install_method: provided
       use_external_resource:
         type: boolean
         default: true
-      resource_id:
-        type: string
-        description: The deployment ID.
-        required: true
       resource_config:
         type: cloudify.datatypes.Deployment
         default: {}
     interfaces:
+      cloudify.interfaces.cloudify_agent:
+        configure:
+          implementation: agent.cloudify_agent.installer.operations.configure
+          executor: central_deployment_agent
+          inputs:
+            cloudify_agent:
+              remote_execution: false
+              name: { get_property: [ SELF, resource_config, cloudify_agent_name ] }
+        start:
+          implementation: agent.cloudify_agent.installer.operations.start
+          executor: central_deployment_agent
+          inputs:
+            cloudify_agent:
+              remote_execution: false
+              name: { get_property: [ SELF, resource_config, cloudify_agent_name ] }
       cloudify.interfaces.lifecycle:
         create:
           implementation: tools.cloudify_deployment_proxy.tasks.wait_for_deployment_ready

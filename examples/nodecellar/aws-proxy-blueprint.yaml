@@ -6,7 +6,7 @@ description: >
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
   - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.4/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-proxy-plugin/v1.0.0/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-proxy-plugin/v1.0.0c/plugin.yaml
   - imports/proxy-mongod-blueprint.yaml
   - imports/mongo-blueprint.yaml
   - imports/aws-nodejs-blueprint.yaml
