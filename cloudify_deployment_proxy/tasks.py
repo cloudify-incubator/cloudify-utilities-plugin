@@ -12,7 +12,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+import tempfile
 import time
+import urllib
 
 from cloudify import ctx
 from cloudify import manager
@@ -124,3 +126,20 @@ def query_deployment_data(daemonize,
         for key, val in outputs.items():
             ctx.instance.runtime_properties[val] = dep_outputs.get(key, '')
     return True
+
+
+@operation
+def upload_blueprint(tenant='default_tenant', **_):
+    client = _.get('client') or manager.get_rest_client()
+    config = _.get('resource_config') or \
+        ctx.node.properties.get('resource_config')
+    app_name = _.get('application_file_name') or config.get('application_file_name')
+    bp_archive = _.get('blueprint_archive') or config.get('blueprint_archive')
+    bp_id = _.get('blueprint_id') or config.get('blueprint_id') or ctx.instance.id
+
+    try:
+        bp_upload_resource = client.blueprints._upload(blueprint_id=bp_id, archive_location=bp_archive, application_file_name=bp_name)
+    except CloudifyClientError as ex:
+        raise NonRecoverableError('Blueprint failed {0}.'.format(str(ex)))
+
+    ctx.logger.info('Output {0}'.format(bp_upload_resource))

@@ -2,7 +2,7 @@ plugins:
 
   cfy_util:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.0.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.0.0.dev1.zip
 
 data_types:
 
@@ -11,7 +11,8 @@ data_types:
       deployment_id:
         description: >
           This is the deployment that the node is a proxy to.
-        required: true
+          Will be generated if not provided.
+        required: false
       outputs:
         description: >
           A dictionary of "{ key: value, key: value }".
@@ -20,6 +21,33 @@ data_types:
         required: false
       unvalidated:
         default: {}
+
+  cloudify.datatypes.BlueprintDeployment:
+    properties:
+      application_file_name:
+        description: >
+          This is the name of the blueprint.yaml file.
+        default: blueprint.yaml
+      blueprint_archive:
+        description: >
+          The URL of a .zip to upload to the manager.
+        required: false
+      blueprint_id:
+        description: >
+          The blueprint ID.
+          If it already exists it will be used. 
+          Defaults to node instance ID.        
+        required: false
+      deployment_id:
+        description: >
+          This is the deployment to install from the blueprint.
+          If it already exists it will be used. 
+          Will be generated if not provided.
+        required: false
+      install_timeout:
+        description: >
+          How long to wait for the install workflow to exist.
+        default: 180
 
 node_types:
 
@@ -81,4 +109,24 @@ node_types:
               default: 1
             timeout:
               default: 15
+
+  cloudify.nodes.BlueprintDeployment:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        type: cloudify.datatypes.BlueprintDeployment
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.upload_blueprint
+        # configure:
+        #   implementation: cfy_util.cloudify_deployment_proxy.tasks.create_deployment
+        # start:
+        #   implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_install
+        # stop:
+        #   implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_uninstall
+        # delete:
+        #   implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
+
 
