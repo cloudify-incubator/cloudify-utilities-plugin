@@ -29,6 +29,6 @@ relationships:
 
   node_contained_in_nodejs:
     derived_from: cloudify.relationships.contained_in
-    target_interfaces:
+    source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure: scripts/nodejs/set-nodejs-root.sh

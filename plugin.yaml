@@ -2,7 +2,7 @@ plugins:
 
   tools:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.0.0c.zip
+    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.0.0.zip
 
 data_types:
 
@@ -12,14 +12,6 @@ data_types:
         description: >
           This is the deployment that the node is a proxy to.
         required: true
-      blueprint_id:
-        description: >
-          This is the blueprint_id that the deployment is created from.
-        required: false
-      cloudify_agent_name:
-        description: >
-          If this is a compute node the name of the cloudify agent.
-        required: false
       outputs:
         description: >
           A dictionary of "{ key: value, key: value }".
@@ -62,31 +54,16 @@ node_types:
   cloudify.nodes.DeploymentProxy.Compute:
     derived_from: cloudify.nodes.Compute
     properties:
-      agent_config:
-        default:
-          install_method: provided
       use_external_resource:
         type: boolean
         default: true
       resource_config:
         type: cloudify.datatypes.Deployment
         default: {}
+      agent_config:
+        default:
+          install_method: none
     interfaces:
-      cloudify.interfaces.cloudify_agent:
-        configure:
-          implementation: agent.cloudify_agent.installer.operations.configure
-          executor: central_deployment_agent
-          inputs:
-            cloudify_agent:
-              remote_execution: false
-              name: { get_property: [ SELF, resource_config, cloudify_agent_name ] }
-        start:
-          implementation: agent.cloudify_agent.installer.operations.start
-          executor: central_deployment_agent
-          inputs:
-            cloudify_agent:
-              remote_execution: false
-              name: { get_property: [ SELF, resource_config, cloudify_agent_name ] }
       cloudify.interfaces.lifecycle:
         create:
           implementation: tools.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
@@ -104,3 +81,4 @@ node_types:
               default: 1
             timeout:
               default: 15
+

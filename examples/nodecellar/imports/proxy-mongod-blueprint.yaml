@@ -3,16 +3,18 @@ inputs:
   mongod_host_deployment_id:
     type: string
 
-  mongod_host_cloudify_agent_name:
-    type: string
-
 node_templates:
+
+  mongod:
+    type: cloudify.nodes.DBMS
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: mongod_host
 
   mongod_host:
     type: cloudify.nodes.DeploymentProxy.Compute
     properties:
       resource_config:
         deployment_id: { get_input: mongod_host_deployment_id }
-        cloudify_agent_name: { get_input: mongod_host_cloudify_agent_name }
         outputs:
           ip: ip

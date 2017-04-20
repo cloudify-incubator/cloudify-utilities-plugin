@@ -64,9 +64,6 @@ inputs:
       The username of the agent running on the instance created from the image.
     default: ubuntu
 
-  use_external_mongodb:
-    default: false
-
 dsl_definitions:
 
   aws_config: &aws_config

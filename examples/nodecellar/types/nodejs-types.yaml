@@ -10,7 +10,7 @@ relationships:
 
   node_connected_to_mongo:
     derived_from: cloudify.relationships.connected_to
-    target_interfaces:
+    source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         postconfigure:
           implementation: scripts/mongo/set-mongo-url.sh

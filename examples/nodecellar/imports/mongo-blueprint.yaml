@@ -5,8 +5,6 @@ node_templates:
 
   mongod:
     type: nodecellar.nodes.MongoDatabase
-    properties:
-      use_external_resource: { get_input: use_external_mongodb }
     relationships:
       - type: cloudify.relationships.contained_in
         target: mongod_host
