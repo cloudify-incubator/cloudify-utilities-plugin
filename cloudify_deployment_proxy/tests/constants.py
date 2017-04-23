@@ -42,6 +42,7 @@ def return_list(*args, **kwargs):
     }
     return [list_mock]
 
+
 BLUEPRINTS_MOCK = MagicMock
 BLUEPRINTS_LIST = [MagicMock]
 BLUEPRINTS_UPLOAD = MagicMock(return_value={'id': 'test'})
