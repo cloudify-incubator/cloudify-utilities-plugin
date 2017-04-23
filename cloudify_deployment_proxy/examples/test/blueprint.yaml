@@ -24,17 +24,9 @@ node_templates:
     type: cloudify.nodes.DeploymentProxy
     properties:
       resource_config:
-        deployment_id: { get_attribute: [ bp_dep, deployment_id ] }
+        deployment_id: { get_attribute: [ bp_dep, deployment, id ] }
         outputs:
           key: bp_dep_output
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
-          inputs:
-            state: 'terminated'
-            timeout: 60
-            deployment_id: { get_attribute: [ bp_dep, deployment_id ] }
     relationships:
       - type: cloudify.relationships.depends_on
         target: bp_dep

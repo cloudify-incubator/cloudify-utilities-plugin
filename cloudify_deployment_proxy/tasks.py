@@ -75,7 +75,7 @@ def dep_workflow_in_state_pollster(_client,
             if _workflow_id and not \
                     _exec.get('workflow_id') == \
                     _workflow_id:
-                return False
+                continue
             return True
     return False
 
@@ -297,7 +297,7 @@ def execute_start(**_):
 
     interval = _.get('interval', POLLING_INTERVAL)
     timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
-    workflow_id = _.get('workflow_id')
+    workflow_id = _.get('workflow_id', 'install')
     workflow_state = _.get('workflow_state', 'terminated')
 
     if workflow_id == 'uninstall':
