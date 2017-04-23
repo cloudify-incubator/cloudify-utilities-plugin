@@ -125,10 +125,21 @@ node_types:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.upload_blueprint
         configure:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.create_deployment
-        # start:
-        #   implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_install
-        # stop:
-        #   implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_uninstall
+        start:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id:
+              default: install
+        stop:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id:
+              default: uninstall
+            executions_start_args:
+              default:
+                allow_custom_parameters: true
+                parameters:
+                  ignore_failure: true
         delete:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
 

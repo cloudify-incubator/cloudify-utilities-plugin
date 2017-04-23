@@ -10,7 +10,7 @@ imports:
 inputs:
 
   bp_dep_archive:
-    default: https://github.com/cloudify-examples/local-simple-python-webserver-blueprint/archive/4.0.zip
+    default: https://github.com/EarthmanT/the-not-blueprint/archive/master.zip
 
 node_templates:
 
@@ -20,17 +20,21 @@ node_templates:
       resource_config:
         blueprint_archive: { get_input: bp_dep_archive }
 
-  # dep_proxy:
-  #   type: cloudify.nodes.DeploymentProxy
-  #   properties:
-  #     resource_config:
-  #       deployment_id: { get_attribute: [ bp_dep, deployment_id ] }
-  #       http_endpoint: bp_dep_output
-  #   interfaces:
-  #     cloudify.interfaces.lifecycle:
-  #       create:
-  #         implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
-  #         inputs:
-  #           state: 'terminated'
-  #           timeout: 60
-  #           deployment_id: { get_attribute: [ bp_dep, deployment_id ] }
+  dep_proxy:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        deployment_id: { get_attribute: [ bp_dep, deployment_id ] }
+        outputs:
+          key: bp_dep_output
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
+          inputs:
+            state: 'terminated'
+            timeout: 60
+            deployment_id: { get_attribute: [ bp_dep, deployment_id ] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: bp_dep

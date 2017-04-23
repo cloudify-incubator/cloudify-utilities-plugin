@@ -13,7 +13,6 @@
 #    * limitations under the License.
 
 import time
-from datetime import datetime
 
 from cloudify import ctx
 from cloudify import manager
@@ -53,21 +52,21 @@ def poll_with_timeout(pollster,
     return False
 
 
-def chop_datetime(_date):
-    return _date.split('.')[0]
+def get_instance_attribute_from_relationship(relationships,
+                                             instance_attribute):
+    relationship_type = 'cloudify.relationships.depends_on'
+    node_instance = \
+        get_instance_from_relationship_type(relationships,
+                                            relationship_type)
+    return node_instance.instance.runtime_properties.get(
+        instance_attribute)
 
 
-def timestamp_diff(expected, actual):
-    T_FORMAT = "%Y-%m-%dT%H:%M:%S"
-
-    expected_timestamp = \
-        datetime.strptime(chop_datetime(expected),
-                          T_FORMAT)
-    actual_timestamp = \
-        datetime.strptime(chop_datetime(actual),
-                          T_FORMAT)
-    timestamp_diff = actual_timestamp-expected_timestamp
-    return (timestamp_diff).total_seconds()
+def get_instance_from_relationship_type(relationships, type):
+    for relationship in relationships:
+        if type in relationship.type_hierarchy:
+            return relationship.target
+    return None
 
 
 def all_dep_workflows_in_state_pollster(_client,
@@ -77,6 +76,7 @@ def all_dep_workflows_in_state_pollster(_client,
     return all([str(_e['status']) == _state for _e in _execs])
 
 
+# Todo: Add ability to filter by execution ID.
 def dep_workflow_in_state_pollster(_client,
                                    _dep_id,
                                    _state,
@@ -84,7 +84,7 @@ def dep_workflow_in_state_pollster(_client,
                                    _created_at):
 
     exec_list_fields = \
-        ['status', 'workflow_id', 'created_at']
+        ['status', 'workflow_id', 'created_at', 'id']
 
     _execs = \
         _client.executions.list(deployment_id=_dep_id,
@@ -92,9 +92,7 @@ def dep_workflow_in_state_pollster(_client,
 
     for _exec in _execs:
         if _exec.get('workflow_id') == _workflow_id and \
-                _exec.get('status') == _state and \
-                timestamp_diff(_created_at,
-                               _exec.get('created_at')) <= 1:
+                _exec.get('status') == _state:
             return True
     return False
 
@@ -141,6 +139,16 @@ def wait_for_deployment_ready(state, timeout, **_):
         ctx.node.properties.get('resource_config')
     dep_id = _.get('id') or config.get('deployment_id')
 
+    if not dep_id:
+        deployment = get_instance_attribute_from_relationship(
+            ctx.instance.relationships,
+            'deployment')
+        if not deployment:
+            return ctx.operation.retry('Deployment not ready.')
+        dep_id = deployment.get('id')
+
+    ctx.instance.runtime_properties['deployment_id'] = dep_id
+
     ctx.logger.info(
         'Waiting for all workflows in '
         'deployment {0} '
@@ -153,14 +161,17 @@ def wait_for_deployment_ready(state, timeout, **_):
         '_dep_id': dep_id,
         '_state': state
     }
+
     success = \
         poll_with_timeout(
             all_dep_workflows_in_state_pollster,
             timeout=timeout,
             pollster_args=pollster_args)
+
     if not success:
         raise NonRecoverableError(
             'Deployment not ready. Timeout: {0} seconds.'.format(timeout))
+
     return True
 
 
@@ -177,7 +188,10 @@ def query_deployment_data(daemonize,
     client = _.get('client') or manager.get_rest_client()
     config = _.get('resource_config') or \
         ctx.node.properties.get('resource_config')
-    dep_id = _.get('id') or config.get('deployment_id')
+    dep_id = _.get('id') or \
+        ctx.instance.runtime_properties.get('deployment_id') or \
+        config.get('deployment_id')
+
     outputs = config.get('outputs')
 
     ctx.logger.debug(
@@ -196,6 +210,7 @@ def query_deployment_data(daemonize,
             'Received these deployment outputs: {0}'.format(dep_outputs))
         for key, val in outputs.items():
             ctx.instance.runtime_properties[val] = dep_outputs.get(key, '')
+
     return True
 
 
@@ -224,6 +239,8 @@ def upload_blueprint(**_):
     ctx.instance.runtime_properties['blueprint']['id'] = \
         bp_upload_response.get('id')
 
+    return True
+
 
 @operation
 def create_deployment(**_):
@@ -239,7 +256,7 @@ def create_deployment(**_):
     dep_id = _.get('deployment_id') or \
         config.get('deployment_id', bp_id)
     inputs = _.get('inputs') or config.get('inputs', {})
-    timeout = _.get('timeout', 30)
+    timeout = _.get('timeout', 20)
 
     try:
         dp_create_response = \
@@ -249,6 +266,8 @@ def create_deployment(**_):
     except CloudifyClientError as ex:
         raise NonRecoverableError(
             'Deployment create failed {0}.'.format(str(ex)))
+
+    ctx.logger.info('output: {0}'.format(dp_create_response))
 
     dep_created_at = dp_create_response.get('created_at')
 
@@ -277,11 +296,10 @@ def delete_deployment(**_):
 
     dep_id = _.get('deployment_id') or \
         config.get('deployment_id', dep_id_prop)
-    timeout = _.get('timeout', 10)
+    timeout = _.get('timeout', 15)
 
     try:
-        dp_delete_response = \
-            client.deployments.delete(deployment_id=dep_id)
+        client.deployments.delete(deployment_id=dep_id)
     except CloudifyClientError as ex:
         raise NonRecoverableError(
             'Deployment delete failed {0}.'.format(str(ex)))
@@ -297,60 +315,64 @@ def delete_deployment(**_):
             timeout=timeout,
             pollster_args=pollster_args,
             expected_result=False)
+
     if not success:
         raise NonRecoverableError(
             'Deployment not deleted. Timeout: {0} seconds.'.format(timeout))
 
     del ctx.instance.runtime_properties['deployment']
 
+    return True
 
-# @operation
-# def execute_install(**_):
-#     client = _.get('client') or manager.get_rest_client()
-#     config = _.get('resource_config') or \
-#         ctx.node.properties.get('resource_config')
-#     dep_id = _.get('deployment_id') or \
-#         config.get('deployment_id',
-#                    ctx.instance.runtime_properties['deployment']['id'])
-#     workflow_id = _.get('workflow_id')
-#     execution_args = _.get('executions_start_args')
-#     timeout = _.get('timeout', 180)
 
-#     try:
-#         ex_start_response = \
-#                 client.executions.start(deployment_id=dep_id,
-#                                         workflow_id=workflow_id,
-#                                         **execution_args)
-#     except CloudifyClientError as ex:
-#         raise NonRecoverableError(
-#             'Executions start failed {0}.'.format(str(ex)))
+@operation
+def execute_start(**_):
+    client = _.get('client') or manager.get_rest_client()
+    config = _.get('resource_config') or \
+        ctx.node.properties.get('resource_config')
+    dep_id = _.get('deployment_id') or \
+        config.get('deployment_id',
+                   ctx.instance.runtime_properties['deployment']['id'])
+    workflow_id = _.get('workflow_id')
+    execution_args = _.get('executions_start_args', dict())
+    timeout = _.get('timeout', 60)
+    workflow_state = _.get('workflow_state', 'terminated')
 
-#     ctx.logger.info('Output: {0}'.format(ex_start_response))
+    try:
+        ex_start_response = \
+            client.executions.start(deployment_id=dep_id,
+                                    workflow_id=workflow_id,
+                                    **execution_args)
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Executions start failed {0}.'.format(str(ex)))
 
-#     ctx.instance.runtime_properties['executions'] = {}
-#     ctx.instance.runtime_properties['executions']['workflow_id'] = \
-#         ex_start_response.get('id')
-#     ctx.instance.runtime_properties['executions']['created_at'] = \
-#         ex_start_response.get('created_at')
+    ctx.logger.info('output: {0}'.format(ex_start_response))
 
-#     dep_created_at = ctx.instance.runtime_properties.get('deployment',
-#                                                          {}).get('created_at')
+    ctx.instance.runtime_properties['executions'] = {}
+    ctx.instance.runtime_properties['executions']['workflow_id'] = \
+        ex_start_response.get('workflow_id')
+    ctx.instance.runtime_properties['executions']['created_at'] = \
+        ex_start_response.get('created_at')
 
-#     pollster_args = {
-#         '_client': client,
-#         '_dep_id': dep_id,
-#         '_state': 'terminated',
-#         '_workflow_id': 'install',
-#         '_created_at': dep_created_at
-#     }
+    dep_created_at = ctx.instance.runtime_properties.get('deployment',
+                                                         {}).get('created_at')
 
-#     success = \
-#         poll_with_timeout(
-#             dep_workflow_in_state_pollster,
-#             timeout=timeout,
-#             pollster_args=pollster_args)
+    pollster_args = {
+        '_client': client,
+        '_dep_id': dep_id,
+        '_state': workflow_state,
+        '_workflow_id': workflow_id,
+        '_created_at': dep_created_at
+    }
 
-#     if not success:
-#         raise NonRecoverableError(
-#             'Deployment not ready. Timeout: {0} seconds.'.format(timeout))
-#     return True
+    success = \
+        poll_with_timeout(
+            dep_workflow_in_state_pollster,
+            timeout=timeout,
+            pollster_args=pollster_args)
+
+    if not success:
+        raise NonRecoverableError(
+            'Execution not finished. Timeout: {0} seconds.'.format(timeout))
+    return True
