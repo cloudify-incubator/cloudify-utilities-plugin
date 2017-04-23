@@ -22,7 +22,7 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 DEPLOYMENTS_TIMEOUT = 60
-EXECUTIONS_TIMEOUT = 300
+EXECUTIONS_TIMEOUT = 900
 POLLING_INTERVAL = 10
 
 DEFAULT_UNINSTALL_ARGS = {
