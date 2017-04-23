@@ -18,16 +18,23 @@ from cloudify import ctx
 from cloudify import manager
 
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-DEPLOYMENTS_TIMEOUT = 15
+DEPLOYMENTS_TIMEOUT = 180
 EXECUTIONS_TIMEOUT = 60
+POLLING_INTERVAL = 5
+DEFAULT_UNINSTALL_ARGS = {
+    'allow_custom_parameters': True,
+    'parameters': {
+        'ignore_failure': True
+    }
+}
 
 
 def poll_with_timeout(pollster,
                       timeout,
-                      interval=EXECUTIONS_TIMEOUT,
+                      interval=POLLING_INTERVAL,
                       pollster_args={},
                       expected_result=True):
 
@@ -98,74 +105,51 @@ def poll_workflow_after_execute(_timeout,
 
     if not success:
         raise NonRecoverableError(
-            'Deployment not ready. Timeout: {0} seconds.'.format(_timeout))
+            'Execution not finished. Timeout: {0} seconds.'.format(_timeout))
     return True
 
 
 @operation
-def wait_for_deployment_ready(state,
-                              timeout=DEPLOYMENTS_TIMEOUT,
-                              **_):
+def wait_for_deployment_ready(**_):
 
     client = _.get('client') or manager.get_rest_client()
     config = _.get('resource_config') or \
         ctx.node.properties.get('resource_config')
+
     dep_id = _.get('id') or config.get('deployment_id')
+    interval = _.get('interval', POLLING_INTERVAL)
+    state = _.get('state', 'terminated')
+    timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
+    workflow_id = _.get('workflow_id',
+                        'create_deployment_environment')
 
     if not dep_id:
-        return ctx.operation.retry(
-            'Deployment ID not provided. '
-            'Waiting for instrinsic function to populate.')
+        raise RecoverableError('Deployment ID is not set.')
 
-    ctx.instance.runtime_properties['deployment_id'] = dep_id
+    ctx.instance.runtime_properties['deployment'] = {}
+    ctx.instance.runtime_properties['deployment']['id'] = dep_id
 
-    ctx.logger.info(
-        'Waiting for all workflows in '
-        'deployment {0} '
-        'to be in state {1}.'
-        .format(dep_id,
-                state))
-
-    pollster_args = {
-        '_client': client,
-        '_dep_id': dep_id,
-        '_state': state
-    }
-
-    success = \
-        poll_with_timeout(
-            dep_workflow_in_state_pollster,
-            timeout=timeout,
-            pollster_args=pollster_args)
-
-    if not success:
-        raise NonRecoverableError(
-            'Deployment not ready. Timeout: {0} seconds.'.format(timeout))
-
-    return True
+    return poll_workflow_after_execute(
+        timeout,
+        interval,
+        client,
+        dep_id,
+        state,
+        workflow_id)
 
 
 @operation
-def query_deployment_data(daemonize,
-                          interval,
-                          timeout=DEPLOYMENTS_TIMEOUT,
-                          **_):
-
-    if daemonize:
-        raise NonRecoverableError(
-            'Option "daemonize" is not implemented.')
+def query_deployment_data(**_):
 
     client = _.get('client') or manager.get_rest_client()
     config = _.get('resource_config') or \
         ctx.node.properties.get('resource_config')
-    dep_id = _.get('id') or \
-        ctx.instance.runtime_properties.get('deployment_id') or \
+
+    deployment = ctx.instance.runtime_properties.get('deployment', {})
+
+    dep_id = _.get('id') or deployment.get('id') or \
         config.get('deployment_id')
-
     outputs = config.get('outputs')
-
-    ctx.logger.debug(
-        'Deployment {0} output mapping: {1}'.format(dep_id, outputs))
 
     try:
         dep_outputs_response = client.deployments.outputs.get(dep_id)
@@ -178,6 +162,7 @@ def query_deployment_data(daemonize,
 
         ctx.logger.debug(
             'Received these deployment outputs: {0}'.format(dep_outputs))
+
         for key, val in outputs.items():
             ctx.instance.runtime_properties[val] = dep_outputs.get(key, '')
 
@@ -208,6 +193,10 @@ def upload_blueprint(**_):
     ctx.instance.runtime_properties['blueprint'] = {}
     ctx.instance.runtime_properties['blueprint']['id'] = \
         bp_upload_response.get('id')
+    ctx.instance.runtime_properties['blueprint']['application_file_name'] = \
+        app_name
+    ctx.instance.runtime_properties['blueprint']['blueprint_archive'] = \
+        bp_archive
 
     return True
 
@@ -215,19 +204,24 @@ def upload_blueprint(**_):
 @operation
 def create_deployment(**_):
 
+    _blueprint = _.get('blueprint') or \
+        ctx.instance.runtime_properties.get('blueprint')
+
     client = _.get('client') or manager.get_rest_client()
     config = _.get('resource_config') or \
         ctx.node.properties.get('resource_config')
 
-    blueprint = _.get('blueprint') or \
-        ctx.instance.runtime_properties.get('blueprint')
     bp_id = _.get('blueprint_id') or \
-        blueprint.get('id') or config.get('blueprint_id')
+        _blueprint.get('id') or config.get('blueprint_id')
     dep_id = _.get('deployment_id') or \
         config.get('deployment_id', bp_id)
     inputs = _.get('inputs') or config.get('inputs', {})
+
+    interval = _.get('interval', POLLING_INTERVAL)
+    state = _.get('state', 'terminated')
     timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
-    interval = _.get('interval', 5)
+    workflow_id = _.get('workflow_id',
+                        'create_deployment_environment')
 
     try:
         dp_create_response = \
@@ -238,8 +232,6 @@ def create_deployment(**_):
         raise NonRecoverableError(
             'Deployment create failed {0}.'.format(str(ex)))
 
-    ctx.logger.info('output: {0}'.format(dp_create_response))
-
     ctx.instance.runtime_properties['deployment'] = {}
     ctx.instance.runtime_properties['deployment']['id'] = \
         dp_create_response.get('id')
@@ -248,8 +240,8 @@ def create_deployment(**_):
                                        interval,
                                        client,
                                        dep_id,
-                                       'terminated',
-                                       'create_deployment_environment')
+                                       state,
+                                       workflow_id)
 
 
 @operation
@@ -297,13 +289,22 @@ def execute_start(**_):
     client = _.get('client') or manager.get_rest_client()
     config = _.get('resource_config') or \
         ctx.node.properties.get('resource_config')
-    dep_id = _.get('deployment_id') or \
-        config.get('deployment_id',
-                   ctx.instance.runtime_properties['deployment']['id'])
+
+    deployment = ctx.instance.runtime_properties.get('deployment', {})
+
+    dep_id = _.get('deployment_id') or deployment.get('id') or \
+        config.get('deployment_id')
+
+    interval = _.get('interval', POLLING_INTERVAL)
+    timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
     workflow_id = _.get('workflow_id')
-    execution_args = _.get('executions_start_args', dict())
-    timeout = _.get('timeout', EXECUTIONS_TIMEOUT)
     workflow_state = _.get('workflow_state', 'terminated')
+
+    if workflow_id == 'uninstall':
+        _args = DEFAULT_UNINSTALL_ARGS
+    else:
+        _args = {}
+    execution_args = _.get('executions_start_args', _args)
 
     try:
         ex_start_response = \
@@ -314,26 +315,14 @@ def execute_start(**_):
         raise NonRecoverableError(
             'Executions start failed {0}.'.format(str(ex)))
 
-    ctx.logger.info('output: {0}'.format(ex_start_response))
-
     ctx.instance.runtime_properties['executions'] = {}
     ctx.instance.runtime_properties['executions']['workflow_id'] = \
         ex_start_response.get('workflow_id')
 
-    pollster_args = {
-        '_client': client,
-        '_dep_id': dep_id,
-        '_state': workflow_state,
-        '_workflow_id': workflow_id
-    }
-
-    success = \
-        poll_with_timeout(
-            dep_workflow_in_state_pollster,
-            timeout=timeout,
-            pollster_args=pollster_args)
-
-    if not success:
-        raise NonRecoverableError(
-            'Execution not finished. Timeout: {0} seconds.'.format(timeout))
-    return True
+    return poll_workflow_after_execute(
+        timeout,
+        interval,
+        client,
+        dep_id,
+        workflow_state,
+        workflow_id)
