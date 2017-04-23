@@ -42,7 +42,6 @@ def poll_with_timeout(pollster,
     current_time = time.time()
 
     while time.time() <= current_time + timeout:
-        ctx.logger.debug('Polling client...')
         if pollster(**pollster_args) != expected_result:
             ctx.logger.debug('Still polling.')
             time.sleep(interval)
@@ -92,13 +91,17 @@ def dep_workflow_in_state_pollster(_client,
                                 _include=exec_list_fields)
 
     for _exec in _execs:
-        ctx.logger.info('Exec: {0}'.format(_exec))
         if _exec.get('workflow_id') == _workflow_id and \
                 _exec.get('status') == _state and \
                 timestamp_diff(_created_at,
                                _exec.get('created_at')) <= 1:
             return True
     return False
+
+
+def all_deps_pollster(_client, _dep_id):
+    _deps = _client.deployments.list(_include=['id'])
+    return all([str(_d['id']) == _dep_id for _d in _deps])
 
 
 def poll_workflow_after_execute(_timeout,
@@ -116,7 +119,7 @@ def poll_workflow_after_execute(_timeout,
         '_created_at': _created_at
     }
 
-    ctx.logger.info('Polling: {0}'.format(pollster_args))
+    ctx.logger.debug('Polling: {0}'.format(pollster_args))
 
     success = \
         poll_with_timeout(
@@ -261,6 +264,44 @@ def create_deployment(**_):
                                        'terminated',
                                        'create_deployment_environment',
                                        dep_created_at)
+
+
+@operation
+def delete_deployment(**_):
+
+    dep_id_prop = ctx.instance.runtime_properties['deployment'].get('id')
+
+    client = _.get('client') or manager.get_rest_client()
+    config = _.get('resource_config') or \
+        ctx.node.properties.get('resource_config')
+
+    dep_id = _.get('deployment_id') or \
+        config.get('deployment_id', dep_id_prop)
+    timeout = _.get('timeout', 10)
+
+    try:
+        dp_delete_response = \
+            client.deployments.delete(deployment_id=dep_id)
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Deployment delete failed {0}.'.format(str(ex)))
+
+    pollster_args = {
+        '_client': client,
+        '_dep_id': dep_id
+    }
+
+    success = \
+        poll_with_timeout(
+            all_deps_pollster,
+            timeout=timeout,
+            pollster_args=pollster_args,
+            expected_result=False)
+    if not success:
+        raise NonRecoverableError(
+            'Deployment not deleted. Timeout: {0} seconds.'.format(timeout))
+
+    del ctx.instance.runtime_properties['deployment']
 
 
 # @operation

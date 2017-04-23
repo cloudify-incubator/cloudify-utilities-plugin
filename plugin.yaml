@@ -129,7 +129,7 @@ node_types:
         #   implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_install
         # stop:
         #   implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_uninstall
-        # delete:
-        #   implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
+        delete:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
 
 
