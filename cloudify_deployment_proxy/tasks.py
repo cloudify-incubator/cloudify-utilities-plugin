@@ -21,9 +21,10 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-DEPLOYMENTS_TIMEOUT = 180
-EXECUTIONS_TIMEOUT = 60
-POLLING_INTERVAL = 5
+DEPLOYMENTS_TIMEOUT = 60
+EXECUTIONS_TIMEOUT = 300
+POLLING_INTERVAL = 10
+
 DEFAULT_UNINSTALL_ARGS = {
     'allow_custom_parameters': True,
     'parameters': {
