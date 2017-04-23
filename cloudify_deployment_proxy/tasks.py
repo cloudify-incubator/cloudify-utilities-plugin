@@ -103,6 +103,7 @@ def all_deps_pollster(_client, _dep_id):
 
 
 def poll_workflow_after_execute(_timeout,
+                                _interval,
                                 _client,
                                 _dep_id,
                                 _state,
@@ -123,6 +124,7 @@ def poll_workflow_after_execute(_timeout,
         poll_with_timeout(
             dep_workflow_in_state_pollster,
             timeout=_timeout,
+            interval=_interval,
             pollster_args=pollster_args)
 
     if not success:
@@ -140,12 +142,9 @@ def wait_for_deployment_ready(state, timeout, **_):
     dep_id = _.get('id') or config.get('deployment_id')
 
     if not dep_id:
-        deployment = get_instance_attribute_from_relationship(
-            ctx.instance.relationships,
-            'deployment')
-        if not deployment:
-            return ctx.operation.retry('Deployment not ready.')
-        dep_id = deployment.get('id')
+        return ctx.operation.retry(
+            'Deployment ID not provided. '
+            'Waiting for instrinsic function to populate.')
 
     ctx.instance.runtime_properties['deployment_id'] = dep_id
 
@@ -257,6 +256,7 @@ def create_deployment(**_):
         config.get('deployment_id', bp_id)
     inputs = _.get('inputs') or config.get('inputs', {})
     timeout = _.get('timeout', 20)
+    interval = _.get('interval', 5)
 
     try:
         dp_create_response = \
@@ -278,6 +278,7 @@ def create_deployment(**_):
         dep_created_at
 
     return poll_workflow_after_execute(timeout,
+                                       interval,
                                        client,
                                        dep_id,
                                        'terminated',
