@@ -45,13 +45,6 @@ def poll_with_timeout(pollster,
     return False
 
 
-def all_dep_workflows_in_state_pollster(_client,
-                                        _dep_id,
-                                        _state):
-    _execs = _client.executions.list(deployment_id=_dep_id)
-    return all([str(_e['status']) == _state for _e in _execs])
-
-
 def all_deps_pollster(_client, _dep_id):
     _deps = _client.deployments.list(_include=['id'])
     return all([str(_d['id']) == _dep_id for _d in _deps])
@@ -61,7 +54,7 @@ def all_deps_pollster(_client, _dep_id):
 def dep_workflow_in_state_pollster(_client,
                                    _dep_id,
                                    _state,
-                                   _workflow_id):
+                                   _workflow_id=None):
 
     exec_list_fields = \
         ['status', 'workflow_id', 'created_at', 'id']
@@ -71,8 +64,11 @@ def dep_workflow_in_state_pollster(_client,
                                 _include=exec_list_fields)
 
     for _exec in _execs:
-        if _exec.get('workflow_id') == _workflow_id and \
-                _exec.get('status') == _state:
+        if _exec.get('status') == _state:
+            if _workflow_id and not \
+                    _exec.get('workflow_id') == \
+                    _workflow_id:
+                return False
             return True
     return False
 
@@ -138,7 +134,7 @@ def wait_for_deployment_ready(state,
 
     success = \
         poll_with_timeout(
-            all_dep_workflows_in_state_pollster,
+            dep_workflow_in_state_pollster,
             timeout=timeout,
             pollster_args=pollster_args)
 
