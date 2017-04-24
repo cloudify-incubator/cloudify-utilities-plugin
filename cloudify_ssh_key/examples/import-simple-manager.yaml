@@ -1,0 +1,29 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+inputs:
+
+  private_key_path:
+    default: ~/.ssh/example-key.pem
+
+  public_key_path:
+    default: ~/.ssh/example-key.pem.pub
+
+  use_secret_store:
+    default: false
+
+  OpenSSH_format:
+    default: 'OpenSSH'
+
+dsl_definitions:
+  resource_config: &RESOURCE_CONFIG
+    private_key_path: { get_input: private_key_path }
+    public_key_path: { get_input: public_key_path }
+    OpenSSH_format: { get_input: OpenSSH_format }
+
+node_templates:
+
+  manager_key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config: *RESOURCE_CONFIG
+      use_secret_store: { get_input: use_secret_store }
