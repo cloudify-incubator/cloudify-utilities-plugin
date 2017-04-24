@@ -20,9 +20,14 @@ setuptools.setup(
     author='Gigaspaces.com',
     author_email='hello@getcloudify.org',
     description='Utilities for extending Cloudify',
-    packages=['cloudify_deployment_proxy'],
+    packages=[
+            'cloudify_deployment_proxy',
+            'cloudify_rsa'
+    ],
     license='LICENSE',
     install_requires=[
         'cloudify-plugins-common>=4.0',
-        'cloudify-rest-client>=4.0']
+        'cloudify-rest-client>=4.0',
+        'pycrypto'
+    ]
 )

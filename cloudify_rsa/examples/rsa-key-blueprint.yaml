@@ -1,0 +1,40 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-key-plugin/v1.0.0/plugin.yaml
+
+inputs:
+
+  public_key_path:
+    default: ~/.ssh/example-key.pem.pub
+
+  use_secret_store:
+    default: true
+
+  OpenSSH_format:
+    default: 'OpenSSH'
+
+  key_name:
+    default: 'example-key'
+
+dsl_definitions:
+  resource_config: &RESOURCE_CONFIG
+    public_key_path: { get_input: public_key_path }
+    OpenSSH_format: { get_input: OpenSSH_format }
+
+node_templates:
+
+  rsa_key:
+    type: cloudify.keys.nodes.RSAKey
+    properties:
+      resource_config: *RESOURCE_CONFIG
+      use_secret_store: { get_input: use_secret_store }
+      key_name: { get_input: key_name }
+
+outputs:
+
+  Key:
+    description: The Public Key Material
+    value:
+      public_key: { get_attribute: [ rsa_key, public_key_export] }
