@@ -306,7 +306,7 @@ def execute_start(**_):
         config.get('deployment_id')
 
     interval = _.get('interval', POLLING_INTERVAL)
-    timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
+    timeout = _.get('timeout', EXECUTIONS_TIMEOUT)
     workflow_id = _.get('workflow_id', 'install')
     workflow_state = _.get('workflow_state', 'terminated')
 
