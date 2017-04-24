@@ -21,7 +21,7 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-DEPLOYMENTS_TIMEOUT = 60
+DEPLOYMENTS_TIMEOUT = 120
 EXECUTIONS_TIMEOUT = 900
 POLLING_INTERVAL = 10
 
@@ -54,8 +54,13 @@ def poll_with_timeout(pollster,
 
 
 def all_deps_pollster(_client, _dep_id):
-    _deps = _client.deployments.list(_include=['id'])
-    return all([str(_d['id']) == _dep_id for _d in _deps])
+    try:
+        _deps = _client.deployments.list(_include=['id'])
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Deployments list failed {0}.'.format(str(ex)))
+    else:
+        return all([str(_d['id']) == _dep_id for _d in _deps])
 
 
 # Todo: Add ability to filter by execution ID.
@@ -67,17 +72,21 @@ def dep_workflow_in_state_pollster(_client,
     exec_list_fields = \
         ['status', 'workflow_id', 'created_at', 'id']
 
-    _execs = \
-        _client.executions.list(deployment_id=_dep_id,
-                                _include=exec_list_fields)
-
-    for _exec in _execs:
-        if _exec.get('status') == _state:
-            if _workflow_id and not \
-                    _exec.get('workflow_id') == \
-                    _workflow_id:
-                continue
-            return True
+    try:
+        _execs = \
+            _client.executions.list(deployment_id=_dep_id,
+                                    _include=exec_list_fields)
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Executions list failed {0}.'.format(str(ex)))
+    else:
+        for _exec in _execs:
+            if _exec.get('status') == _state:
+                if _workflow_id and not \
+                        _exec.get('workflow_id') == \
+                        _workflow_id:
+                    continue
+                return True
     return False
 
 
