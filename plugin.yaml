@@ -2,7 +2,7 @@ plugins:
 
   cfy_util:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/v1.1.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-proxy-plugin/archive/24-Enhance-BPDP.zip
 
   keys:
     executor: central_deployment_agent

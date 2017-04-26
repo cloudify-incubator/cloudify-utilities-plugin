@@ -18,8 +18,9 @@ node_templates:
     type: cloudify.nodes.BlueprintDeployment
     properties:
       resource_config:
-        blueprint_id: bp_dep_f13vya
+        blueprint_id: bp_dep
         blueprint_archive: { get_input: bp_dep_archive }
+        deployment_id: bp_dep
 
   dep_proxy:
     type: cloudify.nodes.DeploymentProxy
