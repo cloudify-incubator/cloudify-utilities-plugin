@@ -31,7 +31,7 @@ class TestKey(testtools.TestCase):
 
     def mock_ctx(self, test_name, use_secret_store=False):
 
-        private_key_path = tempfile.mkdtemp()
+        key_path = tempfile.mkdtemp()
 
         test_node_id = test_name
         if use_secret_store:
@@ -39,7 +39,9 @@ class TestKey(testtools.TestCase):
                 'use_secret_store': use_secret_store,
                 'key_name': test_name,
                 'resource_config': {
-                    'public_key_path': '~/.ssh/{0}.pem.pub'.format(test_name),
+                    'public_key_path': '{0}/{1}.pem.pub'.format(
+                            key_path,
+                            test_name),
                     'OpenSSH_format': True,
                     'algorithm': 'RSA',
                     'bits': 2048
@@ -50,9 +52,11 @@ class TestKey(testtools.TestCase):
                 'use_secret_store': use_secret_store,
                 'resource_config': {
                     'private_key_path': '{0}/{1}.pem'.format(
-                            private_key_path,
+                            key_path,
                             test_name),
-                    'public_key_path': '~/.ssh/{0}.pem.pub'.format(test_name),
+                    'public_key_path': '{0}/{1}.pem.pub'.format(
+                            key_path,
+                            test_name),
                     'OpenSSH_format': True,
                     'algorithm': 'RSA',
                     'bits': 2048
