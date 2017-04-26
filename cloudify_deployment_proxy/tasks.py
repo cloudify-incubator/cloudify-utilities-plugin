@@ -24,6 +24,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 DEPLOYMENTS_TIMEOUT = 120
 EXECUTIONS_TIMEOUT = 900
 POLLING_INTERVAL = 10
+EXT_RES = 'external_resource'
 
 DEFAULT_UNINSTALL_ARGS = {
     'allow_custom_parameters': True,
@@ -214,7 +215,7 @@ def upload_blueprint(**_):
         config.get('blueprint_id', ctx.instance.id)
 
     if not any_bps_pollster(client, bp_id):
-        ctx.instance.runtime_properties['external_resource'] = False
+        ctx.instance.runtime_properties[EXT_RES] = False
         try:
             client.blueprints._upload(
                 blueprint_id=bp_id,
@@ -256,7 +257,7 @@ def create_deployment(**_):
                         'create_deployment_environment')
 
     if not any_deps_pollster(client, dep_id):
-        ctx.instance.runtime_properties['external_resource'] = False
+        ctx.instance.runtime_properties[EXT_RES] = False
         try:
             client.deployments.create(
                 blueprint_id=bp_id,
@@ -289,12 +290,13 @@ def delete_deployment(**_):
     dep_id = _.get('deployment_id') or \
         config.get('deployment_id', dep_id_prop)
     timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
-
-    try:
-        client.deployments.delete(deployment_id=dep_id)
-    except CloudifyClientError as ex:
-        raise NonRecoverableError(
-            'Deployment delete failed {0}.'.format(str(ex)))
+    if not ctx.instance.runtime_properties.get(EXT_RES, True):
+        try:
+            client.deployments.delete(deployment_id=dep_id)
+        except CloudifyClientError as ex:
+            raise NonRecoverableError(
+                'Deployment delete failed {0}.'.format(str(ex)))
+        del ctx.instance.runtime_properties[EXT_RES]
 
     pollster_args = {
         '_client': client,
@@ -319,6 +321,7 @@ def delete_deployment(**_):
 
 @operation
 def execute_start(**_):
+
     client = _.get('client') or manager.get_rest_client()
     config = _.get('resource_config') or \
         ctx.node.properties.get('resource_config')
@@ -339,18 +342,35 @@ def execute_start(**_):
         _args = {}
     execution_args = _.get('executions_start_args', _args)
 
-    try:
-        ex_start_response = \
-            client.executions.start(deployment_id=dep_id,
-                                    workflow_id=workflow_id,
-                                    **execution_args)
-    except CloudifyClientError as ex:
-        raise NonRecoverableError(
-            'Executions start failed {0}.'.format(str(ex)))
+    external_resource = \
+        ctx.instance.runtime_properties.get(
+            EXT_RES, True)
+    reexecute = \
+        _.get('reexecute') or \
+        ctx.instance.runtime_properties.get('reexecute')
+
+    if not external_resource or \
+            (reexecute and poll_workflow_after_execute(
+                timeout,
+                interval,
+                client,
+                dep_id,
+                workflow_state,
+                workflow_id)):
+
+        try:
+            ex_start_response = \
+                client.executions.start(
+                    deployment_id=dep_id,
+                    workflow_id=workflow_id,
+                    **execution_args)
+        except CloudifyClientError as ex:
+            raise NonRecoverableError(
+                'Executions start failed {0}.'.format(str(ex)))
 
     ctx.instance.runtime_properties['executions'] = {}
     ctx.instance.runtime_properties['executions']['workflow_id'] = \
-        ex_start_response.get('workflow_id')
+        workflow_id
 
     return poll_workflow_after_execute(
         timeout,

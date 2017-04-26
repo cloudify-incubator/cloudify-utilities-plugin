@@ -12,6 +12,8 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from cloudify_deployment_proxy.tasks import EXT_RES
+
 import mock
 import testtools
 
@@ -62,6 +64,7 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
         _ctx = self.get_mock_ctx(test_name,
                                  deployment_proxy_properties)
         current_ctx.set(_ctx)
+        _ctx.instance.runtime_properties[EXT_RES] = False
 
         # Tests that execute start fails on rest client error
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
@@ -113,7 +116,7 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
         current_ctx.set(_ctx)
         _ctx.instance.runtime_properties['deployment'] = {}
         _ctx.instance.runtime_properties['deployment']['id'] = test_name
-
+        _ctx.instance.runtime_properties[EXT_RES] = False
         # Tests that deployments delete fails on rest client error
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             setattr(DEPLOYMENTS_MOCK, 'delete', REST_CLIENT_EXCEPTION)
