@@ -52,7 +52,7 @@ def return_none_object(*args, **kwargs):
 
 
 BLUEPRINTS_MOCK = MagicMock
-BLUEPRINTS_LIST = [MagicMock]
+BLUEPRINTS_LIST = return_list
 BLUEPRINTS_GET = return_none_object
 BLUEPRINTS_UPLOAD = MagicMock(return_value={'id': 'test'})
 

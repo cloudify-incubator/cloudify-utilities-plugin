@@ -180,19 +180,18 @@ def query_deployment_data(**_):
 
 
 def get_blueprint(_client,
-                  blueprint_id):
+                  _bp_id):
 
     try:
-        blueprint = \
-            _client.blueprints.get(
-                blueprint_id=blueprint_id)
+        _bps = \
+            _client.blueprints.list(
+                _include=['id'])
     except CloudifyClientError as ex:
         raise NonRecoverableError(str(ex))
-    else:
-        ctx.logger.info('Using existing blueprint: {0}'.format(blueprint))
-        return blueprint
 
-    return False
+    ctx.logger.info('Blueprints: {0}'.format(_bps))
+
+    return all([str(_b['id']) == _bp_id for _b in _bps])
 
 
 @operation
