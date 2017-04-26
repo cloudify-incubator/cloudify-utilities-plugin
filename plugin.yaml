@@ -23,7 +23,7 @@ data_types:
       blueprint_archive:
         description: >
           The URL of a .zip to upload to the manager.
-        required: true.
+        required: true
       unvalidated:
         default: {}
 
