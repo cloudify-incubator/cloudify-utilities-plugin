@@ -359,11 +359,10 @@ def execute_start(**_):
                 workflow_id)):
 
         try:
-            ex_start_response = \
-                client.executions.start(
-                    deployment_id=dep_id,
-                    workflow_id=workflow_id,
-                    **execution_args)
+            client.executions.start(
+                deployment_id=dep_id,
+                workflow_id=workflow_id,
+                **execution_args)
         except CloudifyClientError as ex:
             raise NonRecoverableError(
                 'Executions start failed {0}.'.format(str(ex)))
