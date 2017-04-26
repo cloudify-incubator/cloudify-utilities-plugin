@@ -28,6 +28,7 @@ node_templates:
     type: cloudify.nodes.DeploymentProxy
     properties:
       resource_config:
+        blueprint: { get_property: [ bp_dep, blueprint ] }
         deployment:
           id: { get_attribute: [ bp_dep, deployment, id ] }
           outputs:
