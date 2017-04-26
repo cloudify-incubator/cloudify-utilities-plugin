@@ -1,0 +1,7 @@
+releases:
+  v1.0.0:
+  - rename plugin
+  - change property structure
+  - add data types and property validations
+  - unit tests
+
