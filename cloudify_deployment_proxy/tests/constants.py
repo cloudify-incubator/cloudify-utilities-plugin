@@ -43,8 +43,17 @@ def return_list(*args, **kwargs):
     return [list_mock]
 
 
+def return_object(*args, **kwargs):
+    return MagicMock
+
+
+def return_none_object(*args, **kwargs):
+    return None
+
+
 BLUEPRINTS_MOCK = MagicMock
 BLUEPRINTS_LIST = [MagicMock]
+BLUEPRINTS_GET = return_none_object
 BLUEPRINTS_UPLOAD = MagicMock(return_value={'id': 'test'})
 
 DEPLOYMENTS_MOCK = MagicMock
