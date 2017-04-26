@@ -61,8 +61,17 @@ def any_bps_pollster(_client, _bp_id):
         raise NonRecoverableError(
             'Blueprints list failed {0}.'.format(str(ex)))
     else:
-        ctx.logger.info('Blueprints: {0}'.format([_b for _b in _bps]))
         return any([str(_b['id']) == _bp_id for _b in _bps])
+
+
+def any_deps_pollster(_client, _dep_id):
+    try:
+        _deps = _client.deployments.list(_include=['id'])
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Deployments list failed {0}.'.format(str(ex)))
+    else:
+        return any([str(_d['id']) == _dep_id for _d in _deps])
 
 
 def all_deps_pollster(_client, _dep_id):
@@ -205,15 +214,14 @@ def upload_blueprint(**_):
         config.get('blueprint_id', ctx.instance.id)
 
     if not any_bps_pollster(client, bp_id):
+        ctx.instance.runtime_properties['external_resource'] = False
         try:
-            bp_upload_response = \
-                client.blueprints._upload(blueprint_id=bp_id,
-                                          archive_location=bp_archive,
-                                          application_file_name=app_name)
+            client.blueprints._upload(
+                blueprint_id=bp_id,
+                archive_location=bp_archive,
+                application_file_name=app_name)
         except CloudifyClientError as ex:
             raise NonRecoverableError('Blueprint failed {0}.'.format(str(ex)))
-
-        bp_id = bp_upload_response.get('id')
 
     ctx.instance.runtime_properties['blueprint'] = {}
     ctx.instance.runtime_properties['blueprint']['id'] = bp_id
@@ -247,18 +255,19 @@ def create_deployment(**_):
     workflow_id = _.get('workflow_id',
                         'create_deployment_environment')
 
-    try:
-        dp_create_response = \
-            client.deployments.create(blueprint_id=bp_id,
-                                      deployment_id=dep_id,
-                                      inputs=inputs)
-    except CloudifyClientError as ex:
-        raise NonRecoverableError(
-            'Deployment create failed {0}.'.format(str(ex)))
+    if not any_deps_pollster(client, dep_id):
+        ctx.instance.runtime_properties['external_resource'] = False
+        try:
+            client.deployments.create(
+                blueprint_id=bp_id,
+                deployment_id=dep_id,
+                inputs=inputs)
+        except CloudifyClientError as ex:
+            raise NonRecoverableError(
+                'Deployment create failed {0}.'.format(str(ex)))
 
     ctx.instance.runtime_properties['deployment'] = {}
-    ctx.instance.runtime_properties['deployment']['id'] = \
-        dp_create_response.get('id')
+    ctx.instance.runtime_properties['deployment']['id'] = dep_id
 
     return poll_workflow_after_execute(timeout,
                                        interval,
