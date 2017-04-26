@@ -5,7 +5,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/24-Enhance-BPDP/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/24-Enhance-DeploymentProxy/plugin.yaml
 
 inputs:
 
@@ -21,6 +21,7 @@ node_templates:
         blueprint:
           id: bp_dep
           blueprint_archive: { get_input: bp_dep_archive }
+          main_file_name: blueprint.yaml
         deployment:
           id: bp_dep
 
@@ -28,9 +29,9 @@ node_templates:
     type: cloudify.nodes.DeploymentProxy
     properties:
       resource_config:
-        blueprint: { get_property: [ bp_dep, blueprint ] }
+        blueprint: { get_property: [ bp_dep, resource_config, blueprint ] }
         deployment:
-          id: { get_attribute: [ bp_dep, deployment, id ] }
+          id: { get_attribute: [ bp_dep, resource_config, deployment, id ] }
           outputs:
             key: bp_dep_output
     relationships:

@@ -19,7 +19,7 @@ data_types:
       main_file_name:
         description: >
           The application blueprint filename. If the blueprint consists many imported files this is the main blueprint.
-        required: true
+        default: blueprint.yaml
       blueprint_archive:
         description: >
           The URL of a .zip to upload to the manager.
@@ -85,41 +85,6 @@ data_types:
 node_types:
 
   cloudify.nodes.DeploymentProxy:
-    derived_from: cloudify.nodes.Root
-    properties:
-      use_external_resource:
-        type: boolean
-        default: true
-      resource_config:
-        type: cloudify.datatypes.DeploymentProxy
-        default: {}
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
-        start:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.query_deployment_data
-
-  cloudify.nodes.DeploymentProxy.Compute:
-    derived_from: cloudify.nodes.Compute
-    properties:
-      use_external_resource:
-        type: boolean
-        default: true
-      resource_config:
-        type: cloudify.datatypes.DeploymentProxy
-        default: {}
-      agent_config:
-        default:
-          install_method: none
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
-        start:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.query_deployment_data
-
-  cloudify.nodes.BlueprintDeployment:
     derived_from: cloudify.nodes.Root
     properties:
       resource_config:
