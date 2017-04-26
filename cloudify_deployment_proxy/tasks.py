@@ -93,13 +93,13 @@ def create_deployment(**_):
     dep_id = deployment.get('id') or ctx.instance.id
     inputs = deployment.get('inputs')
     outputs = deployment.get('outputs')
-    interval = config.get('interval', POLLING_INTERVAL)
-    state = config.get('state', 'terminated')
-    timeout = config.get('timeout', DEPLOYMENTS_TIMEOUT)
+
+    interval = _.get('interval', POLLING_INTERVAL)
+    state = _.get('state', 'terminated')
+    timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
     workflow_id = \
-        config.get(
-            'workflow_id',
-            'create_deployment_environment')
+        _.get('workflow_id',
+              'create_deployment_environment')
 
     if not any_dep_by_id(client, dep_id):
         ctx.instance.runtime_properties[EXT_RES] = False
@@ -161,7 +161,8 @@ def delete_deployment(**_):
 
     deployment = config.get('deployment')
     dep_id = deployment.get('id') or ctx.instance.id
-    timeout = config.get('timeout', DEPLOYMENTS_TIMEOUT)
+
+    timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
 
     if not ctx.instance.runtime_properties.get(EXT_RES, True):
         try:
@@ -207,14 +208,16 @@ def execute_start(**_):
 
     deployment = config.get('deployment')
     dep_id = deployment.get('id') or ctx.instance.id
-    interval = config.get('interval', POLLING_INTERVAL)
-    timeout = config.get('timeout', DEPLOYMENTS_TIMEOUT)
+
+    interval = _.get('interval', POLLING_INTERVAL)
+    timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
+
     workflow_id = \
-        config.get(
+        _.get(
             'workflow_id',
             'create_deployment_environment')
     workflow_state = \
-        config.get(
+        _.get(
             'workflow_state',
             'terminated')
 
