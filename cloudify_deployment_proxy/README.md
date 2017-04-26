@@ -8,206 +8,74 @@ This plugin enables a user to connect a deployment to another deployment, in eff
 - Previously published as "Cloudify Proxy Plugin", the usage of which is deprecated.
 - A Cloudify Manager is required.
 - Tested with Cloudify Manager 4.0.
-- Nodecellar Example blueprint requires AWS + VPC. (No provider context.)
-- Nodecellar Example blueprint requires that AWS credentials are stored as secrets on the manager.
 
 ## Examples:
 
 - [Test Example](#test-example-instructions)
-- [Basic Example](#basic-example-instructions)
-- [Nodecellar Example](#nodecellar-example-instructions)
 
 
 ## Test Example Instructions
 
 This test example is used to pass validation that the plugin is working.
 
-## Basic Example Instructions
-
-This basic example covers a trivial scenario:
-- Create a "step1" deployment that sets some data.
-- Create a "step2" deployment that consumes the data.
-
-1. Install Step 1:
+Run:
 
 ```shell
-$ cfy install cloudify_deployment_proxy/examples/simple/step-1-blueprint.yaml
-Uploading blueprint cloudify_deployment_proxy/examples/simple/step-1-blueprint.yaml...
- step-1-blueprint.... |################################################| 100.0%
-Blueprint uploaded. The blueprint's id is simple
-Creating new deployment from blueprint simple...
-Deployment created. The deployment's id is simple
-Executing workflow install on deployment simple [timeout=900 seconds]
-Deployment environment creation is in progress...
-2017-04-20 20:25:05.457  CFY <simple> Starting 'create_deployment_environment' workflow execution
-...
-2017-04-20 20:25:11.165  CFY <simple> Starting 'install' workflow execution
-...
-2017-04-20 20:25:15.218  CFY <simple> 'install' workflow execution succeeded
-Finished executing workflow install on deployment simple
-$ cfy deployments outputs simple
-Retrieving outputs for deployment simple...
- - "environment":
-     Description: The environment data.
-     Value: ABCD01234
- - "application":
-     Description: The application info.
-     Value: 0:1:2:3:4
-```
-
-Notice the output data.
-
-
-2. Install Step 2:
-
-```shell
-$ cfy install cloudify_deployment_proxy/examples/simple/step-2-blueprint.yaml -b simple2
-Uploading blueprint cloudify_deployment_proxy/examples/simple/step-2-blueprint.yaml...
- step-2-blueprint.... |################################################| 100.0%
-Blueprint uploaded. The blueprint's id is simple2
-Creating new deployment from blueprint simple2...
-Deployment created. The deployment's id is simple2
-Executing workflow install on deployment simple2 [timeout=900 seconds]
+$ cfy install cloudify_deployment_proxy/examples/test/blueprint.yaml 
+Uploading blueprint cloudify_deployment_proxy/examples/test/blueprint.yaml...
+ blueprint.yaml |######################################################| 100.0%
+Blueprint uploaded. The blueprint's id is test
+Creating new deployment from blueprint test...
+Deployment created. The deployment's id is test
+Executing workflow install on deployment test [timeout=900 seconds]
 Deployment environment creation is pending...
-2017-04-20 20:26:26.007  CFY <simple2> Starting 'create_deployment_environment' workflow execution
-...
-2017-04-20 20:26:35.831  CFY <simple2> Starting 'install' workflow execution
-...
-2017-04-20 20:26:39.992  CFY <simple2> 'install' workflow execution succeeded
-$ cfy deployments outputs simple2
-Retrieving outputs for deployment simple2...
- - "environment":
-     Description: The environment data.
-     Value: ABCD01234
- - "application":
-     Description: The application info.
-     Value: 0:1:2:3:4
-```
+2017-04-26 11:23:44.500  CFY <test> Starting 'create_deployment_environment' workflow execution
+2017-04-26 11:23:45.020  LOG <test> [,] INFO: Installing plugin: cfy_util
+2017-04-26 11:23:44.923  CFY <test> [,] Sending task 'cloudify_agent.operations.install_plugins'
+2017-04-26 11:23:44.965  CFY <test> [,] Task started 'cloudify_agent.operations.install_plugins'
+2017-04-26 11:23:45.020  LOG <test> [,] INFO: Installing plugin: cfy_util
+2017-04-26 11:23:45.614  LOG <test> [,] INFO: Installing plugin from source
+2017-04-26 11:23:48.925  CFY <test> [,] Task succeeded 'cloudify_agent.operations.install_plugins'
+2017-04-26 11:23:49.077  CFY <test> Skipping starting deployment policy engine core - no policies defined
+2017-04-26 11:23:49.281  CFY <test> Creating deployment work directory
+2017-04-26 11:23:49.615  CFY <test> 'create_deployment_environment' workflow execution succeeded
+2017-04-26 11:23:53.503  CFY <test> Starting 'install' workflow execution
+2017-04-26 11:23:54.151  CFY <test> [bp_dep_2fltcd] Creating node
+2017-04-26 11:23:54.252  CFY <test> [bp_dep_2fltcd.create] Sending task 'cloudify_deployment_proxy.tasks.upload_blueprint'
+2017-04-26 11:23:54.296  CFY <test> [bp_dep_2fltcd.create] Task started 'cloudify_deployment_proxy.tasks.upload_blueprint'
+2017-04-26 11:23:56.379  CFY <test> [bp_dep_2fltcd.create] Task succeeded 'cloudify_deployment_proxy.tasks.upload_blueprint ('True')'
+2017-04-26 11:23:56.815  CFY <test> [bp_dep_2fltcd] Configuring node
+2017-04-26 11:23:56.994  CFY <test> [bp_dep_2fltcd.configure] Sending task 'cloudify_deployment_proxy.tasks.create_deployment'
+2017-04-26 11:23:57.012  CFY <test> [bp_dep_2fltcd.configure] Task started 'cloudify_deployment_proxy.tasks.create_deployment'
+2017-04-26 11:24:08.238  CFY <test> [bp_dep_2fltcd.configure] Task succeeded 'cloudify_deployment_proxy.tasks.create_deployment ('True')'
+2017-04-26 11:24:08.782  CFY <test> [bp_dep_2fltcd] Starting node
+2017-04-26 11:24:08.862  CFY <test> [bp_dep_2fltcd.start] Sending task 'cloudify_deployment_proxy.tasks.execute_start'
+2017-04-26 11:24:08.879  CFY <test> [bp_dep_2fltcd.start] Task started 'cloudify_deployment_proxy.tasks.execute_start'
+2017-04-26 11:24:19.947  CFY <test> [bp_dep_2fltcd.start] Task succeeded 'cloudify_deployment_proxy.tasks.execute_start ('True')'
+2017-04-26 11:24:20.836  CFY <test> [dep_proxy_16u9kh] Creating node
+2017-04-26 11:24:20.919  CFY <test> [dep_proxy_16u9kh.create] Sending task 'cloudify_deployment_proxy.tasks.wait_for_deployment_ready'
+2017-04-26 11:24:20.938  CFY <test> [dep_proxy_16u9kh.create] Task started 'cloudify_deployment_proxy.tasks.wait_for_deployment_ready'
+2017-04-26 11:24:21.780  CFY <test> [dep_proxy_16u9kh.create] Task succeeded 'cloudify_deployment_proxy.tasks.wait_for_deployment_ready ('True')'
+2017-04-26 11:24:22.356  CFY <test> [dep_proxy_16u9kh] Configuring node
+2017-04-26 11:24:22.941  CFY <test> [dep_proxy_16u9kh] Starting node
+2017-04-26 11:24:23.039  CFY <test> [dep_proxy_16u9kh.start] Sending task 'cloudify_deployment_proxy.tasks.query_deployment_data'
+2017-04-26 11:24:23.057  CFY <test> [dep_proxy_16u9kh.start] Task started 'cloudify_deployment_proxy.tasks.query_deployment_data'
+2017-04-26 11:24:23.897  CFY <test> [dep_proxy_16u9kh.start] Task succeeded 'cloudify_deployment_proxy.tasks.query_deployment_data ('True')'
+2017-04-26 11:24:24.523  CFY <test> 'install' workflow execution succeeded
+Finished executing workflow install on deployment test
+* Run 'cfy events list -e 78026d24-6ae7-4fdc-b4da-af9d7eddfddc' to retrieve the execution's events/logs
 
-Notice that the deployment "simple2" has copied the "simple" deployment output data.
-
-3. Uninstall Step 2:
-
-```shell
-$ cfy uninstall simple2
-Executing workflow uninstall on deployment simple2 [timeout=900 seconds]
-2017-04-20 20:27:03.381  CFY <simple2> Starting 'uninstall' workflow execution
-...
-2017-04-20 20:27:05.261  CFY <simple2> 'uninstall' workflow execution succeeded
-Finished executing workflow uninstall on deployment simple2
-```
-
-
-4. Uninstall Step 1:
-
-```shell
-$ cfy uninstall simple
-Executing workflow uninstall on deployment simple [timeout=900 seconds]
-2017-04-20 20:27:46.701  CFY <simple> Starting 'uninstall' workflow execution
-...
-2017-04-20 20:27:48.327  CFY <simple> 'uninstall' workflow execution succeeded
-Finished executing workflow uninstall on deployment simple
-```
-
-
-## Nodecellar Example Instructions
-
-This example follows the [standard manager setup pattern](https://github.com/EarthmanT/installing-cloudify-4.0-manager).
-
-The example demonstrates the following simple example:
-
-- Install blueprint A.
-- Blueprint A brings up a VM in the management environment and installs database on the VM.
-- Leave the deployment running and install blueprint B.
-- Blueprint B brings up another VM that "proxies" the previous deployment and installs a web application that uses the database.
-
-
-#### AWS
-
-1. Copy the example inputs file and edit it:
-
-```shell
-$ cp cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/inputs/aws.yaml.example inputs.yaml
-```
-
-Make sure the variables match those of the Cloudify Manager 4.0 AWS environment.
-
-
-2. Install the MongoDB deployment:
-
-```shell
-$ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/aws-mongo-blueprint.yaml -b mongo1 -i inputs.yaml
-Uploading blueprint cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/aws-mongo-blueprint.yaml...
- aws-mongo-bluepri... |################################################| 100.0%
-Blueprint uploaded. The blueprint's id is mongo1
-Creating new deployment from blueprint mongo1...
-Deployment created. The deployment's id is mongo1
-Executing workflow install on deployment mongo1 [timeout=900 seconds]
-Deployment environment creation is pending...
-2017-04-20 00:00:00.000  CFY <mongo1> Starting 'create_deployment_environment' workflow execution
-...
-2017-04-20 00:00:00.000  CFY <mongo1> Starting 'install' workflow execution
-...
-2017-04-20 00:00:00.000  CFY <mongo1> 'install' workflow execution succeeded
-Finished executing workflow install on deployment mongo1
-```
-
-This installed a MongoDB on a VM.
-
-
-3. Install the Nodecellar deployment:
-
-```shell
-$ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/aws-proxy-blueprint.yaml \
-    -i inputs.yaml -b node1 -i "mongod_host_deployment_id=mongo1"
-Uploading blueprint cloudify-utilities-plugin/cloudify_deployment_proxy/examples/nodecellar/aws-proxy-blueprint.yaml...
- aws-proxy-bluepri... |################################################| 100.0%
-Blueprint uploaded. The blueprint's id is node1
-Creating new deployment from blueprint node1...
-Deployment created. The deployment's id is node1
-Executing workflow install on deployment node1 [timeout=900 seconds]
-Deployment environment creation is pending...
-2017-04-20 00:00:00.000  CFY <node1> Starting 'create_deployment_environment' workflow execution
-...
-2017-04-20 00:00:00.000  CFY <node1> Starting 'install' workflow execution
-...
-2017-04-20 00:00:00.000  CFY <node1> 'install' workflow execution succeeded
-Finished executing workflow install on deployment node1
-```
-
-This installed the Nodecellar web application and connected it to the database from the first deployment.
-
-
-4. Check the deployment outputs for the application endpoint:
-
-```shell
-$ cfy deployments outputs node1
-Retrieving outputs for deployment node1...
- - "endpoint":
-     Description: Application UI
-     Value: http://123.45.67.89:8080
-```
-
-5. At this point, try installing another web application deployment like in step 3 and 4.
-
-*Hint: You will need to change the ```nodejs_host_key_name``` and ```nodejs_host_private_key_path``` input values since these will conflict with the step 3 deployment.**
-
-
-6. Uninstall the Nodecellar deployment:
-
-```shell
-$ cfy install node1 --allow-custom-parameters -p ignore_failure=true
-2017-04-20 00:00:00.000  CFY <node1> Starting 'uninstall' workflow execution
-...
-2017-04-20 00:00:00.000  CFY <node1> 'uninstall' workflow execution succeeded
-```
-
-
-7. Uninstall the Mongo deployment:
-
-```shell
-$ cfy install node1 --allow-custom-parameters -p ignore_failure=true
-2017-04-20 00:00:00.000  CFY <mongo1> Starting 'uninstall' workflow execution
-...
-2017-04-20 00:00:00.000  CFY <mongo1> 'uninstall' workflow execution succeeded
+$ cfy uninstall test
+Executing workflow uninstall on deployment test [timeout=900 seconds]
+2017-04-26 11:24:35.537  CFY <test> Starting 'uninstall' workflow execution
+2017-04-26 11:24:36.076  CFY <test> [dep_proxy_16u9kh] Stopping node
+2017-04-26 11:24:36.981  CFY <test> [dep_proxy_16u9kh] Deleting node
+2017-04-26 11:24:37.585  CFY <test> [bp_dep_2fltcd] Stopping node
+2017-04-26 11:24:37.789  CFY <test> [bp_dep_2fltcd.stop] Sending task 'cloudify_deployment_proxy.tasks.execute_start'
+2017-04-26 11:24:37.827  CFY <test> [bp_dep_2fltcd.stop] Task started 'cloudify_deployment_proxy.tasks.execute_start'
+2017-04-26 11:24:48.996  CFY <test> [bp_dep_2fltcd.stop] Task succeeded 'cloudify_deployment_proxy.tasks.execute_start ('True')'
+2017-04-26 11:24:49.562  CFY <test> [bp_dep_2fltcd] Deleting node
+2017-04-26 11:24:49.660  CFY <test> [bp_dep_2fltcd.delete] Sending task 'cloudify_deployment_proxy.tasks.delete_deployment'
+2017-04-26 11:24:49.678  CFY <test> [bp_dep_2fltcd.delete] Task started 'cloudify_deployment_proxy.tasks.delete_deployment'
+2017-04-26 11:24:50.953  CFY <test> [bp_dep_2fltcd.delete] Task succeeded 'cloudify_deployment_proxy.tasks.delete_deployment ('True')'
 ```

@@ -1,9 +1,0 @@
-node_types:
-
-  step1_type:
-    derived_from: cloudify.nodes.Root
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: scripts/step1.sh
-          executor: central_deployment_agent

@@ -7,6 +7,7 @@ Utilities for extending Cloudify features.
 ## Contents:
 
 - Cloudify Deployment Proxy
- - Examples:
-  - Nodecellar
-   - AWS Deployment Proxy Example
+
+## Versions:
+
+  - v1.0.0: First stable version.
