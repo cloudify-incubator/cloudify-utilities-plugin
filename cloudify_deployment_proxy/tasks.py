@@ -53,6 +53,18 @@ def poll_with_timeout(pollster,
     return False
 
 
+def all_bps_pollster(_client, _bp_id):
+
+    try:
+        _bps = _client.blueprints.list(_include=['id'])
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Blueprints list failed {0}.'.format(str(ex)))
+    else:
+        ctx.logger.info('Blueprints: {0}'.format([_b for _b in _bps]))
+        return all([str(_b['id']) == _bp_id for _b in _bps])
+
+
 def all_deps_pollster(_client, _dep_id):
     try:
         _deps = _client.deployments.list(_include=['id'])
@@ -179,21 +191,6 @@ def query_deployment_data(**_):
     return True
 
 
-def get_blueprint(_client,
-                  _bp_id):
-
-    try:
-        _bps = \
-            _client.blueprints.list(
-                _include=['id'])
-    except CloudifyClientError as ex:
-        raise NonRecoverableError(str(ex))
-
-    ctx.logger.info('Blueprints: {0}'.format(_bps))
-
-    return all([str(_b['id']) == _bp_id for _b in _bps])
-
-
 @operation
 def upload_blueprint(**_):
     client = _.get('client') or manager.get_rest_client()
@@ -207,7 +204,7 @@ def upload_blueprint(**_):
     bp_id = _.get('blueprint_id') or \
         config.get('blueprint_id', ctx.instance.id)
 
-    if not get_blueprint(client, bp_id):
+    if not all_bps_pollster(client, bp_id):
         try:
             bp_upload_response = \
                 client.blueprints._upload(blueprint_id=bp_id,
