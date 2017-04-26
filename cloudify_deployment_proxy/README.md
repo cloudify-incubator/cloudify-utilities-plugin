@@ -13,9 +13,14 @@ This plugin enables a user to connect a deployment to another deployment, in eff
 
 ## Examples:
 
+- [Test Example](#test-example-instructions)
 - [Basic Example](#basic-example-instructions)
 - [Nodecellar Example](#nodecellar-example-instructions)
 
+
+## Test Example Instructions
+
+This test example is used to pass validation that the plugin is working.
 
 ## Basic Example Instructions
 

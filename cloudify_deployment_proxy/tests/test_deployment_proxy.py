@@ -199,7 +199,7 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
                                           deployment_id='test',
                                           blueprint_id='test',
                                           timeout=.01)
-                self.assertIn('Deployment not ready. Timeout',
+                self.assertIn('Execution not finished. Timeout',
                               error.message)
 
         # Tests that deployments create succeeds
@@ -231,7 +231,7 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
                                           blueprint_id='test',
                                           timeout=.01,
                                           interval=.01)
-                self.assertIn('Deployment not ready. Timeout',
+                self.assertIn('Execution not finished. Timeout',
                               error.message)
 
     def test_upload_blueprint(self):
@@ -276,7 +276,6 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
         _ctx = self.get_mock_ctx(test_name,
                                  test_properties)
         current_ctx.set(_ctx)
-        mock_daemonize = False
         mock_interval = .01
         mock_timeout = .01
 
@@ -293,9 +292,8 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
             mock_deployments = mock.MagicMock
             setattr(mock_client, 'deployments', mock_deployments)
             setattr(mock_deployments, 'get', _mock_list)
-            output = query_deployment_data(mock_daemonize,
-                                           mock_interval,
-                                           mock_timeout)
+            output = query_deployment_data(interval=mock_interval,
+                                           timeout=mock_timeout)
             self.assertEqual(True, output)
             self.assertNotIn(deployment_outputs_mapping,
                              _ctx.instance.runtime_properties.keys())
@@ -312,24 +310,12 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
             mock_deployments = mock.MagicMock
             setattr(mock_client, 'deployments', mock_deployments)
             setattr(mock_deployments, 'get', _mock_list)
-            output = query_deployment_data(mock_daemonize,
-                                           mock_interval,
-                                           mock_timeout)
+            output = query_deployment_data(interval=mock_interval,
+                                           timeout=mock_timeout)
             self.assertEqual(True, output)
             self.assertEqual(
                 _ctx.instance.runtime_properties[deployment_outputs_mapping],
                 deployment_outputs_expected)
-
-        # Tests that mock_daemonize True raises error
-        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            mock_daemonize = True
-            error = self.assertRaises(NonRecoverableError,
-                                      query_deployment_data,
-                                      mock_daemonize,
-                                      mock_interval,
-                                      mock_timeout)
-            self.assertIn('Option "daemonize" is not implemented',
-                          error.message)
 
     def test_wait_for_deployment_ready(self):
         from cloudify_deployment_proxy.tasks import wait_for_deployment_ready
@@ -354,7 +340,7 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
                 error = self.assertRaises(NonRecoverableError,
                                           wait_for_deployment_ready,
                                           state=state, timeout=timeout)
-                self.assertIn('Deployment not ready. Timeout', error.message)
+                self.assertIn('Execution not finished. Timeout', error.message)
 
         # Test that wait_for succeeds
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
@@ -367,54 +353,6 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
                 output = wait_for_deployment_ready(state=state,
                                                    timeout=timeout)
                 self.assertTrue(output)
-
-    def test_all_dep_workflows_in_state_pollster(self):
-        from cloudify_deployment_proxy.tasks import \
-            all_dep_workflows_in_state_pollster
-
-        test_name = 'test_all_dep_workflows_in_state_pollster'
-        test_properties = {
-            'resource_config': {
-                'deployment_id': 'test_all_dep_workflows_in_state_pollster'
-            }
-        }
-        _ctx = self.get_mock_ctx(test_name,
-                                 test_properties)
-        current_ctx.set(_ctx)
-
-        # Test that all_dep_workflows.. returns False if not successful.
-        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            _mock_execution_object = {
-                'execution_id': 'care bears care',
-                'deployment_id': 'care bears',
-                'status': 'failed',
-            }
-            _mock_list = mock.MagicMock(return_value=[_mock_execution_object])
-            mock_client_executions = mock.MagicMock
-            setattr(mock_client_executions, 'list', _mock_list)
-            setattr(mock_client, 'executions', mock_client_executions)
-            output = \
-                all_dep_workflows_in_state_pollster(mock_client,
-                                                    'care bears',
-                                                    'terminated')
-            self.assertEqual(False, output)
-
-        # Test that all_dep_workflows.. returns False if not successful.
-        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            _mock_execution_object = {
-                'execution_id': 'care bears care',
-                'deployment_id': 'care bears',
-                'status': 'terminated',
-            }
-            _mock_list = mock.MagicMock(return_value=[_mock_execution_object])
-            mock_client_executions = mock.MagicMock
-            setattr(mock_client_executions, 'list', _mock_list)
-            setattr(mock_client, 'executions', mock_client_executions)
-            output = \
-                all_dep_workflows_in_state_pollster(mock_client,
-                                                    'care bears',
-                                                    'terminated')
-            self.assertEqual(True, output)
 
     def test_poll_with_timeout(self):
         from cloudify_deployment_proxy.tasks import poll_with_timeout

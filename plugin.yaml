@@ -67,20 +67,8 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
-          inputs:
-            state:
-              default: 'terminated'
-            timeout:
-              default: 60
         start:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.query_deployment_data
-          inputs:
-            daemonize:
-              default: false
-            interval:
-              default: 1
-            timeout:
-              default: 15
 
   cloudify.nodes.DeploymentProxy.Compute:
     derived_from: cloudify.nodes.Compute
@@ -98,20 +86,8 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
-          inputs:
-            state:
-              default: 'terminated'
-            timeout:
-              default: 60
         start:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.query_deployment_data
-          inputs:
-            daemonize:
-              default: false
-            interval:
-              default: 1
-            timeout:
-              default: 15
 
   cloudify.nodes.BlueprintDeployment:
     derived_from: cloudify.nodes.Root
@@ -135,11 +111,6 @@ node_types:
           inputs:
             workflow_id:
               default: uninstall
-            executions_start_args:
-              default:
-                allow_custom_parameters: true
-                parameters:
-                  ignore_failure: true
         delete:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
 

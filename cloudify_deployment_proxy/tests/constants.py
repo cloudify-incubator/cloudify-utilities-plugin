@@ -42,6 +42,7 @@ def return_list(*args, **kwargs):
     }
     return [list_mock]
 
+
 BLUEPRINTS_MOCK = MagicMock
 BLUEPRINTS_LIST = [MagicMock]
 BLUEPRINTS_UPLOAD = MagicMock(return_value={'id': 'test'})
@@ -57,9 +58,7 @@ DEPLOYMENTS_CREATE = MagicMock(return_value={
 EXECUTIONS_MOCK = MagicMock
 EXECUTIONS_LIST = return_list
 EXECUTIONS_CREATE = MagicMock(return_value={
-    'workflow_id': 'install',
-    'created_at': datetime.datetime.now()
-})
+    'workflow_id': 'install'})
 
 # Exceptions
 REST_CLIENT_EXCEPTION = MagicMock(side_effect=CloudifyClientError('Mistake'))
