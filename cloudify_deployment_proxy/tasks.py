@@ -53,7 +53,7 @@ def poll_with_timeout(pollster,
     return False
 
 
-def all_bps_pollster(_client, _bp_id):
+def any_bps_pollster(_client, _bp_id):
 
     try:
         _bps = _client.blueprints.list(_include=['id'])
@@ -62,7 +62,7 @@ def all_bps_pollster(_client, _bp_id):
             'Blueprints list failed {0}.'.format(str(ex)))
     else:
         ctx.logger.info('Blueprints: {0}'.format([_b for _b in _bps]))
-        return all([str(_b['id']) == _bp_id for _b in _bps])
+        return any([str(_b['id']) == _bp_id for _b in _bps])
 
 
 def all_deps_pollster(_client, _dep_id):
@@ -204,7 +204,7 @@ def upload_blueprint(**_):
     bp_id = _.get('blueprint_id') or \
         config.get('blueprint_id', ctx.instance.id)
 
-    if not all_bps_pollster(client, bp_id):
+    if not any_bps_pollster(client, bp_id):
         try:
             bp_upload_response = \
                 client.blueprints._upload(blueprint_id=bp_id,
