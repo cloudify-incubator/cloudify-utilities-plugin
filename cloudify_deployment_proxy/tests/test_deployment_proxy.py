@@ -30,7 +30,7 @@ from .constants import (
     DEPLOYMENTS_CREATE,
     DEPLOYMENTS_LIST,
     BLUEPRINTS_MOCK,
-    BLUEPRINTS_GET,
+    BLUEPRINTS_LIST,
     BLUEPRINTS_UPLOAD,
     REST_CLIENT_EXCEPTION
 )
@@ -246,7 +246,7 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
         # Tests that blueprints upload fails on rest client error
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             setattr(BLUEPRINTS_MOCK, '_upload', REST_CLIENT_EXCEPTION)
-            setattr(BLUEPRINTS_MOCK, 'get', BLUEPRINTS_GET)
+            setattr(BLUEPRINTS_MOCK, 'list', BLUEPRINTS_LIST)
             setattr(mock_client, 'blueprints', BLUEPRINTS_MOCK)
             error = self.assertRaises(NonRecoverableError,
                                       upload_blueprint,
