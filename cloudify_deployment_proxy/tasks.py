@@ -179,6 +179,22 @@ def query_deployment_data(**_):
     return True
 
 
+def get_blueprint(_client,
+                  blueprint_id):
+
+    try:
+        blueprint = \
+            _client.blueprints.get(
+                blueprint_id=blueprint_id)
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(str(ex))
+    else:
+        ctx.logger.info('Using existing blueprint: {0}'.format(blueprint))
+        return blueprint
+
+    return False
+
+
 @operation
 def upload_blueprint(**_):
     client = _.get('client') or manager.get_rest_client()
@@ -192,17 +208,19 @@ def upload_blueprint(**_):
     bp_id = _.get('blueprint_id') or \
         config.get('blueprint_id', ctx.instance.id)
 
-    try:
-        bp_upload_response = \
-            client.blueprints._upload(blueprint_id=bp_id,
-                                      archive_location=bp_archive,
-                                      application_file_name=app_name)
-    except CloudifyClientError as ex:
-        raise NonRecoverableError('Blueprint failed {0}.'.format(str(ex)))
+    if not get_blueprint(client, bp_id):
+        try:
+            bp_upload_response = \
+                client.blueprints._upload(blueprint_id=bp_id,
+                                          archive_location=bp_archive,
+                                          application_file_name=app_name)
+        except CloudifyClientError as ex:
+            raise NonRecoverableError('Blueprint failed {0}.'.format(str(ex)))
+
+        bp_id = bp_upload_response.get('id')
 
     ctx.instance.runtime_properties['blueprint'] = {}
-    ctx.instance.runtime_properties['blueprint']['id'] = \
-        bp_upload_response.get('id')
+    ctx.instance.runtime_properties['blueprint']['id'] = bp_id
     ctx.instance.runtime_properties['blueprint']['application_file_name'] = \
         app_name
     ctx.instance.runtime_properties['blueprint']['blueprint_archive'] = \
