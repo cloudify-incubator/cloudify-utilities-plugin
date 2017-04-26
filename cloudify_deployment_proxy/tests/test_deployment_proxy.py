@@ -38,7 +38,7 @@ from .constants import (
 )
 
 
-class TestDeploymentProxyUnitTests(testtools.TestCase):
+class TestDeploymentProxy(testtools.TestCase):
 
     def get_mock_ctx(self,
                      test_name,
@@ -157,7 +157,7 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
                     timeout=.01)
                 self.assertTrue(output)
 
-        # Tests that deployments delete checks all_deps_pollster
+        # Tests that deployments delete checks all_deps_by_id
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             setattr(DEPLOYMENTS_MOCK, 'delete', DEPLOYMENTS_DELETE)
             setattr(DEPLOYMENTS_MOCK, 'list', DEPLOYMENTS_LIST)
@@ -226,7 +226,7 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
             setattr(mock_client, 'executions', EXECUTIONS_MOCK)
             setattr(mock_client, 'list', EXECUTIONS_LIST)
             poll_with_timeout_test = \
-                'cloudify_deployment_proxy.tasks.all_deps_pollster'
+                'cloudify_deployment_proxy.tasks.all_deps_by_id'
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = EXECUTIONS_LIST
                 error = self.assertRaises(NonRecoverableError,
@@ -272,9 +272,11 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
         test_name = 'test_query_deployment_data'
         test_properties = {
             'resource_config': {
-                'deployment_id': 'test_query_deployment_data',
-                'outputs': {
-                    'zero': deployment_outputs_mapping
+                'deployment': {
+                    'id': test_name,
+                    'outputs': {
+                        'zero': deployment_outputs_mapping
+                    }
                 }
             }
         }
@@ -364,7 +366,11 @@ class TestDeploymentProxyUnitTests(testtools.TestCase):
 
         test_name = 'test_poll_with_timeout'
         test_properties = {
-            'resource_config': {'deployment_id': 'test_poll_with_timeout'}
+            'resource_config': {
+                'deployment': {
+                    'id': test_name,
+                }
+            }
         }
         _ctx = self.get_mock_ctx(test_name,
                                  test_properties)

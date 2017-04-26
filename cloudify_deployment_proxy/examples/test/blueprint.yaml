@@ -18,17 +18,20 @@ node_templates:
     type: cloudify.nodes.BlueprintDeployment
     properties:
       resource_config:
-        blueprint_id: bp_dep
-        blueprint_archive: { get_input: bp_dep_archive }
-        deployment_id: bp_dep
+        blueprint:
+          id: bp_dep
+          blueprint_archive: { get_input: bp_dep_archive }
+        deployment:
+          id: bp_dep
 
   dep_proxy:
     type: cloudify.nodes.DeploymentProxy
     properties:
       resource_config:
-        deployment_id: { get_attribute: [ bp_dep, deployment, id ] }
-        outputs:
-          key: bp_dep_output
+        deployment:
+          id: { get_attribute: [ bp_dep, deployment, id ] }
+          outputs:
+            key: bp_dep_output
     relationships:
       - type: cloudify.relationships.depends_on
         target: bp_dep

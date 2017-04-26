@@ -26,9 +26,14 @@ blueprint_deployment_properties = {
 
 deployment_proxy_properties = {
     'resource_config': {
-        'deployment_id': '',
-        'outputs': {
-            'output1': 'output2'
+        'blueprint': {
+            'id': '',
+        },
+        'deployment': {
+            'id': '',
+            'outputs': {
+                'output1': 'output2'
+            }
         }
     }
 }
