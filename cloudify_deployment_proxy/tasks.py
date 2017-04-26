@@ -19,7 +19,7 @@ from cloudify import ctx
 from cloudify import manager
 
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError, RecoverableError
+from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 DEPLOYMENTS_TIMEOUT = 120
@@ -33,78 +33,6 @@ DEFAULT_UNINSTALL_ARGS = {
         'ignore_failure': True
     }
 }
-
-
-@operation
-def wait_for_deployment_ready(**_):
-
-    client = get_desired_value(
-        'client', _,
-        ctx.instance.runtime_properties,
-        ctx.node.properties) or manager.get_rest_client()
-
-    config = get_desired_value(
-        'resource_config', _,
-        ctx.instance.runtime_properties,
-        ctx.node.properties)
-
-    deployment = config.get('deployment')
-    dep_id = deployment.get('id') or ctx.instance.id
-    interval = config.get('interval', POLLING_INTERVAL)
-    state = config.get('state', 'terminated')
-    timeout = config.get('timeout', DEPLOYMENTS_TIMEOUT)
-    workflow_id = \
-        config.get('workflow_id') \
-        or 'create_deployment_environment'
-
-    if not dep_id:
-        raise RecoverableError('Deployment ID is not set.')
-
-    ctx.instance.runtime_properties['deployment'] = {}
-    ctx.instance.runtime_properties['deployment']['id'] = dep_id
-
-    return poll_workflow_after_execute(
-        timeout,
-        interval,
-        client,
-        dep_id,
-        state,
-        workflow_id)
-
-
-@operation
-def query_deployment_data(**_):
-
-    client = get_desired_value(
-        'client', _,
-        ctx.instance.runtime_properties,
-        ctx.node.properties) or manager.get_rest_client()
-
-    config = get_desired_value(
-        'resource_config', _,
-        ctx.instance.runtime_properties,
-        ctx.node.properties)
-
-    deployment = config.get('deployment')
-    dep_id = deployment.get('id') or ctx.instance.id
-    outputs = deployment.get('outputs')
-
-    try:
-        dep_outputs_response = client.deployments.outputs.get(dep_id)
-    except CloudifyClientError as ex:
-        ctx.logger.error(
-            'Ignoring: Failed to query deployment outputs: {0}'
-            .format(str(ex)))
-    else:
-        dep_outputs = dep_outputs_response.get('outputs')
-
-        ctx.logger.debug(
-            'Received these deployment outputs: {0}'.format(dep_outputs))
-
-        for key, val in outputs.items():
-            ctx.instance.runtime_properties[val] = dep_outputs.get(key, '')
-
-    return True
 
 
 @operation
@@ -148,24 +76,30 @@ def upload_blueprint(**_):
 @operation
 def create_deployment(**_):
 
-    _blueprint = _.get('blueprint') or \
-        ctx.instance.runtime_properties.get('blueprint')
+    client = get_desired_value(
+        'client', _,
+        ctx.instance.runtime_properties,
+        ctx.node.properties) or manager.get_rest_client()
 
-    client = _.get('client') or manager.get_rest_client()
-    config = _.get('resource_config') or \
-        ctx.node.properties.get('resource_config')
+    config = get_desired_value(
+        'resource_config', _,
+        ctx.instance.runtime_properties,
+        ctx.node.properties)
 
-    bp_id = _.get('blueprint_id') or \
-        _blueprint.get('id') or config.get('blueprint_id')
-    dep_id = _.get('deployment_id') or \
-        config.get('deployment_id', bp_id)
-    inputs = _.get('inputs') or config.get('inputs', {})
+    blueprint = config.get('blueprint')
+    bp_id = blueprint.get('id') or ctx.instance.id
 
-    interval = _.get('interval', POLLING_INTERVAL)
-    state = _.get('state', 'terminated')
-    timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
-    workflow_id = _.get('workflow_id',
-                        'create_deployment_environment')
+    deployment = config.get('deployment')
+    dep_id = deployment.get('id') or ctx.instance.id
+    inputs = deployment.get('inputs')
+    outputs = deployment.get('outputs')
+    interval = config.get('interval', POLLING_INTERVAL)
+    state = config.get('state', 'terminated')
+    timeout = config.get('timeout', DEPLOYMENTS_TIMEOUT)
+    workflow_id = \
+        config.get(
+            'workflow_id',
+            'create_deployment_environment')
 
     if not any_dep_by_id(client, dep_id):
         ctx.instance.runtime_properties[EXT_RES] = False
@@ -181,26 +115,54 @@ def create_deployment(**_):
     ctx.instance.runtime_properties['deployment'] = {}
     ctx.instance.runtime_properties['deployment']['id'] = dep_id
 
-    return poll_workflow_after_execute(timeout,
-                                       interval,
-                                       client,
-                                       dep_id,
-                                       state,
-                                       workflow_id)
+    poll_workflow_after_execute(
+        timeout,
+        interval,
+        client,
+        dep_id,
+        state,
+        workflow_id)
+
+    try:
+        dep_outputs_response = client.deployments.outputs.get(dep_id)
+    except CloudifyClientError as ex:
+        ctx.logger.error(
+            'Ignoring: Failed to query deployment outputs: {0}'
+            .format(str(ex)))
+    else:
+        dep_outputs = dep_outputs_response.get('outputs')
+
+        ctx.logger.debug(
+            'Received these deployment outputs: {0}'.format(dep_outputs))
+
+        for key, val in outputs.items():
+            if 'outputs' \
+                    not in \
+                    ctx.instance.runtime_properties['deployment'].keys():
+                ctx.instance.runtime_properties['deployment']['outputs'] = {}
+            ctx.instance.runtime_properties['deployment']['outputs'][val] = \
+                dep_outputs.get(key, '')
+
+    return True
 
 
 @operation
 def delete_deployment(**_):
 
-    dep_id_prop = ctx.instance.runtime_properties['deployment'].get('id')
+    client = get_desired_value(
+        'client', _,
+        ctx.instance.runtime_properties,
+        ctx.node.properties) or manager.get_rest_client()
 
-    client = _.get('client') or manager.get_rest_client()
-    config = _.get('resource_config') or \
-        ctx.node.properties.get('resource_config')
+    config = get_desired_value(
+        'resource_config', _,
+        ctx.instance.runtime_properties,
+        ctx.node.properties)
 
-    dep_id = _.get('deployment_id') or \
-        config.get('deployment_id', dep_id_prop)
-    timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
+    deployment = config.get('deployment')
+    dep_id = deployment.get('id') or ctx.instance.id
+    timeout = config.get('timeout', DEPLOYMENTS_TIMEOUT)
+
     if not ctx.instance.runtime_properties.get(EXT_RES, True):
         try:
             client.deployments.delete(deployment_id=dep_id)
@@ -233,19 +195,28 @@ def delete_deployment(**_):
 @operation
 def execute_start(**_):
 
-    client = _.get('client') or manager.get_rest_client()
-    config = _.get('resource_config') or \
-        ctx.node.properties.get('resource_config')
+    client = get_desired_value(
+        'client', _,
+        ctx.instance.runtime_properties,
+        ctx.node.properties) or manager.get_rest_client()
 
-    deployment = ctx.instance.runtime_properties.get('deployment', {})
+    config = get_desired_value(
+        'resource_config', _,
+        ctx.instance.runtime_properties,
+        ctx.node.properties)
 
-    dep_id = _.get('deployment_id') or deployment.get('id') or \
-        config.get('deployment_id')
-
-    interval = _.get('interval', POLLING_INTERVAL)
-    timeout = _.get('timeout', EXECUTIONS_TIMEOUT)
-    workflow_id = _.get('workflow_id', 'install')
-    workflow_state = _.get('workflow_state', 'terminated')
+    deployment = config.get('deployment')
+    dep_id = deployment.get('id') or ctx.instance.id
+    interval = config.get('interval', POLLING_INTERVAL)
+    timeout = config.get('timeout', DEPLOYMENTS_TIMEOUT)
+    workflow_id = \
+        config.get(
+            'workflow_id',
+            'create_deployment_environment')
+    workflow_state = \
+        config.get(
+            'workflow_state',
+            'terminated')
 
     if workflow_id == 'uninstall':
         _args = DEFAULT_UNINSTALL_ARGS
