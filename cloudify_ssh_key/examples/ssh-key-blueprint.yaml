@@ -12,8 +12,8 @@ inputs:
   use_secret_store:
     default: true
 
-  OpenSSH_format:
-    default: 'OpenSSH'
+  openssh_format:
+    default: True
 
   key_name:
     default: 'example-key'
@@ -21,7 +21,7 @@ inputs:
 dsl_definitions:
   resource_config: &RESOURCE_CONFIG
     public_key_path: { get_input: public_key_path }
-    OpenSSH_format: { get_input: OpenSSH_format }
+    openssh_format: { get_input: openssh_format }
 
 node_templates:
 

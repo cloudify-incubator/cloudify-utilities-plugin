@@ -11,14 +11,14 @@ inputs:
   use_secret_store:
     default: false
 
-  OpenSSH_format:
-    default: 'OpenSSH'
+  openssh_format:
+    default: True
 
 dsl_definitions:
   resource_config: &RESOURCE_CONFIG
     private_key_path: { get_input: private_key_path }
     public_key_path: { get_input: public_key_path }
-    OpenSSH_format: { get_input: OpenSSH_format }
+    openssh_format: { get_input: openssh_format }
 
 node_templates:
 

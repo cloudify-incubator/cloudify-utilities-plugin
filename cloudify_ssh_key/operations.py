@@ -13,6 +13,8 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from . import get_desired_value
+
 import os
 import tempfile
 from Crypto.PublicKey import RSA
@@ -22,7 +24,7 @@ from cloudify.exceptions import NonRecoverableError
 from cloudify import ctx, manager
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-OPENSSH_FORMAT = 'OpenSSH'
+OPENSSH_FORMAT_STRING = 'OpenSSH'
 PRIVATE_KEY_EXPORT_TYPE = 'PEM'
 ALGORITHM = 'RSA'
 
@@ -30,49 +32,30 @@ ALGORITHM = 'RSA'
 @operation
 def create(**_):
 
-    resource_config_property = _.get('resource_config') or ctx.instance\
-        .runtime_properties\
-        .get('resource_config') or ctx.node.properties\
-        .get('resource_config')
-    private_key_path = _.get('private_key_path') or ctx.instance\
-        .runtime_properties\
-        .get('private_key_path') or resource_config_property\
-        .get('private_key_path')
-    public_key_path = _.get('public_key_path') or ctx.instance\
-        .runtime_properties\
-        .get('public_key_path') or resource_config_property\
-        .get('public_key_path')
-    OpenSSH_format = _.get(OPENSSH_FORMAT) or ctx.instance.runtime_properties\
-        .get(OPENSSH_FORMAT) or resource_config_property\
-        .get(OPENSSH_FORMAT, True)
-    algorithm = _.get('algorithm') or ctx.instance.runtime_properties\
-        .get('algorithm') or resource_config_property.get('algorithm')
-    bits = _.get('bits') or ctx.instance.runtime_properties\
-        .get('bits') or resource_config_property\
-        .get('bits')
-    use_secret_store = _.get('use_secret_store') or ctx.instance\
-        .runtime_properties\
-        .get('use_secret_store') or ctx.node.properties\
-        .get('use_secret_store')
-    key_name = _.get('key_name') or ctx.instance.runtime_properties\
-        .get('key_name') or ctx.node.properties\
-        .get('key_name', '{0}-{1}'.format(ctx.deployment.id,
-                                          ctx.instance.id))
+    config = get_desired_value(
+        'resource_config', _,
+        ctx.instance.runtime_properties,
+        ctx.node.properties)
 
-    if resource_config_property.get('comment'):
-        ctx.logger.error('NotImplementedError: '
-                         'Tried to pass comment property.')
-    if resource_config_property.get('passphrase'):
-        ctx.logger.error('NotImplementedError: '
-                         'Tried to pass passphrase property.')
-    if resource_config_property.get('unvalidated'):
-        ctx.logger.error('NotImplementedError: '
-                         'Tried to pass unvalidated property.')
+    private_key_path = config.get('private_key_path')
+    public_key_path = config.get('public_key_path')
+    openssh_format = config.get('openssh_format', True)
+    algorithm = config.get('algorithm')
+    bits = config.get('bits')
+    use_secret_store = config.get('use_secret_store') \
+        or ctx.node.properties.get('use_secret_store')
+    key_name = config.get('key_name') \
+        or '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
 
-    # OpenSSH_format is of type boolean
-    if OpenSSH_format:
-        openssh_format_string = OPENSSH_FORMAT
-    else:
+    if config.get('comment'):
+        ctx.logger.error('Property "comment" not implemented.')
+    if config.get('passphrase'):
+        ctx.logger.error('Property "passphrase" not implemented.')
+    if config.get('unvalidated'):
+        ctx.logger.error('Property "unvalidated" not implemented.')
+
+    # openssh_format is of type boolean
+    if not openssh_format:
         raise NonRecoverableError('Only OpenSSH format is supported')
 
     if algorithm != ALGORITHM:
@@ -81,18 +64,21 @@ def create(**_):
     key_object = RSA.generate(bits)
     private_key_export = key_object.exportKey(PRIVATE_KEY_EXPORT_TYPE)
     pubkey = key_object.publickey()
-    public_key_export = pubkey.exportKey(openssh_format_string)
+    public_key_export = pubkey.exportKey(OPENSSH_FORMAT_STRING)
 
     if use_secret_store:
         _create_secret(key_name, private_key_export)
     else:
         if not private_key_path:
-            raise NonRecoverableError('Must provide private_key_path'
-                                      ' when use_secret_store is false')
-        _private_key_handler(private_key_path, private_key_export)
+            raise NonRecoverableError(
+                'Must provide private_key_path when use_secret_store is false')
+
+        _write_key_file(private_key_path,
+                        private_key_export,
+                        _private_key_permissions=True)
 
     if public_key_path:
-        _public_key_handler(public_key_path, public_key_export)
+        _write_key_file(public_key_path, public_key_export)
 
     return
 
@@ -100,26 +86,18 @@ def create(**_):
 @operation
 def delete(**_):
 
-    resource_config_property = _.get('resource_config') or ctx.instance\
-        .runtime_properties\
-        .get('resource_config') or ctx.node.properties\
-        .get('resource_config')
-    private_key_path = _.get('private_key_path') or ctx.instance\
-        .runtime_properties\
-        .get('private_key_path') or resource_config_property\
-        .get('private_key_path')
-    public_key_path = _.get('public_key_path') or ctx.instance\
-        .runtime_properties\
-        .get('public_key_path') or resource_config_property\
-        .get('public_key_path')
-    use_secret_store = _.get('use_secret_store') or ctx.instance\
-        .runtime_properties\
-        .get('use_secret_store') or ctx.node.properties\
-        .get('use_secret_store')
-    key_name = _.get('key_name') or ctx.instance.runtime_properties\
-        .get('key_name') or ctx.node.properties\
-        .get('key_name', '{0}-{1}'.format(ctx.deployment.id,
-                                          ctx.instance.id))
+    config = get_desired_value(
+        'resource_config', _,
+        ctx.instance.runtime_properties,
+        ctx.node.properties)
+
+    private_key_path = config.get('private_key_path')
+    public_key_path = config.get('public_key_path')
+    use_secret_store = config.get('use_secret_store') \
+        or ctx.node.properties.get('use_secret_store')
+    key_name = config.get('key_name') \
+        or '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
+
     if use_secret_store:
         if _get_secret(key_name):
             _delete_secret(key_name)
@@ -158,42 +136,29 @@ def _delete_secret(key):
         raise NonRecoverableError(str(e))
 
 
-def _private_key_handler(private_key_path, private_key_export):
+def _write_key_file(_key_file_path,
+                    _key_file_material,
+                    _private_key_permissions=False):
 
-    private_key_file = \
+    ctx.logger.info('{0}'.format(_key_file_material))
+
+    temporary_file = \
         tempfile.NamedTemporaryFile(delete=False)
 
-    private_key_path_expanded = os.path.expanduser(private_key_path)
-    if private_key_path_expanded:
-        with open(private_key_file.name, 'w') as outfile_private_key:
-            outfile_private_key.write(private_key_export)
-        try:
-            directory = os.path.dirname(private_key_path_expanded)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            os.rename(private_key_file.name,
-                      private_key_path_expanded)
-        except OSError as e:
-            raise NonRecoverableError(str(e))
-
-        os.chmod(os.path.expanduser(private_key_path),
-                 0600)
-
-    return
-
-
-def _public_key_handler(public_key_path, public_key_export):
-
-    public_key_file = \
-        tempfile.NamedTemporaryFile(delete=False)
-
-    with open(public_key_file.name, 'w') as outfile_public_key:
-        outfile_public_key.write(public_key_export)
+    expanded_key_path = os.path.expanduser(_key_file_path)
+    with open(temporary_file.name, 'w') as outfile:
+        outfile.write(_key_file_material)
     try:
-        os.rename(public_key_file.name,
-                  os.path.expanduser(public_key_path))
+        directory = os.path.dirname(expanded_key_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        os.rename(temporary_file.name,
+                  expanded_key_path)
     except OSError as e:
         raise NonRecoverableError(str(e))
+
+    if _private_key_permissions:
+        os.chmod(os.path.expanduser(_key_file_path), 0600)
 
     return
 

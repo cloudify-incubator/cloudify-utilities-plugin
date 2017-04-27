@@ -42,7 +42,7 @@ class TestKey(testtools.TestCase):
                     'public_key_path': '{0}/{1}.pem.pub'.format(
                             key_path,
                             test_name),
-                    'OpenSSH_format': True,
+                    'openssh_format': True,
                     'algorithm': 'RSA',
                     'bits': 2048
                 }
@@ -51,13 +51,13 @@ class TestKey(testtools.TestCase):
             test_properties = {
                 'use_secret_store': use_secret_store,
                 'resource_config': {
-                    'private_key_path': '{0}/{1}.pem'.format(
+                    'private_key_path': '{0}/{1}'.format(
                             key_path,
                             test_name),
-                    'public_key_path': '{0}/{1}.pem.pub'.format(
+                    'public_key_path': '{0}/{1}.pub'.format(
                             key_path,
                             test_name),
-                    'OpenSSH_format': True,
+                    'openssh_format': True,
                     'algorithm': 'RSA',
                     'bits': 2048
                 },
