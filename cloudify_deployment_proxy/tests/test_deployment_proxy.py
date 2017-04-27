@@ -65,6 +65,7 @@ class TestDeploymentProxy(testtools.TestCase):
                                  deployment_proxy_properties)
         current_ctx.set(_ctx)
         _ctx.instance.runtime_properties[EXT_RES] = False
+        _ctx.instance.runtime_properties['deployment'] = {}
 
         # Tests that execute start fails on rest client error
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
