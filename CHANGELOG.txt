@@ -9,3 +9,6 @@ releases:
   v1.1.0:
   - add cloudify_ssh_key plugin (moved from cloudify-key-plugin).
   - refactoring
+
+  v1.1.1:
+  - Fixed an issue where the install workflow is re-executed.
