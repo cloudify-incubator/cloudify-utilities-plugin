@@ -5,7 +5,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/v1.0.0/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/24-CollapseTypes/plugin.yaml
 
 inputs:
 
@@ -14,19 +14,15 @@ inputs:
 
 node_templates:
 
-  bp_dep:
-    type: cloudify.nodes.BlueprintDeployment
-    properties:
-      resource_config:
-        blueprint_archive: { get_input: bp_dep_archive }
-
   dep_proxy:
     type: cloudify.nodes.DeploymentProxy
     properties:
       resource_config:
-        deployment_id: { get_attribute: [ bp_dep, deployment, id ] }
-        outputs:
-          key: bp_dep_output
-    relationships:
-      - type: cloudify.relationships.depends_on
-        target: bp_dep
+        blueprint:
+          id: bp_dep
+          blueprint_archive: { get_input: bp_dep_archive }
+          main_file_name: blueprint.yaml
+        deployment:
+          id: bp_dep
+          outputs:
+            key: bp_dep_output

@@ -10,12 +10,33 @@ plugins:
 
 data_types:
 
+  cloudify.datatypes.Blueprint:
+    properties:
+      id:
+        description: >
+          This is the blueprint that the deployment node is a proxy to.
+        required: false
+      main_file_name:
+        description: >
+          The application blueprint filename. If the blueprint consists many imported files this is the main blueprint.
+        default: blueprint.yaml
+      blueprint_archive:
+        description: >
+          The URL of a .zip to upload to the manager.
+        required: true
+      unvalidated:
+        default: {}
+
   cloudify.datatypes.Deployment:
     properties:
-      deployment_id:
+      id:
         description: >
           This is the deployment that the node is a proxy to.
         required: false
+      inputs:
+        description: >
+          The inputs to the deployment.
+        default: {}
       outputs:
         description: >
           A dictionary of "{ key: value, key: value }".
@@ -25,36 +46,14 @@ data_types:
       unvalidated:
         default: {}
 
-  cloudify.datatypes.BlueprintDeployment:
+  cloudify.datatypes.DeploymentProxy:
     properties:
-      application_file_name:
-        description: >
-          This is the name of the blueprint.yaml file.
-        default: blueprint.yaml
-      blueprint_archive:
-        description: >
-          The URL of a .zip to upload to the manager.
-        required: false
-      blueprint_id:
-        description: >
-          The blueprint ID.
-          If it already exists it will be used. 
-          Defaults to node instance ID.        
-        required: false
-      deployment_id:
-        description: >
-          This is the deployment to install from the blueprint.
-          If it already exists it will be used. 
-          Will be generated if not provided.
-        required: false
-      inputs:
-        description: >
-          The inputs to the deployment.
-        default: {}
-      install_timeout:
-        description: >
-          How long to wait for the install workflow to exist.
-        default: 180
+      blueprint:
+        type: cloudify.datatypes.Blueprint
+        required: true
+      deployment:
+        type: cloudify.datatypes.Deployment
+        required: true
 
   cloudify.datatypes.key:
     properties:
@@ -88,43 +87,8 @@ node_types:
   cloudify.nodes.DeploymentProxy:
     derived_from: cloudify.nodes.Root
     properties:
-      use_external_resource:
-        type: boolean
-        default: true
       resource_config:
-        type: cloudify.datatypes.Deployment
-        default: {}
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
-        start:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.query_deployment_data
-
-  cloudify.nodes.DeploymentProxy.Compute:
-    derived_from: cloudify.nodes.Compute
-    properties:
-      use_external_resource:
-        type: boolean
-        default: true
-      resource_config:
-        type: cloudify.datatypes.Deployment
-        default: {}
-      agent_config:
-        default:
-          install_method: none
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.wait_for_deployment_ready
-        start:
-          implementation: cfy_util.cloudify_deployment_proxy.tasks.query_deployment_data
-
-  cloudify.nodes.BlueprintDeployment:
-    derived_from: cloudify.nodes.Root
-    properties:
-      resource_config:
-        type: cloudify.datatypes.BlueprintDeployment
+        type: cloudify.datatypes.DeploymentProxy
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:

@@ -140,8 +140,6 @@ def _write_key_file(_key_file_path,
                     _key_file_material,
                     _private_key_permissions=False):
 
-    ctx.logger.info('{0}'.format(_key_file_material))
-
     temporary_file = \
         tempfile.NamedTemporaryFile(delete=False)
 
