@@ -76,7 +76,7 @@ data_types:
       passphrase:
         type: string
         required: false
-      OpenSSH_format:
+      openssh_format:
         type: boolean
         required: false
       unvalidated:
