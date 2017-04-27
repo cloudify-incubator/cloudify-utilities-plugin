@@ -22,6 +22,10 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+BP_UPLOAD = '_upload'
+DEP_CREATE = 'create'
+DEP_DELETE = 'delete'
+
 DEPLOYMENTS_TIMEOUT = 120
 EXECUTIONS_TIMEOUT = 900
 POLLING_INTERVAL = 10
@@ -33,6 +37,23 @@ DEFAULT_UNINSTALL_ARGS = {
         'ignore_failure': True
     }
 }
+
+
+def get_client_response(_special_client,
+                        _client_attr,
+                        _client_args):
+
+    _generic_client = \
+        getattr(_special_client, _client_attr)
+
+    try:
+        response = _generic_client(**_client_args)
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Client {0} action {1} failed: {2}.'.format(
+                _special_client, _client_attr, str(ex)))
+    else:
+        return response
 
 
 @operation
@@ -49,24 +70,23 @@ def upload_blueprint(**_):
         ctx.node.properties)
 
     blueprint = config.get('blueprint')
-    app_name = blueprint.get('main_file_name')
+    bp_file_name = blueprint.get('main_file_name')
     bp_archive = blueprint.get('blueprint_archive')
     bp_id = blueprint.get('id') or ctx.instance.id
 
     if not any_bp_by_id(client, bp_id):
         ctx.instance.runtime_properties[EXT_RES] = False
-        try:
-            client.blueprints._upload(
-                blueprint_id=bp_id,
-                archive_location=bp_archive,
-                application_file_name=app_name)
-        except CloudifyClientError as ex:
-            raise NonRecoverableError('Blueprint failed {0}.'.format(str(ex)))
+        bp_upload_args = \
+            dict(blueprint_id=bp_id,
+                 archive_location=bp_archive,
+                 application_file_name=bp_file_name)
+        get_client_response(
+            client.blueprints, BP_UPLOAD, bp_upload_args)
 
     ctx.instance.runtime_properties['blueprint'] = {}
     ctx.instance.runtime_properties['blueprint']['id'] = bp_id
     ctx.instance.runtime_properties['blueprint']['application_file_name'] = \
-        app_name
+        bp_file_name
     ctx.instance.runtime_properties['blueprint']['blueprint_archive'] = \
         bp_archive
 
@@ -102,14 +122,12 @@ def create_deployment(**_):
 
     if not any_dep_by_id(client, dep_id):
         ctx.instance.runtime_properties[EXT_RES] = False
-        try:
-            client.deployments.create(
-                blueprint_id=bp_id,
-                deployment_id=dep_id,
-                inputs=inputs)
-        except CloudifyClientError as ex:
-            raise NonRecoverableError(
-                'Deployment create failed {0}.'.format(str(ex)))
+        dp_create_args = \
+            dict(blueprint_id=bp_id,
+                 deployment_id=dep_id,
+                 inputs=inputs)
+        get_client_response(
+            client.deployments, DEP_CREATE, dp_create_args)
 
     ctx.instance.runtime_properties['deployment'] = {}
     ctx.instance.runtime_properties['deployment']['id'] = dep_id
@@ -144,11 +162,10 @@ def delete_deployment(**_):
     timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
 
     if not ctx.instance.runtime_properties.get(EXT_RES, True):
-        try:
-            client.deployments.delete(deployment_id=dep_id)
-        except CloudifyClientError as ex:
-            raise NonRecoverableError(
-                'Deployment delete failed {0}.'.format(str(ex)))
+        dp_delete_args = \
+            dict(deployment_id=dep_id)
+        get_client_response(
+            client.deployments, DEP_DELETE, dp_delete_args)
         del ctx.instance.runtime_properties[EXT_RES]
 
     pollster_args = {
@@ -158,7 +175,7 @@ def delete_deployment(**_):
 
     success = \
         poll_with_timeout(
-            all_deps_by_id,
+            any_dep_by_id,
             timeout=timeout,
             pollster_args=pollster_args,
             expected_result=False)
@@ -202,10 +219,8 @@ def execute_start(**_):
             'terminated')
 
     if workflow_id == 'uninstall':
-        uninstall_reexecute = False
         _args = DEFAULT_UNINSTALL_ARGS
     else:
-        uninstall_reexecute = True
         _args = {}
     execution_args = _.get('executions_start_args', _args)
 
@@ -215,7 +230,7 @@ def execute_start(**_):
     reexecute = \
         _.get('reexecute') \
         or ctx.instance.runtime_properties.get('reexecute') \
-        or uninstall_reexecute
+        or False
 
     def _execute_and_poll():
 

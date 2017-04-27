@@ -126,7 +126,7 @@ class TestDeploymentProxy(testtools.TestCase):
                                       delete_deployment,
                                       deployment_id='test_deployments_delete',
                                       timeout=.01)
-            self.assertIn('Deployment delete failed',
+            self.assertIn('action delete failed',
                           error.message)
 
         # Tests that deployments delete fails on timeout
@@ -189,7 +189,7 @@ class TestDeploymentProxy(testtools.TestCase):
                                       deployment_id='test_deployments_create',
                                       blueprint_id='test_deployments_create',
                                       timeout=.01)
-            self.assertIn('Deployment create failed',
+            self.assertIn('action create failed',
                           error.message)
 
         # Tests that deployments create fails on timeout
@@ -237,7 +237,7 @@ class TestDeploymentProxy(testtools.TestCase):
             error = self.assertRaises(NonRecoverableError,
                                       upload_blueprint,
                                       blueprint_id='test_upload_blueprint')
-            self.assertIn('Blueprint failed',
+            self.assertIn('_upload failed',
                           error.message)
 
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
