@@ -222,8 +222,10 @@ def execute_start(**_):
             'terminated')
 
     if workflow_id == 'uninstall':
+        uninstall_reexecute = False
         _args = DEFAULT_UNINSTALL_ARGS
     else:
+        uninstall_reexecute = True
         _args = {}
     execution_args = _.get('executions_start_args', _args)
 
@@ -231,17 +233,11 @@ def execute_start(**_):
         ctx.instance.runtime_properties.get(
             EXT_RES, True)
     reexecute = \
-        _.get('reexecute') or \
-        ctx.instance.runtime_properties.get('reexecute')
+        _.get('reexecute') \
+        or ctx.instance.runtime_properties.get('reexecute') \
+        or uninstall_reexecute
 
-    if not external_resource or \
-            (reexecute and poll_workflow_after_execute(
-                timeout,
-                interval,
-                client,
-                dep_id,
-                workflow_state,
-                workflow_id)):
+    def _execute_and_poll():
 
         try:
             client.executions.start(
@@ -252,17 +248,33 @@ def execute_start(**_):
             raise NonRecoverableError(
                 'Executions start failed {0}.'.format(str(ex)))
 
+        return poll_workflow_after_execute(
+            timeout,
+            interval,
+            client,
+            dep_id,
+            workflow_state,
+            workflow_id)
+
     ctx.instance.runtime_properties['executions'] = {}
     ctx.instance.runtime_properties['executions']['workflow_id'] = \
         workflow_id
 
-    return poll_workflow_after_execute(
-        timeout,
-        interval,
-        client,
-        dep_id,
-        workflow_state,
-        workflow_id)
+    if not external_resource or \
+            (reexecute and poll_workflow_after_execute(
+                timeout,
+                interval,
+                client,
+                dep_id,
+                workflow_state,
+                workflow_id)):
+
+        return _execute_and_poll()
+
+    ctx.logger.debug(
+        'Not running execute because this is an external_resource.')
+
+    return True
 
 
 def poll_with_timeout(pollster,
