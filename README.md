@@ -15,3 +15,4 @@ Utilities for extending Cloudify features.
 
   - v1.0.0: First stable version.
   - v1.1.0: Add Cloudify SHH Key Plugin. Combine BlueprintDeployment node type and DeploymentProxy node type.
+  - v1.1.1: Fixed an issue where deployments may be re-installed.
