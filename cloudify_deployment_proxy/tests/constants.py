@@ -26,35 +26,61 @@ blueprint_deployment_properties = {
 
 deployment_proxy_properties = {
     'resource_config': {
-        'deployment_id': '',
-        'outputs': {
-            'output1': 'output2'
+        'blueprint': {
+            'id': '',
+            'blueprint_archive': 'URL',
+            'main_file_name': 'blueprint.yaml'
+        },
+        'deployment': {
+            'id': '',
+            'inputs': {},
+            'outputs': {
+                'output1': 'output2'
+            }
         }
     }
 }
 
 
-# Rest Client Responses
-
 def return_list(*args, **kwargs):
     list_mock = {
-        'id': MagicMock
+        'id': MagicMock,
+        'workflow_id': MagicMock,
+        'workflow_state': MagicMock
     }
     return [list_mock]
 
 
+def return_object(*args, **kwargs):
+    return MagicMock
+
+
+def return_none_object(*args, **kwargs):
+    return None
+
+
+def return_dict_object(*args, **kwargs):
+    return {}
+
+
 BLUEPRINTS_MOCK = MagicMock
-BLUEPRINTS_LIST = [MagicMock]
+BLUEPRINTS_LIST = return_list
+BLUEPRINTS_GET = return_none_object
 BLUEPRINTS_UPLOAD = MagicMock(return_value={'id': 'test'})
 
 DEPLOYMENTS_MOCK = MagicMock
+DEPLOYMENTS_OUTPUTS = MagicMock
+DEPLOYMENTS_OUTPUTS_GET = MagicMock(return_value={'outputs': {}})
 DEPLOYMENTS_LIST = return_list
 DEPLOYMENTS_DELETE = MagicMock(return_value=True)
 DEPLOYMENTS_CREATE = MagicMock(return_value={
     'id': 'test',
     'created_at': datetime.datetime.now()
 })
-
+DEPLOYMENTS_CREATE = MagicMock(return_value={
+    'id': 'test',
+    'created_at': datetime.datetime.now()
+})
 EXECUTIONS_MOCK = MagicMock
 EXECUTIONS_LIST = return_list
 EXECUTIONS_CREATE = MagicMock(return_value={
