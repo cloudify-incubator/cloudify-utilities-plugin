@@ -25,6 +25,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 BP_UPLOAD = '_upload'
 DEP_CREATE = 'create'
 DEP_DELETE = 'delete'
+EXEC_START = 'start'
 
 DEPLOYMENTS_TIMEOUT = 120
 EXECUTIONS_TIMEOUT = 900
@@ -234,14 +235,12 @@ def execute_start(**_):
 
     def _execute_and_poll():
 
-        try:
-            client.executions.start(
-                deployment_id=dep_id,
-                workflow_id=workflow_id,
-                **execution_args)
-        except CloudifyClientError as ex:
-            raise NonRecoverableError(
-                'Executions start failed {0}.'.format(str(ex)))
+        exec_start_args = \
+            dict(deployment_id=dep_id,
+                 workflow_id=workflow_id,
+                 **execution_args)
+        get_client_response(
+            client.executions, EXEC_START, exec_start_args)
 
         return poll_workflow_after_execute(
             timeout,

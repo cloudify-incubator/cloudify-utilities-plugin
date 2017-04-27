@@ -75,7 +75,7 @@ class TestDeploymentProxy(testtools.TestCase):
                                       execute_start,
                                       deployment_id='test_execute_start',
                                       workflow_id='install')
-            self.assertIn('Executions start failed',
+            self.assertIn('action start failed',
                           error.message)
 
         # Tests that execute start fails on timeout
