@@ -92,7 +92,6 @@ def create_deployment(**_):
     deployment = config.get('deployment')
     dep_id = deployment.get('id') or ctx.instance.id
     inputs = deployment.get('inputs')
-    outputs = deployment.get('outputs')
 
     interval = _.get('interval', POLLING_INTERVAL)
     state = _.get('state', 'terminated')
@@ -122,26 +121,6 @@ def create_deployment(**_):
         dep_id,
         state,
         workflow_id)
-
-    try:
-        dep_outputs_response = client.deployments.outputs.get(dep_id)
-    except CloudifyClientError as ex:
-        ctx.logger.error(
-            'Ignoring: Failed to query deployment outputs: {0}'
-            .format(str(ex)))
-    else:
-        dep_outputs = dep_outputs_response.get('outputs')
-
-        ctx.logger.debug(
-            'Received these deployment outputs: {0}'.format(dep_outputs))
-
-        for key, val in outputs.items():
-            if 'outputs' \
-                    not in \
-                    ctx.instance.runtime_properties['deployment'].keys():
-                ctx.instance.runtime_properties['deployment']['outputs'] = {}
-            ctx.instance.runtime_properties['deployment']['outputs'][val] = \
-                dep_outputs.get(key, '')
 
     return True
 
@@ -208,6 +187,7 @@ def execute_start(**_):
 
     deployment = config.get('deployment')
     dep_id = deployment.get('id') or ctx.instance.id
+    outputs = deployment.get('outputs')
 
     interval = _.get('interval', POLLING_INTERVAL)
     timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
@@ -269,7 +249,30 @@ def execute_start(**_):
                 workflow_state,
                 workflow_id)):
 
-        return _execute_and_poll()
+        if not _execute_and_poll():
+            ctx.logger.error(
+                'Deployment {0} execution {1} error.'
+                .format(dep_id, workflow_id))
+
+    try:
+        dep_outputs_response = client.deployments.outputs.get(dep_id)
+    except CloudifyClientError as ex:
+        ctx.logger.error(
+            'Ignoring: Failed to query deployment outputs: {0}'
+            .format(str(ex)))
+    else:
+        dep_outputs = dep_outputs_response.get('outputs')
+
+        ctx.logger.debug(
+            'Received these deployment outputs: {0}'.format(dep_outputs))
+
+        for key, val in outputs.items():
+            if 'outputs' \
+                    not in \
+                    ctx.instance.runtime_properties['deployment'].keys():
+                ctx.instance.runtime_properties['deployment']['outputs'] = {}
+            ctx.instance.runtime_properties['deployment']['outputs'][val] = \
+                dep_outputs.get(key, '')
 
     ctx.logger.debug(
         'Not running execute because this is an external_resource.')
