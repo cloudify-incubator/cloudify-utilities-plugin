@@ -144,6 +144,10 @@ node_types:
   cloudify.nodes.NodeInstanceProxy.Compute:
     derived_from: cloudify.nodes.Compute
     properties:
+      agent_config:
+        default:
+          install_method: provided
+          port: 22
       resource_config:
         type: cloudify.datatypes.NodeInstanceProxy
         default: {}
