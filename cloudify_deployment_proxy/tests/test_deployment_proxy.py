@@ -42,7 +42,8 @@ class TestDeploymentProxy(testtools.TestCase):
 
     def get_mock_ctx(self,
                      test_name,
-                     test_properties):
+                     test_properties,
+                     node_type='cloudify.nodes.DeploymentProxy'):
 
         test_node_id = test_name
         test_properties = test_properties
@@ -54,6 +55,7 @@ class TestDeploymentProxy(testtools.TestCase):
         )
 
         ctx.node.type_hierarchy = ['cloudify.nodes.Root']
+        ctx.node.type = node_type
 
         return ctx
 

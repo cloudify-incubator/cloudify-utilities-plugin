@@ -39,6 +39,8 @@ DEFAULT_UNINSTALL_ARGS = {
     }
 }
 
+NIP = 'NodeInstanceProxy'
+
 
 def get_client_response(_special_client,
                         _client_attr,
@@ -207,6 +209,8 @@ def execute_start(**_):
     dep_id = deployment.get('id') or ctx.instance.id
     outputs = deployment.get('outputs')
 
+    node_instance_proxy = config.get('node_instance')
+
     interval = _.get('interval', POLLING_INTERVAL)
     timeout = _.get('timeout', DEPLOYMENTS_TIMEOUT)
 
@@ -268,8 +272,45 @@ def execute_start(**_):
                 'Deployment {0} execution {1} error.'
                 .format(dep_id, workflow_id))
 
+    if 'cloudify.nodes.NodeInstanceProxy' == ctx.node.type:
+        nip_node_id = node_instance_proxy.get('node', {}).get('id')
+        set_node_instance_proxy_runtime_properties(
+            client, dep_id, nip_node_id)
+    else:
+        set_deployment_outputs(client, dep_id, outputs)
+    return True
+
+
+def set_node_instance_proxy_runtime_properties(
+        _client, _dep_id, _node_id, _node_instance_id=None):
+
+    if NIP not in ctx.instance.runtime_properties.keys():
+        ctx.instance.runtime_properties[NIP] = dict()
+
     try:
-        dep_outputs_response = client.deployments.outputs.get(dep_id)
+        node_instances = \
+            _client.node_instances.list(
+                deployment_id=_dep_id,
+                node_id=_node_id)
+    except CloudifyClientError as ex:
+        ctx.logger.error(
+            'Ignoring: Failed to query node instances: {0}'
+            .format(str(ex)))
+    else:
+        ctx.logger.debug(
+            'Received these node instances: {0}'.format(node_instances))
+        for ni in node_instances.get('items'):
+            ni_id = ni.get('id')
+            if _node_instance_id and ni_id != _node_instance_id:
+                continue
+            ctx.instance.runtime_properties[NIP][ni_id] = \
+                ni.get('runtime_properties')
+
+
+def set_deployment_outputs(_client, _dep_id, _outputs):
+
+    try:
+        dep_outputs_response = _client.deployments.outputs.get(_dep_id)
     except CloudifyClientError as ex:
         ctx.logger.error(
             'Ignoring: Failed to query deployment outputs: {0}'
@@ -280,38 +321,13 @@ def execute_start(**_):
         ctx.logger.debug(
             'Received these deployment outputs: {0}'.format(dep_outputs))
 
-        for key, val in outputs.items():
+        for key, val in _outputs.items():
             if 'outputs' \
                     not in \
                     ctx.instance.runtime_properties['deployment'].keys():
                 ctx.instance.runtime_properties['deployment']['outputs'] = {}
             ctx.instance.runtime_properties['deployment']['outputs'][val] = \
                 dep_outputs.get(key, '')
-
-    ctx.logger.debug(
-        'Not running execute because this is an external_resource.')
-
-    return True
-
-
-def poll_with_timeout(pollster,
-                      timeout,
-                      interval=POLLING_INTERVAL,
-                      pollster_args={},
-                      expected_result=True):
-
-    current_time = time.time()
-
-    while time.time() <= current_time + timeout:
-        if pollster(**pollster_args) != expected_result:
-            ctx.logger.debug('Polling...')
-            time.sleep(interval)
-        else:
-            ctx.logger.debug('Polling succeeded!')
-            return True
-
-    ctx.logger.error('Polling timed out!')
-    return False
 
 
 def any_bp_by_id(_client, _dep_id):
@@ -346,6 +362,26 @@ def resource_by_id(_client, _id, _type):
             '{0} list failed {1}.'.format(_type, str(ex)))
     else:
         return [str(_r['id']) == _id for _r in _resources]
+
+
+def poll_with_timeout(pollster,
+                      timeout,
+                      interval=POLLING_INTERVAL,
+                      pollster_args={},
+                      expected_result=True):
+
+    current_time = time.time()
+
+    while time.time() <= current_time + timeout:
+        if pollster(**pollster_args) != expected_result:
+            ctx.logger.debug('Polling...')
+            time.sleep(interval)
+        else:
+            ctx.logger.debug('Polling succeeded!')
+            return True
+
+    ctx.logger.error('Polling timed out!')
+    return False
 
 
 # Todo: Add ability to filter by execution ID.
