@@ -306,8 +306,13 @@ def set_node_instance_proxy_runtime_properties(
                 continue
             node_instance_proxy[ni_id] = \
                 ni.get('runtime_properties')
+
     ctx.instance.runtime_properties[NIP] = \
         node_instance_proxy
+
+    if len(node_instance_proxy):
+        for key, value in node_instance_proxy.get('ni_id', {}):
+            ctx.instance.runtime_properties[key] = value
 
 
 def set_deployment_outputs(_client, _dep_id, _outputs):
