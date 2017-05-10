@@ -40,6 +40,9 @@ DEFAULT_UNINSTALL_ARGS = {
 }
 
 NIP = 'NodeInstanceProxy'
+NIP_TYPES = \
+    ['cloudify.nodes.NodeInstanceProxy',
+     'cloudify.nodes.NodeInstanceProxy.Compute']
 
 
 def get_client_response(_special_client,
@@ -272,7 +275,7 @@ def execute_start(**_):
                 'Deployment {0} execution {1} error.'
                 .format(dep_id, workflow_id))
 
-    if 'cloudify.nodes.NodeInstanceProxy' == ctx.node.type:
+    if ctx.node.type in NIP_TYPES:
         nip_node_id = node_instance_proxy.get('node', {}).get('id')
         nip_ni_id = node_instance_proxy.get('id')
         set_node_instance_proxy_runtime_properties(

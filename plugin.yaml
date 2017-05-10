@@ -141,6 +141,62 @@ node_types:
         type: cloudify.datatypes.NodeInstanceProxy
         default: {}
 
+  cloudify.nodes.NodeInstanceProxy.Compute:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      resource_config:
+        type: cloudify.datatypes.NodeInstanceProxy
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.upload_blueprint
+        configure:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.create_deployment
+        start:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id:
+              default: install
+        stop:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id:
+              default: uninstall
+        delete:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
+      cloudify.interfaces.cloudify_agent:
+        create:
+          implementation: agent.cloudify_agent.installer.operations.create
+          executor: central_deployment_agent
+          inputs:
+            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+        configure:
+          implementation: agent.cloudify_agent.installer.operations.configure
+          executor: central_deployment_agent
+          inputs:
+            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+        start:
+          implementation: agent.cloudify_agent.installer.operations.start
+          executor: central_deployment_agent
+          inputs:
+            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+        stop:
+          implementation: agent.cloudify_agent.installer.operations.stop
+          executor: central_deployment_agent
+          inputs:
+            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+        delete:
+          implementation: agent.cloudify_agent.installer.operations.delete
+          executor: central_deployment_agent
+          inputs:
+            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+        restart:
+          implementation: agent.cloudify_agent.installer.operations.restart
+          executor: central_deployment_agent
+          inputs:
+            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+
   cloudify.keys.nodes.RSAKey:
     derived_from: cloudify.nodes.Root
     properties:
