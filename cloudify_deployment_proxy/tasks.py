@@ -274,8 +274,9 @@ def execute_start(**_):
 
     if 'cloudify.nodes.NodeInstanceProxy' == ctx.node.type:
         nip_node_id = node_instance_proxy.get('node', {}).get('id')
+        nip_ni_id = node_instance_proxy.get('id')
         set_node_instance_proxy_runtime_properties(
-            client, dep_id, nip_node_id)
+            client, dep_id, nip_node_id, nip_ni_id)
     else:
         set_deployment_outputs(client, dep_id, outputs)
     return True
@@ -284,8 +285,8 @@ def execute_start(**_):
 def set_node_instance_proxy_runtime_properties(
         _client, _dep_id, _node_id, _node_instance_id=None):
 
-    if NIP not in ctx.instance.runtime_properties.keys():
-        ctx.instance.runtime_properties[NIP] = dict()
+    node_instance_proxy = \
+        ctx.instance.runtime_properties.get(NIP, dict())
 
     try:
         node_instances = \
@@ -301,8 +302,12 @@ def set_node_instance_proxy_runtime_properties(
             'Received these node instances: {0}'.format(node_instances))
         for ni in node_instances:
             ni_id = ni.get('id')
-            ctx.instance.runtime_properties[NIP][ni_id] = \
+            if _node_instance_id and _node_instance_id != ni_id:
+                continue
+            node_instance_proxy[ni_id] = \
                 ni.get('runtime_properties')
+    ctx.instance.runtime_properties[NIP] = \
+        node_instance_proxy
 
 
 def set_deployment_outputs(_client, _dep_id, _outputs):
