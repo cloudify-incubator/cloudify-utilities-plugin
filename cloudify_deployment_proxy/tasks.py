@@ -300,12 +300,9 @@ def set_node_instance_proxy_runtime_properties(
         ctx.logger.debug(
             'Received these node instances: {0}'.format(node_instances))
         for ni in node_instances:
-            ctx.logger.info('{0}'.format(ni))
-            # ni_id = ni.get('id')
-            # if _node_instance_id and ni_id != _node_instance_id:
-            #     continue
-            # ctx.instance.runtime_properties[NIP][ni_id] = \
-            #     ni.get('runtime_properties')
+            ni_id = ni.get('id')
+            ctx.instance.runtime_properties[NIP][ni_id] = \
+                ni.get('runtime_properties')
 
 
 def set_deployment_outputs(_client, _dep_id, _outputs):
