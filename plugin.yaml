@@ -174,32 +174,38 @@ node_types:
           implementation: agent.cloudify_agent.installer.operations.create
           executor: central_deployment_agent
           inputs:
-            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+            agent_config:
+              default: { get_attribute: [ SELF, cloudify_agent ] }
         configure:
           implementation: agent.cloudify_agent.installer.operations.configure
           executor: central_deployment_agent
           inputs:
-            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+            agent_config:
+              default: { get_attribute: [ SELF, cloudify_agent ] }
         start:
           implementation: agent.cloudify_agent.installer.operations.start
           executor: central_deployment_agent
           inputs:
-            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+            agent_config:
+              default: { get_attribute: [ SELF, cloudify_agent ] }
         stop:
           implementation: agent.cloudify_agent.installer.operations.stop
           executor: central_deployment_agent
           inputs:
-            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+            agent_config:
+              default: { get_attribute: [ SELF, cloudify_agent ] }
         delete:
           implementation: agent.cloudify_agent.installer.operations.delete
           executor: central_deployment_agent
           inputs:
-            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+            agent_config:
+              default: { get_attribute: [ SELF, cloudify_agent ] }
         restart:
           implementation: agent.cloudify_agent.installer.operations.restart
           executor: central_deployment_agent
           inputs:
-            agent_config: { get_attribute: [ SELF, cloudify_agent ] }
+            agent_config:
+              default: { get_attribute: [ SELF, cloudify_agent ] }
 
   cloudify.keys.nodes.RSAKey:
     derived_from: cloudify.nodes.Root
