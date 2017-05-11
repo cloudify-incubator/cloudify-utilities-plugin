@@ -5,7 +5,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/21-NodeInstanceProxy/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/a276e563295369eaf8228829f786427481c0d975/plugin.yaml
 
 inputs:
 
@@ -32,3 +32,10 @@ node_templates:
         node_instance:
           node:
             id: host
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id: install
+            timeout: 1200
