@@ -12,28 +12,29 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from cloudify_deployment_proxy.tasks import EXT_RES
-
 import mock
 import testtools
 
-from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
+from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
 
+from ..tasks import (
+    EXT_RES,
+    delete_deployment,
+    execute_start,
+    upload_blueprint,
+    poll_with_timeout,
+    create_deployment,
+)
+
+from .client_mock import MockCloudifyRestClient
 from .constants import (
     deployment_proxy_properties,
     EXECUTIONS_MOCK,
-    EXECUTIONS_CREATE,
     DEPLOYMENTS_MOCK,
-    DEPLOYMENTS_DELETE,
-    DEPLOYMENTS_CREATE,
-    DEPLOYMENTS_OUTPUTS,
-    DEPLOYMENTS_OUTPUTS_GET,
-    DEPLOYMENTS_LIST,
     BLUEPRINTS_MOCK,
     BLUEPRINTS_LIST,
-    BLUEPRINTS_UPLOAD,
     REST_CLIENT_EXCEPTION
 )
 
@@ -60,7 +61,6 @@ class TestDeploymentProxy(testtools.TestCase):
         return ctx
 
     def test_execute_start(self):
-        from cloudify_deployment_proxy.tasks import execute_start
 
         test_name = 'test_execute_start'
         _ctx = self.get_mock_ctx(test_name,
@@ -82,8 +82,7 @@ class TestDeploymentProxy(testtools.TestCase):
 
         # Tests that execute start fails on timeout
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            setattr(EXECUTIONS_MOCK, 'start', EXECUTIONS_CREATE)
-            setattr(mock_client, 'executions', EXECUTIONS_MOCK)
+            mock_client.return_value = MockCloudifyRestClient()
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.tasks.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
@@ -99,8 +98,7 @@ class TestDeploymentProxy(testtools.TestCase):
 
         # Tests that execute start succeeds
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            setattr(EXECUTIONS_MOCK, 'start', EXECUTIONS_CREATE)
-            setattr(mock_client, 'executions', EXECUTIONS_MOCK)
+            mock_client.return_value = MockCloudifyRestClient()
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.tasks.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
@@ -111,7 +109,6 @@ class TestDeploymentProxy(testtools.TestCase):
                 self.assertTrue(output)
 
     def test_deployments_delete(self):
-        from cloudify_deployment_proxy.tasks import delete_deployment
 
         test_name = 'test_deployments_delete'
         _ctx = self.get_mock_ctx(test_name,
@@ -133,8 +130,7 @@ class TestDeploymentProxy(testtools.TestCase):
 
         # Tests that deployments delete fails on timeout
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            setattr(DEPLOYMENTS_MOCK, 'delete', DEPLOYMENTS_DELETE)
-            setattr(mock_client, 'deployments', DEPLOYMENTS_MOCK)
+            mock_client.return_value = MockCloudifyRestClient()
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.tasks.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
@@ -149,8 +145,7 @@ class TestDeploymentProxy(testtools.TestCase):
 
         # Tests that deployments delete succeeds
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            setattr(DEPLOYMENTS_MOCK, 'delete', DEPLOYMENTS_DELETE)
-            setattr(mock_client, 'deployments', DEPLOYMENTS_MOCK)
+            mock_client.return_value = MockCloudifyRestClient()
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.tasks.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
@@ -162,9 +157,7 @@ class TestDeploymentProxy(testtools.TestCase):
 
         # Tests that deployments delete checks all_deps_by_id
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            setattr(DEPLOYMENTS_MOCK, 'delete', DEPLOYMENTS_DELETE)
-            setattr(DEPLOYMENTS_MOCK, 'list', DEPLOYMENTS_LIST)
-            setattr(mock_client, 'deployments', DEPLOYMENTS_MOCK)
+            mock_client.return_value = MockCloudifyRestClient()
             _ctx.instance.runtime_properties['deployment'] = {}
             _ctx.instance.runtime_properties['deployment']['id'] = test_name
             output = delete_deployment(deployment_id='test_deployments_delete',
@@ -172,7 +165,6 @@ class TestDeploymentProxy(testtools.TestCase):
             self.assertTrue(output)
 
     def test_deployments_create(self):
-        from cloudify_deployment_proxy.tasks import create_deployment
 
         test_name = 'test_deployments_create'
         _ctx = self.get_mock_ctx(test_name,
@@ -196,8 +188,7 @@ class TestDeploymentProxy(testtools.TestCase):
 
         # Tests that deployments create fails on timeout
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            setattr(DEPLOYMENTS_MOCK, 'create', DEPLOYMENTS_CREATE)
-            setattr(mock_client, 'deployments', DEPLOYMENTS_MOCK)
+            mock_client.return_value = MockCloudifyRestClient()
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.tasks.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
@@ -212,10 +203,7 @@ class TestDeploymentProxy(testtools.TestCase):
 
         # Tests that deployments create succeeds
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            setattr(DEPLOYMENTS_OUTPUTS, 'get', DEPLOYMENTS_OUTPUTS_GET)
-            setattr(DEPLOYMENTS_MOCK, 'outputs', DEPLOYMENTS_OUTPUTS)
-            setattr(DEPLOYMENTS_MOCK, 'create', DEPLOYMENTS_CREATE)
-            setattr(mock_client, 'deployments', DEPLOYMENTS_MOCK)
+            mock_client.return_value = MockCloudifyRestClient()
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.tasks.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
@@ -224,7 +212,6 @@ class TestDeploymentProxy(testtools.TestCase):
                 self.assertTrue(output)
 
     def test_upload_blueprint(self):
-        from cloudify_deployment_proxy.tasks import upload_blueprint
 
         test_name = 'test_upload_blueprint'
         _ctx = self.get_mock_ctx(test_name,
@@ -243,13 +230,11 @@ class TestDeploymentProxy(testtools.TestCase):
                           error.message)
 
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            setattr(BLUEPRINTS_MOCK, '_upload', BLUEPRINTS_UPLOAD)
-            setattr(mock_client, 'blueprints', BLUEPRINTS_MOCK)
+            mock_client.return_value = MockCloudifyRestClient()
             output = upload_blueprint(blueprint_id='test_upload_blueprint')
             self.assertTrue(output)
 
     def test_poll_with_timeout(self):
-        from cloudify_deployment_proxy.tasks import poll_with_timeout
 
         test_name = 'test_poll_with_timeout'
         test_properties = {
