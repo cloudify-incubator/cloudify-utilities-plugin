@@ -5,7 +5,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/4065dab7efd30b71458dff2f320ea5f4638561e3/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/21-NodeInstanceProxy/plugin.yaml
 
 inputs:
 
@@ -13,6 +13,15 @@ inputs:
     default: https://github.com/EarthmanT/the-not-blueprint/archive/master.zip
 
 node_templates:
+
+  hello_world:
+    type: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start: script.sh
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: dep_proxy
 
   dep_proxy:
     type: cloudify.nodes.NodeInstanceProxy.Compute
