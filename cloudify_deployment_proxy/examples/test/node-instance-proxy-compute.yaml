@@ -5,7 +5,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/8202b6196ebb8e730d29dc01cccfd87b1ffb897f/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/4065dab7efd30b71458dff2f320ea5f4638561e3/plugin.yaml
 
 inputs:
 
