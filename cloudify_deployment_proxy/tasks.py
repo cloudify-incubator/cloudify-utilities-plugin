@@ -40,10 +40,9 @@ DEFAULT_UNINSTALL_ARGS = {
 }
 
 NIP = 'NodeInstanceProxy'
-NIP_COMPUTE = 'cloudify.nodes.NodeInstanceProxy.Compute'
 NIP_TYPES = \
     ['cloudify.nodes.NodeInstanceProxy',
-     NIP_COMPUTE]
+     'cloudify.nodes.NodeInstanceProxy.Compute']
 
 
 def get_client_response(_special_client,
@@ -293,7 +292,7 @@ def set_node_instance_proxy_runtime_properties(
         ctx.instance.runtime_properties.get(NIP, dict())
 
     try:
-        _node_instances = \
+        node_instances = \
             _client.node_instances.list(
                 deployment_id=_dep_id,
                 node_id=_node_id)
@@ -303,18 +302,21 @@ def set_node_instance_proxy_runtime_properties(
             .format(str(ex)))
     else:
         ctx.logger.debug(
-            'Received these node instances: {0}'.format(_node_instances))
-        for ni in _node_instances:
+            'Received these node instances: {0}'.format(node_instances))
+        for ni in node_instances:
             ni_id = ni.get('id')
             if _node_instance_id and _node_instance_id != ni_id:
                 continue
             node_instance_proxy[ni_id] = \
                 ni.get('runtime_properties')
-            if ctx.node.type == NIP_COMPUTE:
-                ctx.instance.runtime_properties['agent_config'] = \
-                    ni.get('agent_config')
-                ctx.instance.runtime_properties['agent_config'] = \
-                    {'install_method': 'provided'}
+
+    ctx.instance.runtime_properties[NIP] = \
+        node_instance_proxy
+
+    if ctx.node.type == NIP_TYPES[1]:
+        agent_config = ni.get('runtime_properties', {}).get('cloudify_agent', {})
+        agent_config['install_method'] = 'provided'
+        ctx.instance.runtime_properties['agent_config'] = agent_config
 
 
 def set_deployment_outputs(_client, _dep_id, _outputs):
