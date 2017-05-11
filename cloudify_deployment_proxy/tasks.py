@@ -311,8 +311,10 @@ def set_node_instance_proxy_runtime_properties(
             node_instance_proxy[ni_id] = \
                 ni.get('runtime_properties')
             if ctx.node.type == NIP_COMPUTE:
-                ctx.instance.runtime_properties['cloudify_agent'] = \
-                    ni.get('cloudify_agent')
+                ctx.instance.runtime_properties['agent_config'] = \
+                    ni.get('agent_config')
+                ctx.instance.runtime_properties['agent_config'] = \
+                    {'install_method': 'provided'}
 
 
 def set_deployment_outputs(_client, _dep_id, _outputs):
