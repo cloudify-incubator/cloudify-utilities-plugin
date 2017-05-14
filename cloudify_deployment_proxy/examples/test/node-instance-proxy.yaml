@@ -5,7 +5,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/21-NodeInstanceProxy/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.0/plugin.yaml
 
 inputs:
 

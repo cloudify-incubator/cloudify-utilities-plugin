@@ -12,3 +12,8 @@ releases:
 
   v1.1.1:
   - Fixed an issue where the install workflow is re-executed.
+
+  v1.2.0:
+  - Add NodeInstanceProxy node type.
+  - add cloudify rest client mock
+  - added more tests
