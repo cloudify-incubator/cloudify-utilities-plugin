@@ -12,25 +12,23 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from cloudify.decorators import operation
-from . import DeploymentProxyBase
+UNINSTALL_ARGS = {
+    'allow_custom_parameters': True,
+    'parameters': {
+        'ignore_failure': True
+    }
+}
 
+DEPLOYMENTS_TIMEOUT = 120
+EXECUTIONS_TIMEOUT = 900
+POLLING_INTERVAL = 10
+EXTERNAL_RESOURCE = 'external_resource'
 
-@operation
-def upload_blueprint(**_):
-    return DeploymentProxyBase(_).upload_blueprint()
+BP_UPLOAD = '_upload'
+DEP_CREATE = 'create'
+DEP_DELETE = 'delete'
+EXEC_START = 'start'
 
-
-@operation
-def create_deployment(**_):
-    return DeploymentProxyBase(_).create_deployment()
-
-
-@operation
-def delete_deployment(**_):
-    return DeploymentProxyBase(_).delete_deployment()
-
-
-@operation
-def execute_start(**_):
-    return DeploymentProxyBase(_).execute_workflow()
+NIP = 'NodeInstanceProxy'
+NIP_TYPE = 'cloudify.nodes.NodeInstanceProxy'
+DEP_TYPE = 'cloudify.nodes.DeploymentProxy'
