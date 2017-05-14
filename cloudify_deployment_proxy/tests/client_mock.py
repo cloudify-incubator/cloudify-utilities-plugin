@@ -20,32 +20,34 @@ from cloudify_rest_client.responses import ListResponse
 
 class BaseMockClient(object):
 
-    @staticmethod
-    def base_list_return(*args, **_):
-        list_mock = {
+    @property
+    def list_mock(self):
+        return {
             'id': MagicMock,
             'workflow_id': MagicMock,
-            'workflow_state': MagicMock
+            'workflow_state': MagicMock,
+            'status': MagicMock
         }
+
+    def base_list_return(self, *args, **_):
         del args
-        return ListResponse([list_mock], metadata={})
+        return ListResponse([self.list_mock], metadata={})
 
     def list(self, *args, **kwargs):
         return self.base_list_return(args, kwargs)
-
-    def get(self, *args, **_):
-        return dict()
 
 
 class MockBlueprintsClient(BaseMockClient):
 
     def _upload(self, *args, **_):
+        del args
         return MagicMock(return_value={'id': 'test'})
 
 
 class MockDeploymentsOutputsClient(BaseMockClient):
 
     def get(self, *args, **_):
+        del args
         return MagicMock(return_value={'outputs': {}})
 
 
@@ -60,6 +62,7 @@ class MockDeploymentsClient(BaseMockClient):
                 'id': 'test',
                 'created_at': datetime.datetime.now()
             }
+        del args
         return MagicMock(_return_value)
 
     def delete(self, *args, **_):
@@ -74,7 +77,12 @@ class MockExecutionsClient(BaseMockClient):
                 'id': 'test',
                 'created_at': datetime.datetime.now()
             }
+        del args
         return MagicMock(_return_value)
+
+
+class MockNodeInstancesClient(BaseMockClient):
+    pass
 
 
 class MockCloudifyRestClient(object):
@@ -83,3 +91,4 @@ class MockCloudifyRestClient(object):
         self.blueprints = MockBlueprintsClient()
         self.deployments = MockDeploymentsClient()
         self.executions = MockExecutionsClient()
+        self.node_instances = MockNodeInstancesClient()

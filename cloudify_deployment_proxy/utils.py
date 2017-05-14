@@ -12,25 +12,18 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from cloudify.decorators import operation
-from . import DeploymentProxyBase
+from cloudify import ctx
 
 
-@operation
-def upload_blueprint(**_):
-    return DeploymentProxyBase(_).upload_blueprint()
+def get_desired_value(key,
+                      args,
+                      instance_attr,
+                      node_prop):
+
+    return args.get(key) \
+           or instance_attr.get(key) \
+           or node_prop.get(key)
 
 
-@operation
-def create_deployment(**_):
-    return DeploymentProxyBase(_).create_deployment()
-
-
-@operation
-def delete_deployment(**_):
-    return DeploymentProxyBase(_).delete_deployment()
-
-
-@operation
-def execute_start(**_):
-    return DeploymentProxyBase(_).execute_workflow()
+def update_attributes(_type, _key, _value):
+    ctx.instance.runtime_properties[_type][_key] = _value
