@@ -14,18 +14,18 @@ inputs:
 
 node_templates:
 
-  dep_proxy:
+  node_instance_proxy:
     type: cloudify.nodes.NodeInstanceProxy
     properties:
       resource_config:
         blueprint:
-          id: bp_dep
+          id: deployment_proxy
           blueprint_archive: { get_input: bp_dep_archive }
           main_file_name: blueprint.yaml
         deployment:
-          id: bp_dep
+          id: deployment_proxy
           outputs:
-            key: bp_dep_output
+            key: deployment_proxy_output
         node_instance:
           node:
             id: not_a_node_template
