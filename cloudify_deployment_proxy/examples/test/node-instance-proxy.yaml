@@ -1,0 +1,31 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+  This blueprint (step-1-blueprint.yaml) sets runtime properties that will be used in step 2 blueprint.
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/21-NodeInstanceProxy/plugin.yaml
+
+inputs:
+
+  bp_dep_archive:
+    default: https://github.com/EarthmanT/the-not-blueprint/archive/master.zip
+
+node_templates:
+
+  dep_proxy:
+    type: cloudify.nodes.NodeInstanceProxy
+    properties:
+      resource_config:
+        blueprint:
+          id: bp_dep
+          blueprint_archive: { get_input: bp_dep_archive }
+          main_file_name: blueprint.yaml
+        deployment:
+          id: bp_dep
+          outputs:
+            key: bp_dep_output
+        node_instance:
+          node:
+            id: not_a_node_template
