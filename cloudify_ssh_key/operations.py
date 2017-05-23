@@ -79,6 +79,8 @@ def create(**_):
 
     if public_key_path:
         _write_key_file(public_key_path, public_key_export)
+    ctx.instance.runtime_properties['public_key_export'] = \
+        public_key_export
 
     return
 
