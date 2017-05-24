@@ -79,8 +79,12 @@ def create(**_):
 
     if public_key_path:
         _write_key_file(public_key_path, public_key_export)
-    ctx.instance.runtime_properties['public_key_export'] = \
-        public_key_export
+    if _.get('store_public_key_material', True):
+        ctx.instance.runtime_properties['public_key_export'] = \
+            public_key_export
+    if _.get('store_private_key_material', False):
+        ctx.instance.runtime_properties['private_key_export'] = \
+            private_key_export
 
     return
 
