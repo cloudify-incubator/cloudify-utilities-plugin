@@ -26,6 +26,7 @@ from ..polling import (
     all_deps_by_id,
     resource_by_id,
     poll_with_timeout,
+    dep_logs_redirect,
     dep_workflow_in_state_pollster,
     poll_workflow_after_execute)
 
@@ -210,6 +211,33 @@ class TestPolling(DeploymentProxyTestBase):
                     0)
             self.assertTrue(output)
 
+    # Test that matching executions returns True with get empty logs
+    def test_dep_workflow_in_state_pollster_matching_executions_logs(self):
+        test_name = 'test_dep_workflow_in_state_pollster_matching_executions'
+        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
+            cfy_mock_client = MockCloudifyRestClient()
+            list_response = cfy_mock_client.blueprints.list()
+
+            cfy_mock_client.events._set([])
+
+            list_response[0]['id'] = test_name
+            list_response[0]['status'] = 'terminated'
+
+            def mock_return(*args, **kwargs):
+                del args, kwargs
+                return list_response
+
+            cfy_mock_client.executions.list = mock_return
+            mock_client.return_value = cfy_mock_client
+            output = \
+                dep_workflow_in_state_pollster(
+                    cfy_mock_client,
+                    test_name,
+                    'terminated',
+                    0,
+                    True)
+            self.assertTrue(output)
+
     # Test that matching executions returns True
     def test_dep_workflow_in_state_pollster_matching_state(self):
         test_name = 'test_dep_workflow_in_state_pollster_matching_executions'
@@ -280,3 +308,65 @@ class TestPolling(DeploymentProxyTestBase):
                 poll_workflow_after_execute(
                     None, None, None, None, None, None)
             self.assertTrue(output)
+
+    def test_dep_logs_redirect_predefined_level(self):
+        test_name = "dep_logs_redirect_predefined_level"
+        _ctx = self.get_mock_ctx(test_name)
+        _ctx.logger.log = mock.MagicMock(return_value=None)
+        current_ctx.set(_ctx)
+
+        cfy_mock_client = MockCloudifyRestClient()
+
+        cfy_mock_client.events._set([{
+            "node_instance_id": "vm_ke9e2d",
+            "operation": "cloudify.interfaces.cloudify_agent.create",
+            "blueprint_id": "linuxbp1",
+            "timestamp": "2017-03-22T11:42:00.484Z",
+            "message": "Successfully configured cfy-agent",
+            "level": "error",
+            "node_name": "vm",
+            "workflow_id": "install",
+            "reported_timestamp": "2017-03-22T11:41:59.169Z",
+            "deployment_id": "linuxdp1",
+            "type": "cloudify_log",
+            "execution_id": "19ce78d6-babc-4a18-ba8e-74b853f2b387",
+            "logger": "22e710c6-18b8-4e96-b8a3-2104b81c5bfc"
+        }])
+
+        dep_logs_redirect(cfy_mock_client, 'some_execution_id')
+        _ctx.logger.log.assert_called_with(
+            40,
+            '2017-03-22T11:41:59.169Z [vm_ke9e2d.create] Successfully '
+            'configured cfy-agent')
+
+    def test_dep_logs_redirect_unknow_level(self):
+        test_name = "dep_logs_redirect_predefined_level"
+        _ctx = self.get_mock_ctx(test_name)
+        _ctx.logger.log = mock.MagicMock(return_value=None)
+        current_ctx.set(_ctx)
+
+        cfy_mock_client = MockCloudifyRestClient()
+
+        cfy_mock_client.events._set([{
+            "node_instance_id": "vm_ke9e2d",
+            "event_type": "task_succeeded",
+            "operation": "cloudify.interfaces.cloudify_agent.create",
+            "blueprint_id": "linuxbp1",
+            "timestamp": "2017-03-22T11:42:00.788Z",
+            "message": (
+                "Task succeeded 'cloudify_agent.installer.operations.create'"
+            ),
+            "node_name": "vm",
+            "workflow_id": "install",
+            "error_causes": None,
+            "reported_timestamp": "2017-03-22T11:42:00.083Z",
+            "deployment_id": "linuxdp1",
+            "type": "cloudify_event",
+            "execution_id": "19ce78d6-babc-4a18-ba8e-74b853f2b387"
+        }])
+
+        dep_logs_redirect(cfy_mock_client, 'some_execution_id')
+        _ctx.logger.log.assert_called_with(
+            20,
+            "2017-03-22T11:42:00.083Z [vm_ke9e2d.create] Task succeeded "
+            "'cloudify_agent.installer.operations.create'")

@@ -85,6 +85,17 @@ class MockNodeInstancesClient(BaseMockClient):
     pass
 
 
+class MockEventsClient(BaseMockClient):
+
+    list_events = []
+
+    def _set(self, list_events):
+        self.list_events = list_events
+
+    def get(self, *args, **_):
+        return self.list_events, len(self.list_events)
+
+
 class MockCloudifyRestClient(object):
 
     def __init__(self):
@@ -92,3 +103,4 @@ class MockCloudifyRestClient(object):
         self.deployments = MockDeploymentsClient()
         self.executions = MockExecutionsClient()
         self.node_instances = MockNodeInstancesClient()
+        self.events = MockEventsClient()

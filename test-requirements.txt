@@ -4,3 +4,5 @@ coverage
 testtools>=0.9.36,!=1.2.0
 tox
 nose-cov
+pylint
+flake8

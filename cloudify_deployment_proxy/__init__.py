@@ -40,7 +40,7 @@ from .polling import (
 from .utils import get_desired_value, update_attributes
 
 
-class DeploymentProxyBase:
+class DeploymentProxyBase(object):
 
     def __init__(self,
                  operation_inputs):
@@ -73,10 +73,11 @@ class DeploymentProxyBase:
         self.blueprint_archive = self.blueprint.get('blueprint_archive')
 
         # Deployment-related properties
-        self.deployment = self.config.get('deployment')
+        self.deployment = self.config.get('deployment', {})
         self.deployment_id = self.deployment.get('id') or ctx.instance.id
         self.deployment_inputs = self.deployment.get('inputs')
         self.deployment_outputs = self.deployment.get('outputs')
+        self.deployment_logs = self.deployment.get('logs', {})
 
         # Node-instance-related properties
         self.node_instance_proxy = self.config.get('node_instance')
@@ -267,4 +268,5 @@ class DeploymentProxyBase:
             self.client,
             self.deployment_id,
             self.workflow_state,
-            self.workflow_id)
+            self.workflow_id,
+            _log_redirect=self.deployment_logs.get('redirect', True))

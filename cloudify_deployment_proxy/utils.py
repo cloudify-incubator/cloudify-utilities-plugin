@@ -20,9 +20,9 @@ def get_desired_value(key,
                       instance_attr,
                       node_prop):
 
-    return args.get(key) \
-           or instance_attr.get(key) \
-           or node_prop.get(key)
+    return (args.get(key) or
+            instance_attr.get(key) or
+            node_prop.get(key))
 
 
 def update_attributes(_type, _key, _value):

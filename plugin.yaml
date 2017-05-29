@@ -43,6 +43,10 @@ data_types:
           Get "key" the deployment.
           Set "value" runtime property to the value of the output.
         required: false
+      logs:
+        description: >
+          Logs redirect settings, by default {redirect: true}
+        required: false
       unvalidated:
         default: {}
 
