@@ -79,10 +79,56 @@ def poll_with_timeout(pollster,
     return False
 
 
+def dep_logs_redirect(_client, execution_id):
+    last_event = int(ctx.instance.runtime_properties.get(
+        "_last_received_event_" + execution_id, 0
+    ))
+
+    full_count = last_event + 100
+
+    while full_count > last_event:
+        events, full_count = _client.events.get(execution_id, last_event,
+                                                last_event + 100, True)
+        for event in events:
+
+            instance_prompt = event.get('node_instance_id', "")
+            if instance_prompt:
+                if event.get('operation'):
+                    instance_prompt += (
+                        "." + event.get('operation').split('.')[-1]
+                    )
+
+            if instance_prompt:
+                instance_prompt = "[" + instance_prompt + "] "
+
+            message = "%s %s%s" % (
+                event.get('reported_timestamp', ""),
+                instance_prompt if instance_prompt else "",
+                event.get('message', "")
+            )
+            level = event.get('level')
+            predefined_levels = {
+                'critical': 50,
+                'error': 40,
+                'warning': 30,
+                'info': 20,
+                'debug': 10
+            }
+            if level in predefined_levels:
+                ctx.logger.log(predefined_levels[level], message)
+            else:
+                ctx.logger.log(20, message)
+
+        last_event += len(events)
+    ctx.instance.runtime_properties["_last_received_event_" +
+                                    execution_id] = last_event
+
+
 def dep_workflow_in_state_pollster(_client,
                                    _dep_id,
                                    _state,
-                                   _workflow_id=None):
+                                   _workflow_id=None,
+                                   _log_redirect=False):
 
     exec_list_fields = \
         ['status', 'workflow_id', 'created_at', 'id']
@@ -98,7 +144,9 @@ def dep_workflow_in_state_pollster(_client,
         for _exec in _execs:
             if _workflow_id and _exec.get('workflow_id', '') != _workflow_id:
                 continue
-            elif _exec.get('status') == _state:
+            if _log_redirect:
+                dep_logs_redirect(_client, _exec.get('id'))
+            if _exec.get('status') == _state:
                 return True
     return False
 
@@ -108,13 +156,15 @@ def poll_workflow_after_execute(_timeout,
                                 _client,
                                 _dep_id,
                                 _state,
-                                _workflow_id):
+                                _workflow_id,
+                                _log_redirect=False):
 
     pollster_args = {
         '_client': _client,
         '_dep_id': _dep_id,
         '_state': _state,
-        '_workflow_id': _workflow_id
+        '_workflow_id': _workflow_id,
+        '_log_redirect': _log_redirect
     }
 
     ctx.logger.debug('Polling: {0}'.format(pollster_args))
