@@ -1,4 +1,5 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+########
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,21 +12,4 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
-import setuptools
-
-setuptools.setup(
-    name='cloudify-utilities-plugin',
-    version='1.2.0',
-    author='Gigaspaces.com',
-    author_email='hello@getcloudify.org',
-    description='Utilities for extending Cloudify',
-    packages=['cloudify_deployment_proxy',
-              'cloudify_ssh_key',
-              'cloudify_configuration'],
-    license='LICENSE',
-    install_requires=[
-        'cloudify-plugins-common>=4.0',
-        'cloudify-rest-client>=4.0',
-        'pycrypto']
-)
+__author__ = 'michael'
