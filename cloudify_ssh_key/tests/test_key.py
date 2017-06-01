@@ -15,12 +15,14 @@
 # Built-in Imports
 import os
 import mock
+import copy
 import tempfile
 import testtools
 
 # Third Party Imports
 from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
+from cloudify.exceptions import NonRecoverableError
 from cloudify_ssh_key.operations import create, delete, _get_secret
 
 
@@ -105,3 +107,28 @@ class TestKey(testtools.TestCase):
         self.assertTrue(os.path.exists(key_path))
         delete()
         self.assertFalse(os.path.exists(key_path))
+
+    def test_raise_unimplemented(self):
+
+        corner_cases = [{
+            'comment': 'some_comment',
+            'passphrase': 'some_passphrase',
+            'unvalidated': 'some_unvalidated',
+            'openssh_format': False
+        }, {
+            'algorithm': 'DSA'
+        }, {
+            'use_secret_store': False,
+            'private_key_path': None,
+            'openssh_format': True,
+            'algorithm': 'RSA',
+            'bits': 2048
+        }]
+
+        for case in corner_cases:
+            _ctx = self.mock_ctx('test_raise_unimplemented', True)
+            _ctx.node.properties['use_secret_store'] = False
+            current_ctx.set(ctx=_ctx)
+            self.assertRaises(NonRecoverableError,
+                              create,
+                              resource_config=copy.deepcopy(case))

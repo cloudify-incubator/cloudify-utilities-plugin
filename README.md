@@ -9,6 +9,7 @@ Utilities for extending Cloudify features.
 
 - Cloudify Deployment Proxy
 - Cloudify SSH Key
+- Cloudify Configuration
 
 
 ## Versions:
