@@ -16,25 +16,23 @@
 
 from cloudify import ctx
 from cloudify.workflows import ctx as workflow_ctx
-
-from cloudify.state import ctx_parameters as inputs
 from cloudify.decorators import workflow
 
-##
 from cloudify import manager
 
 import json
 
+
 def load_configuration(parameters, **kwargs):
-    #load params
+    # load params
     if isinstance(parameters, dict):
         params = parameters
     else:
         params = json.loads(parameters)
 
-    #get previous params
+    # get previous params
     p = ctx.instance.runtime_properties.get('params', {})
-    #update params
+    # update params
     p.update(params)
     ctx.instance.runtime_properties['params'] = p
 
@@ -42,23 +40,24 @@ def load_configuration(parameters, **kwargs):
 def load_configuration_to_runtime_properties(source_config, **kwargs):
     old_params = ctx.source.instance.runtime_properties.get('params', {})
 
-    #privent recursion by removing old_params from old_params
+    # privent recursion by removing old_params from old_params
     old_params['old_params'] = {}
 
     # retrive relevant parameters list from node properties
     params_list = ctx.source.node.properties['params_list']
 
     # populate params from main configuration with only relevant values
-    params = {k:v for k, v in source_config.iteritems() if k in params_list}
+    params = {k: v for k, v in source_config.iteritems() if k in params_list}
 
     # overide params with HARD coded node params
     params.update(ctx.source.node.properties['params'])
 
-    # create in params old_params key with empty dict so it wll match to the old_params
+    # create in params old_params key with empty dict
+    # so it wll match to the old_params
     params['old_params'] = {}
 
     # find changed params between old params and populated params
-    diff_params = [k for k,v in params.iteritems() if v != old_params.get(k)]
+    diff_params = [k for k, v in params.iteritems() if v != old_params.get(k)]
 
     # populate the old params into params
     params['old_params'] = old_params
@@ -66,11 +65,11 @@ def load_configuration_to_runtime_properties(source_config, **kwargs):
     # populate diff_params inot params
     params['diff_params'] = diff_params
 
-    ctx.logger.info("Show params: {}" . format(params) )
-    ctx.logger.info("Show old params: {}" . format(old_params) )
-    ctx.logger.info("Show diff params: {}" . format(diff_params) )
+    ctx.logger.info("Show params: {}".format(params))
+    ctx.logger.info("Show old params: {}".format(old_params))
+    ctx.logger.info("Show diff params: {}".format(diff_params))
 
-    #update params to runtime properties
+    # update params to runtime properties
     ctx.source.instance.runtime_properties['params'] = params
 
 
@@ -82,36 +81,47 @@ def update(params, configuration_node_type, node_types_to_update, **kwargs):
     restcli = manager.get_rest_client()
 
     node_types = set(node_types_to_update)
-    ## update interface on the config node
+    # update interface on the config node
     graph = ctx.graph_mode()
 
     sequence = graph.sequence()
     for node in ctx.nodes:
         if configuration_node_type in node.type_hierarchy:
             for instance in node.instances:
-                load_config_task = instance.execute_operation('cloudify.interfaces.lifecycle.configure', allow_kwargs_override=True, kwargs={'parameters': params})
+                load_config_task = instance.execute_operation(
+                    'cloudify.interfaces.lifecycle.configure',
+                    allow_kwargs_override=True, kwargs={'parameters': params}
+                )
                 sequence.add(load_config_task)
 
     for node in ctx.nodes:
         if node_types.intersection(set(node.type_hierarchy)):
             for instance in node.instances:
                 for relationship in instance.relationships:
-                    operation_task = relationship.execute_target_operation('cloudify.interfaces.relationship_lifecycle.preconfigure')
+                    operation_task = relationship.execute_target_operation(
+                        'cloudify.interfaces.relationship_lifecycle'
+                        '.preconfigure'
+                    )
                     sequence.add(operation_task)
 
     graph.execute()
-    
+
     sequence = graph.sequence()
 
     for node in ctx.nodes:
         if node_types.intersection(set(node.type_hierarchy)):
             for instance in node.instances:
                 currentinstance = restcli.node_instances.get(instance.id)
-                if len( currentinstance.runtime_properties['params']['diff_params'] ) > 0 :
-                    ctx.logger.info("Updating instance ID: {} with diff_params {} " . format(instance.id , currentinstance.runtime_properties['params']['diff_params'] ) )
-                    operation_task = instance.execute_operation('cloudify.interfaces.lifecycle.update')
+                params = currentinstance.runtime_properties['params']
+                if len(params['diff_params']) > 0:
+                    ctx.logger.info(
+                        "Updating instance ID: {} with diff_params {}".format(
+                            instance.id, params['diff_params']
+                        )
+                    )
+                    operation_task = instance.execute_operation(
+                        'cloudify.interfaces.lifecycle.update'
+                    )
                     sequence.add(operation_task)
 
-
     return graph.execute()
-
