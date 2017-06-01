@@ -1,4 +1,4 @@
-# cloudify-configuration-plugin
+# Cloudify Utilities: Configuration
 
 ## Configuration plugin manual for VCPE solution
 
