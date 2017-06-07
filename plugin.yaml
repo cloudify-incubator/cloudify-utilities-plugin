@@ -2,15 +2,19 @@ plugins:
 
   cfy_util:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.2.zip
 
   keys:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.2.zip
 
   configuration:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.2.zip
+
+  terminal:
+    executor: central_deployment_agent
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.2.zip
 
 data_types:
 
@@ -117,6 +121,49 @@ data_types:
 
 node_types:
 
+  cloudify.terminal.raw:
+    derived_from: cloudify.nodes.Root
+    properties:
+      terminal_auth:
+        # login credentials for ios server
+        default:
+          # ssh user
+          user: ""
+          # optional, ssh password
+          password: ""
+          # optional, device ip
+          ip: ""
+          # optional, ssh user key
+          key_content: ""
+          # optional, ssh port
+          port: 22
+          # optional, save communication logs
+          store_logs: false
+          # optional, list of prompts accepted from device, by default: #/$
+          promt_check: []
+          # optional, list of possible errors without new line
+          errors: []
+          # optional, command for close connection, default 'exit'
+          exit_command: exit
+
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        configure:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        start:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        stop:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        delete:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+
   configuration_loader:
     derived_from: cloudify.nodes.ApplicationServer
     properties:
@@ -183,6 +230,16 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_public_key_material:
+              description: >
+                Allow the public key material to be stored as a runtime property. Recommended.
+              type: boolean
+              default: true
+            store_private_key_material:
+              description: Allow the private key material to be stored as a runtime property. Not recommended for manager deployments.
+              type: boolean
+              default: false
         delete:
           implementation: keys.cloudify_ssh_key.operations.delete
 

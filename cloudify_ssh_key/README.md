@@ -1,4 +1,4 @@
-# Cloudify SSH Key
+# Cloudify Utilities: SSH Key
 
 This plugin enables a user to create a private and public key.
 

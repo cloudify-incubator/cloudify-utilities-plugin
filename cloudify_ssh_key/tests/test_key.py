@@ -23,7 +23,10 @@ import testtools
 from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
-from cloudify_ssh_key.operations import create, delete, _get_secret
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_ssh_key.operations import (create, delete, _get_secret,
+                                         _create_secret, _delete_secret,
+                                         _remove_path, _write_key_file)
 
 
 class TestKey(testtools.TestCase):
@@ -91,7 +94,10 @@ class TestKey(testtools.TestCase):
 
         with mock.patch('cloudify.manager.get_rest_client'):
             key_path = self.create_public_key_path(ctx=ctx)
-            create()
+            create(store_private_key_material=True)
+            self.assertIsNotNone(
+                ctx.instance.runtime_properties.get('private_key_export')
+            )
             self.assertIsNotNone(_get_secret('test_delete_with_secret'))
             self.assertTrue(os.path.exists(key_path))
             delete()
@@ -132,3 +138,32 @@ class TestKey(testtools.TestCase):
             self.assertRaises(NonRecoverableError,
                               create,
                               resource_config=copy.deepcopy(case))
+
+    def test_create_secret_Error(self):
+        mock_client = mock.MagicMock(side_effect=CloudifyClientError("e"))
+        with mock.patch('cloudify.manager.get_rest_client', mock_client):
+            self.assertRaises(NonRecoverableError, _create_secret, 'k', 'v')
+
+    def test_get_secret_Error(self):
+        mock_client = mock.MagicMock(side_effect=CloudifyClientError("e"))
+        with mock.patch('cloudify.manager.get_rest_client', mock_client):
+            self.assertRaises(NonRecoverableError, _get_secret, 'k')
+
+    def test_delete_secret_Error(self):
+        mock_client = mock.MagicMock(side_effect=CloudifyClientError("e"))
+        with mock.patch('cloudify.manager.get_rest_client', mock_client):
+            self.assertRaises(NonRecoverableError, _delete_secret, 'k')
+
+    def test_remove_path_Error(self):
+        mock_client = mock.MagicMock(side_effect=OSError("e"))
+        with mock.patch('os.remove', mock_client):
+            self.assertRaises(NonRecoverableError, _remove_path, 'k')
+
+    def test__write_key_file_Error(self):
+        mock_client = mock.MagicMock(side_effect=OSError("e"))
+        with mock.patch('os.path.exists', mock.MagicMock(return_value=False)):
+            with mock.patch('os.makedirs', mock_client):
+                fake_file = mock.mock_open()
+                with mock.patch('__builtin__.open', fake_file):
+                    self.assertRaises(NonRecoverableError, _write_key_file,
+                                      'k', 'content')

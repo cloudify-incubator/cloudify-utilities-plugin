@@ -1,4 +1,4 @@
-# Cloudify Deployment Proxy
+# Cloudify Utilities: Deployment Proxy
 
 This plugin enables a user to connect a deployment to another deployment, in effect enabling "chains" of applications or service.
 
@@ -21,8 +21,8 @@ This test example is used to pass validation that the plugin is working.
 Run:
 
 ```shell
-$ cfy install cloudify_deployment_proxy/examples/test/blueprint.yaml 
-Uploading blueprint cloudify_deployment_proxy/examples/test/blueprint.yaml...
+$ cfy install cloudify_deployment_proxy/examples/test/deployment-proxy.yaml
+Uploading blueprint cloudify_deployment_proxy/examples/test/deployment-proxy.yaml...
  blueprint.yaml |######################################################| 100.0%
 Blueprint uploaded. The blueprint's id is test
 Creating new deployment from blueprint test...
