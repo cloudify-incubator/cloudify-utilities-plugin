@@ -16,6 +16,7 @@ from cloudify import ctx
 from cloudify import manager
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
+import time
 
 from .constants import (
     UNINSTALL_ARGS,
@@ -36,6 +37,7 @@ from .polling import (
     any_dep_by_id,
     poll_with_timeout,
     poll_workflow_after_execute,
+    dep_system_workflows_finished
 )
 from .utils import get_desired_value, update_attributes
 
@@ -171,7 +173,10 @@ class DeploymentProxyBase(object):
         client_args = dict(deployment_id=self.deployment_id)
 
         if not ctx.instance.runtime_properties.get(EXTERNAL_RESOURCE, True):
+            ctx.logger.info("Delete deployment {0}".format(self.deployment_id))
             self.dp_get_client_response('deployments', DEP_DELETE, client_args)
+
+        ctx.logger.info("Wait for deployment delete.")
 
         pollster_args = \
             dict(_client=self.client,
@@ -179,11 +184,28 @@ class DeploymentProxyBase(object):
 
         del ctx.instance.runtime_properties['deployment']
 
-        return poll_with_timeout(
+        poll_result = poll_with_timeout(
             any_dep_by_id,
             timeout=self.timeout,
             pollster_args=pollster_args,
             expected_result=False)
+
+        ctx.logger.info("Little wait internal cleanup services.")
+
+        time.sleep(POLLING_INTERVAL)
+
+        ctx.logger.info("Wait for stop all system workflows.")
+
+        pollster_args = \
+            dict(_client=self.client)
+
+        poll_with_timeout(
+            dep_system_workflows_finished,
+            timeout=self.timeout,
+            pollster_args=pollster_args,
+            expected_result=True)
+
+        return poll_result
 
     def execute_workflow(self):
 
