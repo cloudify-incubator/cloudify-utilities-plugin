@@ -17,3 +17,14 @@ releases:
   - Add NodeInstanceProxy node type.
   - add cloudify rest client mock
   - added more tests
+
+  v1.2.1:
+  - Public Key Runtime Property
+
+  v1.2.2:
+  - add ability to store to runtime props
+
+  v1.2.3:
+  - configuration plugin
+  - terminal plugin
+  - improved deployment/blueprint as external resource support
