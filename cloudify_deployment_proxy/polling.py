@@ -124,6 +124,22 @@ def dep_logs_redirect(_client, execution_id):
                                     execution_id] = last_event
 
 
+def dep_system_workflows_finished(_client):
+
+    try:
+        _execs = _client.executions.list(include_system_workflows=True)
+    except CloudifyClientError as ex:
+        raise NonRecoverableError(
+            'Executions list failed {0}.'.format(str(ex)))
+    else:
+        for _exec in _execs:
+            if _exec.get('is_system_workflow'):
+                if _exec.get('status') not in ('terminated', 'failed',
+                                               'cancelled'):
+                    return False
+    return True
+
+
 def dep_workflow_in_state_pollster(_client,
                                    _dep_id,
                                    _state,

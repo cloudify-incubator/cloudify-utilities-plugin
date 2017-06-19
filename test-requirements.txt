@@ -6,3 +6,5 @@ tox
 nose-cov
 pylint
 flake8
+# for blueprints validate
+cloudify>=3.4.1

@@ -29,6 +29,20 @@ REST_CLIENT_EXCEPTION = \
 
 class TestDeployment(DeploymentProxyTestBase):
 
+    sleep_mock = None
+
+    def setUp(self):
+        super(TestDeployment, self).setUp()
+        mock_sleep = mock.MagicMock()
+        self.sleep_mock = mock.patch('time.sleep', mock_sleep)
+        self.sleep_mock.start()
+
+    def tearDown(self):
+        if self.sleep_mock:
+            self.sleep_mock.stop()
+            self.sleep_mock = None
+        super(TestDeployment, self).tearDown()
+
     def test_delete_deployment_rest_client_error(self):
 
         test_name = 'test_delete_deployment_rest_client_error'

@@ -28,10 +28,25 @@ from ..polling import (
     poll_with_timeout,
     dep_logs_redirect,
     dep_workflow_in_state_pollster,
+    dep_system_workflows_finished,
     poll_workflow_after_execute)
 
 
 class TestPolling(DeploymentProxyTestBase):
+
+    sleep_mock = None
+
+    def setUp(self):
+        super(TestPolling, self).setUp()
+        mock_sleep = mock.MagicMock()
+        self.sleep_mock = mock.patch('time.sleep', mock_sleep)
+        self.sleep_mock.start()
+
+    def tearDown(self):
+        if self.sleep_mock:
+            self.sleep_mock.stop()
+            self.sleep_mock = None
+        super(TestPolling, self).tearDown()
 
     # test that any bp by id returns false if there are no matching
     def test_any_bp_by_id_no_blueprint(self):
@@ -170,6 +185,69 @@ class TestPolling(DeploymentProxyTestBase):
                 {},
                 True)
         self.assertTrue(output)
+
+    # Test that no matching executions returns False
+    def test_dep_system_workflows_finished_no_executions(self):
+        test_name = 'test_dep_system_workflows_finished_no_executions'
+        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
+            cfy_mock_client = MockCloudifyRestClient()
+            list_response = cfy_mock_client.deployments.list()
+            list_response[0]['id'] = test_name
+            list_response[0]['is_system_workflow'] = True
+            list_response[0]['status'] = 'started'
+
+            def mock_return(*args, **kwargs):
+                del args, kwargs
+                return list_response
+
+            cfy_mock_client.executions.list = mock_return
+            mock_client.return_value = cfy_mock_client
+            output = \
+                dep_system_workflows_finished(
+                    cfy_mock_client)
+            self.assertFalse(output)
+
+    # Test that matching executions returns True
+    def test_dep_system_workflows_finished_matching_executions(self):
+        test_name = 'test_dep_system_workflows_finished_matching_executions'
+        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
+            cfy_mock_client = MockCloudifyRestClient()
+            list_response = cfy_mock_client.blueprints.list()
+            list_response[0]['id'] = test_name
+            list_response[0]['is_system_workflow'] = True
+            list_response[0]['status'] = 'terminated'
+
+            def mock_return(*args, **kwargs):
+                del args, kwargs
+                return list_response
+
+            cfy_mock_client.executions.list = mock_return
+            mock_client.return_value = cfy_mock_client
+            output = \
+                dep_system_workflows_finished(
+                    cfy_mock_client)
+            self.assertTrue(output)
+
+    # test that raises Exception is handled.
+    def test_dep_system_workflows_finished_raises(self):
+        test_name = 'test_dep_system_workflows_finished_raises'
+        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
+            cfy_mock_client = MockCloudifyRestClient()
+            list_response = cfy_mock_client.blueprints.list()
+            list_response[0]['id'] = test_name
+
+            def mock_return(*args, **kwargs):
+                del args, kwargs
+                raise CloudifyClientError('Mistake')
+
+            cfy_mock_client.executions.list = mock_return
+            mock_client.return_value = cfy_mock_client
+            output = \
+                self.assertRaises(
+                    NonRecoverableError,
+                    dep_system_workflows_finished,
+                    cfy_mock_client)
+            self.assertIn('failed', output.message)
 
     # Test that no matching executions returns False
     def test_dep_workflow_in_state_pollster_no_executions(self):
