@@ -175,32 +175,10 @@ In runtime properties will be provided runtime properties from node instance.
 
 ## Examples:
 
+- [Test Example](#test-example-instructions)
 - [Deployment proxy](examples/deployment-proxy.yaml) - save deployment outputs to runtime properties
 - [Deployment reuse external blueprint](examples/deployment-proxy-reuse.yaml) - save deployment outputs to runtime properties
 - [Node instance proxy](examples/node-instance-proxy.yaml) - save instance properties to runtime properties
-- [etcd Cluster Example](https://github.com/cloudify-examples/deployment-proxy-blueprint)
-
-## Test Example Instructions
-
-The simple example is pretty trivial. It is meant to validate that the plugin is operational. It uploads a simple blueprint to the manager, creates a deployment, and installs that deployment. It then installs a new blueprint that uses the outputs of that deployment.
-
-
-*Upload the plugin wagon to your manager:*
-
-Plugins are packaged as wagons that include all of the dependencies of a particular plugin.
-
-```shell
-$ cfy plugins upload https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/[version]/cloudify_utilities_plugin-[version]-py27-none-linux_x86_64.1.wgn
-```
-
-
-*Install the test blueprint:*
-
-```shell
-$ cfy install https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/[version].zip -n cloudify_deployment_proxy/examples/test/deployment-proxy.yaml -b demo
-```
-
-You should see an output like this:
 
 ```shell
 $ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-proxy.yaml -b one -d one
@@ -255,7 +233,9 @@ Deployment environment creation is in progress...
 2017-06-20 15:03:18.414  CFY <one> 'install' workflow execution succeeded
 Finished executing workflow install on deployment one
 * Run 'cfy events list -e 27ce2cb8-cfc4-4356-a7b4-7c776b9be680' to retrieve the execution's events/logs
+```
 
+```shell
 $ cfy uninstall one
 Executing workflow uninstall on deployment one [timeout=900 seconds]
 2017-06-20 15:03:57.601  CFY <one> Starting 'uninstall' workflow execution
@@ -286,17 +266,34 @@ Deleting blueprint one...
 Blueprint deleted
 ```
 
+
 ### Check external resource
 
-```shell
 # upload blueprint
-cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-proxy.yaml -b one -d one
+
+```shell
+$ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-proxy.yaml -b one -d one
+```
+
 # reuse blueprint
-cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-proxy-reuse.yaml -b two -d two
+
+```shell
+$ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-proxy-reuse.yaml -b two -d two
+```
+
+
 # reuse deployment
-cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-proxy-custom-workflow.yaml -b third -d third
+
+```shell
+#
+$ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-proxy-custom-workflow.yaml -b three -d three
+````
+
+
 # delete all
-cfy uninstall third
-cfy uninstall two
-cfy uninstall one
+
+```shell
+$ cfy uninstall three
+$ cfy uninstall two
+$ cfy uninstall one
 ```
