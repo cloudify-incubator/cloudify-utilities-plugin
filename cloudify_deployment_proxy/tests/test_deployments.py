@@ -21,7 +21,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .client_mock import MockCloudifyRestClient
 from .base import DeploymentProxyTestBase
 from ..tasks import create_deployment, delete_deployment
-from ..constants import EXTERNAL_RESOURCE
 
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
@@ -51,7 +50,6 @@ class TestDeployment(DeploymentProxyTestBase):
 
         _ctx.instance.runtime_properties['deployment'] = {}
         _ctx.instance.runtime_properties['deployment']['id'] = test_name
-        _ctx.instance.runtime_properties[EXTERNAL_RESOURCE] = False
         # Tests that deployments delete fails on rest client error
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
@@ -74,7 +72,6 @@ class TestDeployment(DeploymentProxyTestBase):
         current_ctx.set(_ctx)
         _ctx.instance.runtime_properties['deployment'] = {}
         _ctx.instance.runtime_properties['deployment']['id'] = test_name
-        _ctx.instance.runtime_properties[EXTERNAL_RESOURCE] = False
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             mock_client.return_value = MockCloudifyRestClient()
             poll_with_timeout_test = \
@@ -96,7 +93,6 @@ class TestDeployment(DeploymentProxyTestBase):
         current_ctx.set(_ctx)
         _ctx.instance.runtime_properties['deployment'] = {}
         _ctx.instance.runtime_properties['deployment']['id'] = test_name
-        _ctx.instance.runtime_properties[EXTERNAL_RESOURCE] = False
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             mock_client.return_value = MockCloudifyRestClient()
             _ctx.instance.runtime_properties['deployment'] = {}

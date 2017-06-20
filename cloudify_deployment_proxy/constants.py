@@ -25,6 +25,7 @@ POLLING_INTERVAL = 10
 EXTERNAL_RESOURCE = 'external_resource'
 
 BP_UPLOAD = '_upload'
+BP_DELETE = 'delete'
 DEP_CREATE = 'create'
 DEP_DELETE = 'delete'
 EXEC_START = 'start'
