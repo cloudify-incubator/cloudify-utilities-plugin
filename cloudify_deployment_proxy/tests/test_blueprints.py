@@ -21,6 +21,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .client_mock import MockCloudifyRestClient
 from .base import DeploymentProxyTestBase
 from ..tasks import upload_blueprint
+from ..constants import EXTERNAL_RESOURCE
 
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
@@ -77,3 +78,21 @@ class TestBlueprint(DeploymentProxyTestBase):
             mock_client.return_value = MockCloudifyRestClient()
             output = upload_blueprint(blueprint_id=test_name)
             self.assertTrue(output)
+
+    def test_upload_blueprint_use_external(self):
+        # Test that upload blueprint succeeds
+
+        test_name = 'test_upload_blueprint_success'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
+        _ctx.instance.runtime_properties['resource_config'] = {
+            'blueprint': {
+                EXTERNAL_RESOURCE: True
+            }
+        }
+
+        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
+            mock_client.return_value = MockCloudifyRestClient()
+            output = upload_blueprint(blueprint_id=test_name)
+            self.assertFalse(output)

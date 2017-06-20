@@ -20,6 +20,10 @@ data_types:
 
   cloudify.datatypes.Blueprint:
     properties:
+      external_resource:
+        description: >
+          Use external resource.
+        default: false
       id:
         description: >
           This is the blueprint that the deployment node is a proxy to.
@@ -30,13 +34,16 @@ data_types:
         default: blueprint.yaml
       blueprint_archive:
         description: >
-          The URL of a .zip to upload to the manager.
+          The URL of a .zip to upload to the manager. (Can be skipped if external_resource == True)
+        default: ""
         required: true
-      unvalidated:
-        default: {}
 
   cloudify.datatypes.Deployment:
     properties:
+      external_resource:
+        description: >
+          Use external resource.
+        default: false
       id:
         description: >
           This is the deployment that the node is a proxy to.
@@ -55,8 +62,6 @@ data_types:
         description: >
           Logs redirect settings, by default {redirect: true}
         required: false
-      unvalidated:
-        default: {}
 
   cloudify.datatypes.Node:
     properties:
@@ -80,6 +85,14 @@ data_types:
       deployment:
         type: cloudify.datatypes.Deployment
         required: true
+      executions_start_args:
+        default: {}
+        description: >
+          Optional parems for executions
+      reexecute:
+        default: false
+        description: >
+          Reexecte workflows, on external deployment
 
   cloudify.datatypes.NodeInstanceProxy:
     properties:
@@ -89,6 +102,14 @@ data_types:
       deployment:
         type: cloudify.datatypes.Deployment
         required: true
+      executions_start_args:
+        default: {}
+        description: >
+          Optional params for executions
+      reexecute:
+        default: false
+        description: >
+          Reexecte workflows, on external deployment
       node_instance:
         type: cloudify.datatypes.NodeInstance
 
@@ -182,6 +203,24 @@ node_types:
     properties:
       resource_config:
         type: cloudify.datatypes.DeploymentProxy
+        default: {}
+      client:
+        description: >
+          Client configuration, if empty will be reused manager client:
+            host: Host of Cloudify's management machine.
+            port: Port of REST API service on management machine.
+            protocol: Protocol of REST API service on management machine,
+                      defaults to http.
+            api_version: version of REST API service on management machine.
+            headers: Headers to be added to request.
+            query_params: Query parameters to be added to the request.
+            cert: Path to a copy of the server's self-signed certificate.
+            trust_all: if `False`, the server's certificate
+                       (self-signed or not) will be verified.
+            username: Cloudify User username.
+            password: Cloudify User password.
+            token: Cloudify User token.
+            tenant: Cloudify Tenant name.
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:

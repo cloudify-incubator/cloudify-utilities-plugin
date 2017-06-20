@@ -15,6 +15,7 @@
 from cloudify import ctx
 from cloudify import manager
 from cloudify.exceptions import NonRecoverableError
+from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 import time
 
@@ -25,6 +26,7 @@ from .constants import (
     POLLING_INTERVAL,
     EXTERNAL_RESOURCE,
     BP_UPLOAD,
+    BP_DELETE,
     DEP_CREATE,
     DEP_DELETE,
     EXEC_START,
@@ -54,22 +56,24 @@ class DeploymentProxyBase(object):
         full_operation_name = ctx.operation.name
         self.operation_name = full_operation_name.split('.').pop()
 
-        self.client = get_desired_value(
+        self.client_config = get_desired_value(
             'client', operation_inputs,
             ctx.instance.runtime_properties,
-            ctx.node.properties) or manager.get_rest_client()
+            ctx.node.properties
+        )
+
+        if self.client_config:
+            self.client = CloudifyClient(**self.client_config)
+        else:
+            self.client = manager.get_rest_client()
 
         self.config = get_desired_value(
             'resource_config', operation_inputs,
             ctx.instance.runtime_properties,
             ctx.node.properties)
 
-        self.external_resource = \
-            ctx.instance.runtime_properties.get(
-                EXTERNAL_RESOURCE, True)
-
         # Blueprint-related properties
-        self.blueprint = self.config.get('blueprint')
+        self.blueprint = self.config.get('blueprint', {})
         self.blueprint_id = self.blueprint.get('id') or ctx.instance.id
         self.blueprint_file_name = self.blueprint.get('main_file_name')
         self.blueprint_archive = self.blueprint.get('blueprint_archive')
@@ -140,10 +144,15 @@ class DeploymentProxyBase(object):
         update_attributes(
             'blueprint', 'application_file_name', self.blueprint_file_name)
 
-        if any_bp_by_id(self.client, self.blueprint_id):
+        if self.blueprint.get(EXTERNAL_RESOURCE):
+            ctx.logger.info("Used external blueprint.")
             return False
 
-        ctx.instance.runtime_properties[EXTERNAL_RESOURCE] = False
+        if any_bp_by_id(self.client, self.blueprint_id):
+            ctx.logger.info("Blueprint {0} is already exit."
+                            .format(self.blueprint_id))
+            return False
+
         return self.dp_get_client_response('blueprints',
                                            BP_UPLOAD,
                                            client_args)
@@ -161,10 +170,14 @@ class DeploymentProxyBase(object):
         update_attributes('deployment', 'id', self.deployment_id)
 
         if any_dep_by_id(self.client, self.deployment_id):
+            ctx.logger.info("Deployment {0} is already exit."
+                            .format(self.deployment_id))
             return False
 
-        ctx.instance.runtime_properties[EXTERNAL_RESOURCE] = False
-        self.dp_get_client_response('deployments', DEP_CREATE, client_args)
+        if not self.deployment.get(EXTERNAL_RESOURCE):
+            ctx.logger.info("Create deployment {0}."
+                            .format(self.deployment_id))
+            self.dp_get_client_response('deployments', DEP_CREATE, client_args)
 
         return self.verify_execution_successful()
 
@@ -172,23 +185,38 @@ class DeploymentProxyBase(object):
 
         client_args = dict(deployment_id=self.deployment_id)
 
-        if not ctx.instance.runtime_properties.get(EXTERNAL_RESOURCE, True):
+        poll_result = True
+
+        if not self.deployment.get(EXTERNAL_RESOURCE):
+
+            ctx.logger.info("Wait for stop deployment related executions.")
+
+            pollster_args = \
+                dict(_client=self.client,
+                     _check_all_in_deployment=self.deployment_id)
+
+            poll_with_timeout(
+                dep_system_workflows_finished,
+                timeout=self.timeout,
+                pollster_args=pollster_args,
+                expected_result=True)
+
             ctx.logger.info("Delete deployment {0}".format(self.deployment_id))
             self.dp_get_client_response('deployments', DEP_DELETE, client_args)
 
-        ctx.logger.info("Wait for deployment delete.")
+            ctx.logger.info("Wait for deployment delete.")
 
-        pollster_args = \
-            dict(_client=self.client,
-                 _dep_id=self.deployment_id)
+            pollster_args = \
+                dict(_client=self.client,
+                     _dep_id=self.deployment_id)
 
-        del ctx.instance.runtime_properties['deployment']
+            poll_result = poll_with_timeout(
+                any_dep_by_id,
+                timeout=self.timeout,
+                pollster_args=pollster_args,
+                expected_result=False)
 
-        poll_result = poll_with_timeout(
-            any_dep_by_id,
-            timeout=self.timeout,
-            pollster_args=pollster_args,
-            expected_result=False)
+            del ctx.instance.runtime_properties['deployment']
 
         ctx.logger.info("Little wait internal cleanup services.")
 
@@ -205,6 +233,12 @@ class DeploymentProxyBase(object):
             pollster_args=pollster_args,
             expected_result=True)
 
+        if not self.blueprint.get(EXTERNAL_RESOURCE):
+            ctx.logger.info("Delete blueprint {0}."
+                            .format(self.blueprint_id))
+            client_args = dict(blueprint_id=self.blueprint_id)
+            self.dp_get_client_response('blueprints', BP_DELETE, client_args)
+
         return poll_result
 
     def execute_workflow(self):
@@ -214,23 +248,33 @@ class DeploymentProxyBase(object):
 
         update_attributes('executions', 'workflow_id', self.workflow_id)
 
-        # Wait for the deployment to
-        if self.external_resource \
-                and not (self.reexecute and
-                         self.verify_execution_successful()):
+        # Wait for the deployment to finish any executions
+        pollster_args = \
+            dict(_client=self.client,
+                 _check_all_in_deployment=self.deployment_id)
+
+        if not poll_with_timeout(dep_system_workflows_finished,
+                                 timeout=self.timeout,
+                                 pollster_args=pollster_args,
+                                 expected_result=True):
             return ctx.operation.retry(
                 'The deployment is not ready for execution.')
 
-        execution_args = \
-            self.config.get(
-                'executions_start_args',
-                UNINSTALL_ARGS if self.workflow_id == 'uninstall' else {}
-            )
-        client_args = \
-            dict(deployment_id=self.deployment_id,
-                 workflow_id=self.workflow_id,
-                 **execution_args)
-        self.dp_get_client_response('executions', EXEC_START, client_args)
+        # we must to run some execution
+        if (
+            self.deployment.get(EXTERNAL_RESOURCE) and self.reexecute
+        ) or not self.deployment.get(EXTERNAL_RESOURCE):
+
+            execution_args = \
+                self.config.get(
+                    'executions_start_args',
+                    UNINSTALL_ARGS if self.workflow_id == 'uninstall' else {}
+                )
+            client_args = \
+                dict(deployment_id=self.deployment_id,
+                     workflow_id=self.workflow_id,
+                     **execution_args)
+            self.dp_get_client_response('executions', EXEC_START, client_args)
 
         # Poll for execution success.
         if not self.verify_execution_successful():

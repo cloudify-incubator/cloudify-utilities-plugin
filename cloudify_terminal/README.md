@@ -152,3 +152,9 @@ and that reuse such node in other part of your blueprint. For implicit reuse ip 
                 promt_check: <optional, list of prompt's, will overwrite values from terminal_auth>
 
 ````
+
+# Examples
+
+* [Cisco](examples/cisco.yaml) - show currently assigned ip's.
+* [Fortigate](examples/fortigate.yaml) - show assigned ip's with example for error settings.
+* [SSH to VM](examples/linux-ssh.yaml) - Simple ssh to linux vm with `run hostname`.
