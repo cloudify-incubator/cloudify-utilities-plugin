@@ -5,25 +5,42 @@ This plugin enables a user to connect a deployment to another deployment, in eff
 
 ### Notes
 
-- Previously published as "Cloudify Proxy Plugin", the usage of which is deprecated.
+- Previously published as "Cloudify Proxy Plugin".
 - A Cloudify Manager is required.
 - Tested with Cloudify Manager 4.0.
 
 ## Examples:
 
-- [Test Example](#test-example-instructions)
+- [Deployment Proxy Example](examples/test/deployment-proxy.yaml)
+- [Node Instance Proxy Example](examples/test/node-instance-proxy.yaml)
+- [etcd Cluster Example](https://github.com/cloudify-examples/deployment-proxy-blueprint)
 
 
 ## Test Example Instructions
 
-This test example is used to pass validation that the plugin is working.
+The simple example is pretty trivial. It is meant to validate that the plugin is operational. It uploads a simple blueprint to the manager, creates a deployment, and installs that deployment. It then installs a new blueprint that uses the outputs of that deployment.
 
-Run:
+
+*Upload the plugin wagon to your manager:*
+
+Plugins are packaged as wagons that include all of the dependencies of a particular plugin.
 
 ```shell
-$ cfy install cloudify_deployment_proxy/examples/test/deployment-proxy.yaml
+$ cfy plugins upload https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/[version]/cloudify_utilities_plugin-[version]-py27-none-linux_x86_64.1.wgn
+```
+
+
+*Install the test blueprint:*
+
+```shell
+$ cfy install https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/[version].zip -n cloudify_deployment_proxy/examples/test/deployment-proxy.yaml -b demo
+```
+
+You should see an output like this:
+
+```shell
 Uploading blueprint cloudify_deployment_proxy/examples/test/deployment-proxy.yaml...
- blueprint.yaml |######################################################| 100.0%
+blueprint.yaml |######################################################| 100.0%
 Blueprint uploaded. The blueprint's id is test
 Creating new deployment from blueprint test...
 Deployment created. The deployment's id is test
@@ -63,9 +80,17 @@ Deployment environment creation is pending...
 2017-04-26 11:24:23.897  CFY <test> [dep_proxy_16u9kh.start] Task succeeded 'cloudify_deployment_proxy.tasks.query_deployment_data ('True')'
 2017-04-26 11:24:24.523  CFY <test> 'install' workflow execution succeeded
 Finished executing workflow install on deployment test
-* Run 'cfy events list -e 78026d24-6ae7-4fdc-b4da-af9d7eddfddc' to retrieve the execution's events/logs
+```
 
+*Uninstall the blueprint:*
+
+```shell
 $ cfy uninstall test
+```
+
+You should see an output like this:
+
+```shell
 Executing workflow uninstall on deployment test [timeout=900 seconds]
 2017-04-26 11:24:35.537  CFY <test> Starting 'uninstall' workflow execution
 2017-04-26 11:24:36.076  CFY <test> [dep_proxy_16u9kh] Stopping node
