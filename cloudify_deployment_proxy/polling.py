@@ -80,8 +80,13 @@ def poll_with_timeout(pollster,
 
 
 def dep_logs_redirect(_client, execution_id):
-    last_event = int(ctx.instance.runtime_properties.get(
-        "_last_received_event_" + execution_id, 0
+    COUNT_EVENTS = "received_events"
+
+    if not ctx.instance.runtime_properties.get(COUNT_EVENTS):
+        ctx.instance.runtime_properties[COUNT_EVENTS] = {}
+
+    last_event = int(ctx.instance.runtime_properties[COUNT_EVENTS].get(
+        execution_id, 0
     ))
 
     full_count = last_event + 100
@@ -120,11 +125,10 @@ def dep_logs_redirect(_client, execution_id):
                 ctx.logger.log(20, message)
 
         last_event += len(events)
-    ctx.instance.runtime_properties["_last_received_event_" +
-                                    execution_id] = last_event
+    ctx.instance.runtime_properties[COUNT_EVENTS][execution_id] = last_event
 
 
-def dep_system_workflows_finished(_client):
+def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
 
     try:
         _execs = _client.executions.list(include_system_workflows=True)
@@ -137,6 +141,11 @@ def dep_system_workflows_finished(_client):
                 if _exec.get('status') not in ('terminated', 'failed',
                                                'cancelled'):
                     return False
+            if _check_all_in_deployment:
+                if _check_all_in_deployment == _exec.get('deployment_id'):
+                    if _exec.get('status') not in ('terminated', 'failed',
+                                                   'cancelled'):
+                        return False
     return True
 
 

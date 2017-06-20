@@ -43,6 +43,9 @@ class MockBlueprintsClient(BaseMockClient):
         del args
         return MagicMock(return_value={'id': 'test'})
 
+    def delete(self, *_, **__):
+        return None
+
 
 class MockDeploymentsOutputsClient(BaseMockClient):
 
