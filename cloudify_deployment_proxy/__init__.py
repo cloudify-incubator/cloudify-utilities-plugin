@@ -276,9 +276,9 @@ class DeploymentProxyBase(object):
                      **execution_args)
             self.dp_get_client_response('executions', EXEC_START, client_args)
 
-        # Poll for execution success.
-        if not self.verify_execution_successful():
-            ctx.logger.error('Deployment error.')
+            # Poll for execution success.
+            if not self.verify_execution_successful():
+                ctx.logger.error('Deployment error.')
 
         if NIP_TYPE == ctx.node.type:
             return self.post_execute_node_instance_proxy()
