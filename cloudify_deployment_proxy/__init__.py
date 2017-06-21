@@ -149,7 +149,7 @@ class DeploymentProxyBase(object):
             return False
 
         if any_bp_by_id(self.client, self.blueprint_id):
-            ctx.logger.info("Blueprint {0} is already exit."
+            ctx.logger.info("Blueprint {0} already exists."
                             .format(self.blueprint_id))
             return False
 
@@ -170,7 +170,7 @@ class DeploymentProxyBase(object):
         update_attributes('deployment', 'id', self.deployment_id)
 
         if any_dep_by_id(self.client, self.deployment_id):
-            ctx.logger.info("Deployment {0} is already exit."
+            ctx.logger.info("Deployment {0} already exists."
                             .format(self.deployment_id))
             return False
 
