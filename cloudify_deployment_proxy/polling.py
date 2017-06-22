@@ -93,7 +93,7 @@ def dep_logs_redirect(_client, execution_id):
 
     while full_count > last_event:
         events, full_count = _client.events.get(execution_id, last_event,
-                                                last_event + 100, True)
+                                                250, True)
         for event in events:
 
             instance_prompt = event.get('node_instance_id', "")
