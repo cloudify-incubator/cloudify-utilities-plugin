@@ -69,7 +69,7 @@ class connection(object):
         self._write_to_log(recieved)
         if not recieved:
             if self.logger:
-                self.logger.info("We have issue with receive!")
+                self.logger.info("We have empty response.")
             time.sleep(1)
         return recieved
 
