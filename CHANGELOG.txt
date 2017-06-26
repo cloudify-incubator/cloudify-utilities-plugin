@@ -28,3 +28,7 @@ releases:
   - configuration plugin
   - terminal plugin
   - improved deployment/blueprint as external resource support
+
+  v1.2.4:
+  - handling paging in long executions in the deployment proxy
+  - added configuration plugin examples
