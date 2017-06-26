@@ -285,14 +285,19 @@ $ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deplo
 # reuse deployment
 
 ```shell
-#
 $ cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-proxy-custom-workflow.yaml -b three -d three
 ````
 
+# reuse only outputs from one
+
+```shell
+cfy install cloudify-utilities-plugin/cloudify_deployment_proxy/examples/deployment-without-workflow.yaml -b four -d four
+````
 
 # delete all
 
 ```shell
+$ cfy uninstall four
 $ cfy uninstall three
 $ cfy uninstall two
 $ cfy uninstall one

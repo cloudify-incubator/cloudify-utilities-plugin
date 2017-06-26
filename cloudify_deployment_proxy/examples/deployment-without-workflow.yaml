@@ -4,25 +4,16 @@ imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.3/plugin.yaml
 
-inputs:
-
-  bp_dep_archive:
-    default: https://github.com/EarthmanT/the-not-blueprint/archive/master.zip
-
 node_templates:
 
-  node_instance_proxy:
-    type: cloudify.nodes.NodeInstanceProxy
+  deployment_proxy:
+    type: cloudify.nodes.DeploymentProxy
     properties:
       resource_config:
         blueprint:
-          id: deployment_proxy
-          blueprint_archive: { get_input: bp_dep_archive }
-          main_file_name: blueprint.yaml
+          external_resource: true
         deployment:
+          external_resource: true
           id: deployment_proxy
           outputs:
             key: deployment_proxy_output
-        node_instance:
-          node:
-            id: not_a_node_template
