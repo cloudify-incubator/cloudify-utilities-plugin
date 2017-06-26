@@ -19,7 +19,11 @@ Utilities for extending Cloudify features.
   - v1.1.0: Add Cloudify SHH Key Plugin. Combine BlueprintDeployment node type and DeploymentProxy node type.
   - v1.1.1: Fixed an issue where deployments may be re-installed.
   - v1.2.0: Add NodeInstanceProxy node type.
-            Add cloudify rest client mock
-            Added more tests
-  - v1.2.1: Public Key Runtime Property
-  - v1.2.2: Add ability to store to runtime props
+            Add cloudify rest client mock.
+            Added more tests.
+  - v1.2.1: Public Key Runtime Property.
+  - v1.2.2: Add ability to store to runtime properties.
+  - v1.2.2: Add support for:
+            * [configuration plugin](cloudify_configuration/README.md).
+            * [terminal plugin](cloudify_configuration/README.md).
+            Significant improvements to deployment/blueprint as external resource support.

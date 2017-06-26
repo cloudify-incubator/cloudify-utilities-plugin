@@ -106,7 +106,7 @@ class TestTasks(unittest.TestCase):
 
         self.assertEqual(conn._conn_recv(4), "")
 
-        conn.logger.info.assert_called_with('We have issue with receive!')
+        conn.logger.info.assert_called_with('We have empty response.')
         conn.conn.recv.assert_called_with(4)
 
     def test_find_any_in(self):
