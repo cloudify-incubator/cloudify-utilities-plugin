@@ -32,3 +32,6 @@ releases:
   v1.2.4:
   - handling paging in long executions in the deployment proxy
   - added configuration plugin examples
+
+  v1.2.5:
+  - Added Cloud-init type.

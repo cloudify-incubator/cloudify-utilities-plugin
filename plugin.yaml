@@ -1,5 +1,11 @@
 plugins:
 
+  cloudinit:
+    executor: central_deployment_agent
+    package_name: cloudify_cloudinit
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.4.zip
+    package_version: 1.2.4
+
   cfy_util:
     executor: central_deployment_agent
     package_name: cloudify_deployment_proxy
@@ -289,6 +295,28 @@ node_types:
               default: false
         delete:
           implementation: keys.cloudify_ssh_key.operations.delete
+
+  cloudify.nodes.CloudInit.CloudConfig:
+    derived_from: cloudify.nodes.Root
+    properties:
+      header:
+        default: 'Content-Type: text/cloud-config'
+      encode_base64:
+        default: false
+      resource_config:
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        configure:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        start:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        stop:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        delete:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
 
 relationships:
 

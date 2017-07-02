@@ -1,0 +1,135 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
+  - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.11/plugin.yaml
+
+inputs:
+
+  ami:
+    description: >
+      An AWS AMI. Tested with a Centos 7.0 image.
+    default: ami-ae7bfdb8
+
+  instance_type:
+    description: >
+      The AWS instance_type. Tested with m3.medium, although that is unnecessarily large.
+    default: t2.small
+
+  agent_user:
+    default: centos
+
+dsl_definitions:
+
+    aws_config: &aws_config
+      aws_access_key_id: { get_secret: aws_access_key_id }
+      aws_secret_access_key: { get_secret: aws_secret_access_key }
+      ec2_region_name: { get_secret: ec2_region_name }
+      ec2_region_endpoint: { get_secret: ec2_region_endpoint }
+
+node_templates:
+
+  example:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    properties:
+      resource_config:
+        users:
+          - name: { get_input: agent_user }
+            primary-group: { get_input: agent_user_primary_group }
+            shell: /bin/bash
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            ssh-authorized-keys:
+              - { get_secret: agent_key_public }
+        packages:
+          - [epel-release]
+          - [python-wheel]
+          - [python-pip]
+          - [python-setuptools]
+          - [gcc]
+          - [python-devel]
+          - [libffi-devel]
+          - [openssl-devel]
+
+  host:
+    type: cloudify.aws.nodes.Instance
+    properties:
+      agent_config:
+        install_method: none
+      aws_config: *aws_config
+      image_id: { get_input: ami }
+      instance_type: { get_input: instance_type }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: aws.cloudify_aws.ec2.instance.create
+          inputs:
+            args:
+              placement: { get_secret: availability_zone }
+              user_data: { get_attribute: [ example, cloud_config ] }
+    relationships:
+      - type: cloudify.aws.relationships.instance_connected_to_eni
+        target: nic
+      - type: cloudify.relationships.depends_on
+        target: example
+
+  nic:
+    type: cloudify.aws.nodes.Interface
+    properties:
+      aws_config: *aws_config
+      use_external_resource: { get_input: use_existing_host }
+      resource_id: { get_input: nic_resource_id }
+    relationships:
+      - type: cloudify.aws.relationships.connected_to_subnet
+        target: public_subnet
+      - type: cloudify.aws.relationships.connected_to_elastic_ip
+        target: ip
+      - type: cloudify.aws.relationships.connected_to_security_group
+        target: securitygroup
+
+  securitygroup:
+    type: cloudify.aws.nodes.SecurityGroup
+    properties:
+      aws_config: *aws_config
+      use_external_resource: { get_input: use_existing_host }
+      resource_id: { get_input: group_resource_id }
+      description: SSH Group
+      rules:
+        - ip_protocol: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: { get_property: [ wagon, port ] }
+          to_port: { get_property: [ wagon, port ] }
+          cidr_ip: 0.0.0.0/0
+    relationships:
+      - type: cloudify.aws.relationships.security_group_contained_in_vpc
+        target: vpc
+
+  ip:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      use_external_resource: { get_input: use_existing_host }
+      resource_id: { get_input: ip_resource_id }
+      domain: vpc
+
+  public_subnet:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      aws_config: *aws_config
+      use_external_resource: true
+      resource_id: { get_secret: public_subnet_id }
+      cidr_block: N/A
+      availability_zone: N/A
+    relationships:
+      - type: cloudify.aws.relationships.subnet_contained_in_vpc
+        target: vpc
+
+  vpc:
+    type: cloudify.aws.nodes.VPC
+    properties:
+      aws_config: *aws_config
+      use_external_resource: true
+      resource_id: { get_secret: vpc_id }
+      cidr_block: N/A
