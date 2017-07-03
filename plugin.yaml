@@ -2,33 +2,33 @@ plugins:
 
   cloudinit:
     executor: central_deployment_agent
-    package_name: cloudify_cloudinit
+    package_name: cloudify-utilities-plugin
     source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: 1.2.5
+    package_version: '1.2.5'
 
   cfy_util:
     executor: central_deployment_agent
-    package_name: cloudify_deployment_proxy
+    package_name: cloudify-utilities-plugin
     source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: 1.2.5
+    package_version: '1.2.5'
 
   keys:
     executor: central_deployment_agent
-    package_name: cloudify_ssh_key
+    package_name: cloudify-utilities-plugin
     source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: 1.2.5
+    package_version: '1.2.5'
 
   configuration:
     executor: central_deployment_agent
-    package_name: cloudify_configuration
+    package_name: cloudify-utilities-plugin
     source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: 1.2.5
+    package_version: '1.2.5'
 
   terminal:
     executor: central_deployment_agent
-    package_name: cloudify_terminal
+    package_name: cloudify-utilities-plugin
     source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: 1.2.5
+    package_version: '1.2.5'
 
 data_types:
 
