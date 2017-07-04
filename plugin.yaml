@@ -300,7 +300,7 @@ node_types:
     derived_from: cloudify.nodes.Root
     properties:
       header:
-        default: 'Content-Type: text/cloud-config'
+        default: '#cloud-config'
       encode_base64:
         default: false
       resource_config:
