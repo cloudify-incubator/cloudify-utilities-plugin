@@ -1,0 +1,57 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
+  - plugin.yaml
+
+dsl_definitions:
+
+  # So that the plugin executes locally.
+  interfaces_override:
+    properties: &interfaces_override
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: file.cloudify_files.tasks.create
+          executor: central_deployment_agent
+        stop:
+          implementation: file.cloudify_files.tasks.remove
+          executor: central_deployment_agent
+        delete:
+          implementation: file.cloudify_files.tasks.delete
+          executor: central_deployment_agent
+
+node_templates:
+
+  content_example:
+    type: cloudify.nodes.File
+    properties:
+      resource_config:
+        target_path: ~/Desktop/file_content_example.txt
+        file_content: |
+          hello world
+        file_permissions: '0777'
+    interfaces: *interfaces_override
+
+  template_example:
+    type: cloudify.nodes.File
+    properties:
+      resource_config:
+        target_path: ~/Desktop/file_template_example.txt
+        resource_path: resources/hello-world.template
+        template_variables:
+          world: Mundo
+        file_permissions: '0777'
+    interfaces: *interfaces_override
+
+  config_example:
+    type: cloudify.nodes.File
+    properties:
+      resource_config:
+        target_path: ~/Desktop/config_example.txt
+        config_sections:
+          section1:
+            hello: world
+          section2:
+            hi: universe
+    interfaces: *interfaces_override
+

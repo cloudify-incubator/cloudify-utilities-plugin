@@ -16,7 +16,7 @@ import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.2.5',
+    version='1.3.0',
     author='Gigaspaces.com',
     author_email='hello@getcloudify.org',
     description='Utilities for extending Cloudify',
@@ -24,6 +24,7 @@ setuptools.setup(
               'cloudify_ssh_key',
               'cloudify_terminal',
               'cloudify_configuration',
+              'cloudify_files',
               'cloudify_cloudinit'],
     license='LICENSE',
     install_requires=[

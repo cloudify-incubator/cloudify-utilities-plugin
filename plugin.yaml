@@ -3,32 +3,38 @@ plugins:
   cloudinit:
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: '1.2.5'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.0.zip
+    package_version: '1.3.0'
 
   cfy_util:
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: '1.2.5'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.0.zip
+    package_version: '1.3.0'
 
   keys:
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: '1.2.5'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.0.zip
+    package_version: '1.3.0'
 
   configuration:
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: '1.2.5'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.0.zip
+    package_version: '1.3.0'
 
   terminal:
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.2.5.zip
-    package_version: '1.2.5'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.0.zip
+    package_version: '1.3.0'
+
+  file:
+    executor: host_agent
+    package_name: cloudify-utilities-plugin
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.0.zip
+    package_version: '1.3.0'
 
 data_types:
 
@@ -152,6 +158,33 @@ data_types:
         required: false
       unvalidated:
         description: Unvalidated parameters.
+        required: false
+
+  cloudify.datatypes.File:
+    properties:
+      target_path:
+        type: string
+        description: >
+          A path to a new or existing file. If the file is existing it will be overwritten. All use cases require this to be provided.
+        required: true
+      file_permissions:
+        type: string
+        description: The file permissions.
+        default: '0644'
+      resource_path:
+        type: string
+        description: >
+          Resource path is used if you include a file with the blueprint. It can consume template_variables. (See examples.)
+        required: false
+      template_variables:
+        description: A dictionary of variables keys and values for rendering the file resource if templating is used. Only used if providing resource_path.
+        required: false
+      file_content:
+        type: string
+        description: The content of a file. May not be used with template_variables or config_sections or resource_path
+        required: false
+      config_sections:
+        description: A INI format config in KV format. May not be used with file_content or template_variables or resource_path.
         required: false
 
 node_types:
@@ -317,6 +350,23 @@ node_types:
           implementation: cloudinit.cloudify_cloudinit.tasks.update
         delete:
           implementation: cloudinit.cloudify_cloudinit.tasks.update
+
+  cloudify.nodes.File:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        type: boolean
+        required: false
+      resource_config:
+        type: cloudify.datatypes.File
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: file.cloudify_files.tasks.create
+        stop:
+          implementation: file.cloudify_files.tasks.remove
+        delete:
+          implementation: file.cloudify_files.tasks.delete
 
 relationships:
 
