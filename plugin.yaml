@@ -30,7 +30,7 @@ plugins:
     source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.0.zip
     package_version: '1.3.0'
 
-  file:
+  files:
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
     source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.0.zip
@@ -356,17 +356,17 @@ node_types:
     properties:
       use_external_resource:
         type: boolean
-        required: false
+        default: false
       resource_config:
         type: cloudify.datatypes.File
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: file.cloudify_files.tasks.create
+          implementation: files.cloudify_files.tasks.create
         stop:
-          implementation: file.cloudify_files.tasks.remove
+          implementation: files.cloudify_files.tasks.remove
         delete:
-          implementation: file.cloudify_files.tasks.delete
+          implementation: files.cloudify_files.tasks.delete
 
 relationships:
 

@@ -36,7 +36,6 @@ class CloudifyFile(object):
         self.file_permissions = self.config.get('file_permissions')
         self.config_sections = self.config.get('config_sections') or {}
 
-
     def chmod(self):
         try:
             command = \

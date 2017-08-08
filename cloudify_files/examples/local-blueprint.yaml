@@ -11,13 +11,13 @@ dsl_definitions:
     properties: &interfaces_override
       cloudify.interfaces.lifecycle:
         create:
-          implementation: file.cloudify_files.tasks.create
+          implementation: files.cloudify_files.tasks.create
           executor: central_deployment_agent
         stop:
-          implementation: file.cloudify_files.tasks.remove
+          implementation: files.cloudify_files.tasks.remove
           executor: central_deployment_agent
         delete:
-          implementation: file.cloudify_files.tasks.delete
+          implementation: files.cloudify_files.tasks.delete
           executor: central_deployment_agent
 
 node_templates:

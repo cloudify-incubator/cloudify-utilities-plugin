@@ -96,7 +96,8 @@ def read_config_file(path_to_file):
                 if line == '\n':
                     continue
                 line = line.rstrip('\n')
-                if not re.match(SECTION_RE, line) and not re.match(PAIR_RE, line):
+                if not re.match(SECTION_RE, line) \
+                        and not re.match(PAIR_RE, line):
                     line = '%s = None' % line
                 config_string = '%s\n%s' % (config_string, line)
     sio = StringIO.StringIO(config_string)
