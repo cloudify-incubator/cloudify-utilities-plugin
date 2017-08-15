@@ -37,9 +37,9 @@ def run(**kwargs):
     password = terminal_auth.get('password')
     key_content = terminal_auth.get('key_content')
     port = terminal_auth.get('port', 22)
-    if not ip or not user or (not password and not key_content):
+    if not ip or not user:
         raise cfy_exc.NonRecoverableError(
-            "please check your credentials"
+            "please check your credentials, ip or user not set"
         )
 
     # additional settings
