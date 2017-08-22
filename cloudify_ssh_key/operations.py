@@ -67,12 +67,14 @@ def create(**_):
     public_key_export = pubkey.exportKey(OPENSSH_FORMAT_STRING)
 
     if use_secret_store:
-        _create_secret(key_name, private_key_export)
-    else:
-        if not private_key_path:
-            raise NonRecoverableError(
-                'Must provide private_key_path when use_secret_store is false')
+        _create_secret('{0}_private'.format(key_name), private_key_export)
+        _create_secret('{0}_public'.format(key_name), public_key_export)
 
+    if not private_key_path and not use_secret_store:
+        raise NonRecoverableError(
+            'Must provide private_key_path when use_secret_store is false')
+
+    if private_key_path:
         _write_key_file(private_key_path,
                         private_key_export,
                         _private_key_permissions=True)

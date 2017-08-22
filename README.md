@@ -9,6 +9,7 @@ Utilities for extending Cloudify features.
 
 - [Cloudify Cloud-Init](cloudify_cloudinit/README.md)
 - [Cloudify Deployment Proxy](cloudify_deployment_proxy/README.md)
+- [Cloudify File](cloudify_files/README.md)
 - [Cloudify SSH Key](cloudify_ssh_key/README.md)
 - [Cloudify Configuration](cloudify_configuration/README.md)
 - [Cloudify Terminal](cloudify_terminal/README.md)
@@ -32,3 +33,4 @@ Utilities for extending Cloudify features.
             * handling paging in long executions in the deployment proxy
             * added configuration plugin examples
   - v1.2.5: Added Cloud-init type.
+  - v1.3.0: Added File type.

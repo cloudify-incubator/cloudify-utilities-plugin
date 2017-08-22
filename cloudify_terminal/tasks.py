@@ -85,6 +85,20 @@ def run(**kwargs):
             template_params['ctx'] = ctx
             operation = template_engine.render(template_params)
 
+        # incase of template_text
+        if not operation and 'template_text' in call:
+            template_params = call.get('params')
+            template = call.get('template_text')
+            if not template:
+                ctx.logger.info("Empty template_text.")
+                continue
+            template_engine = Template(template)
+            if not template_params:
+                template_params = {}
+            # save context for reuse in template
+            template_params['ctx'] = ctx
+            operation = template_engine.render(template_params)
+
         if not operation:
             continue
 

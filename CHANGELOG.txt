@@ -35,3 +35,6 @@ releases:
 
   v1.2.5:
   - Added Cloud-init type.
+
+  v1.3.0:
+  - Added file type.
