@@ -306,7 +306,8 @@ node_types:
         default: true
       key_name:
         type: string
-        default: { get_property: [ SELF, resource_config, key_name ] }
+        description: Deprecated. Use resource_config.key_name.
+        required: false
       resource_config:
         description: >
           A dictionary of values to pass to configure the key.
