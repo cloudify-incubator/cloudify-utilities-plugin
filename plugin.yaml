@@ -141,6 +141,9 @@ data_types:
       public_key_path:
         type: string
         default: '~/.ssh/id_rsa.pub'
+      key_name:
+        type: string
+        required: false
       algorithm:
         type: string
         default: 'RSA'
@@ -303,10 +306,7 @@ node_types:
         default: true
       key_name:
         type: string
-        required: false
-        description: >
-          If use_secret_store is true the key is stored in secret store by that name.
-          Else, the name is deployment_id-instance_id.
+        default: { get_property: [ SELF, resource_config, key_name ] }
       resource_config:
         description: >
           A dictionary of values to pass to configure the key.
