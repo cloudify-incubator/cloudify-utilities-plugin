@@ -25,6 +25,7 @@ setuptools.setup(
               'cloudify_terminal',
               'cloudify_configuration',
               'cloudify_files',
+              'cloudify_custom_workflow',
               'cloudify_cloudinit'],
     license='LICENSE',
     install_requires=[
