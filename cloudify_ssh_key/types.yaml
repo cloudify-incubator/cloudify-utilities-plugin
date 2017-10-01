@@ -1,0 +1,65 @@
+data_types:
+
+  cloudify.datatypes.key:
+    properties:
+      private_key_path:
+        type: string
+        required: false
+      public_key_path:
+        type: string
+        default: '~/.ssh/id_rsa.pub'
+      key_name:
+        type: string
+        required: false
+      algorithm:
+        type: string
+        default: 'RSA'
+      bits:
+        type: integer
+        default: 2048
+      comment:
+        type: string
+        required: false
+      passphrase:
+        type: string
+        required: false
+      openssh_format:
+        type: boolean
+        required: false
+      unvalidated:
+        description: Unvalidated parameters.
+        required: false
+
+node_types:
+
+  cloudify.keys.nodes.RSAKey:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_secret_store:
+        type: boolean
+        default: true
+      key_name:
+        type: string
+        description: Deprecated. Use resource_config.key_name.
+        required: false
+      resource_config:
+        description: >
+          A dictionary of values to pass to configure the key.
+        type: cloudify.datatypes.key
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_public_key_material:
+              description: >
+                Allow the public key material to be stored as a runtime property. Recommended.
+              type: boolean
+              default: true
+            store_private_key_material:
+              description: Allow the private key material to be stored as a runtime property. Not recommended for manager deployments.
+              type: boolean
+              default: false
+        delete:
+          implementation: keys.cloudify_ssh_key.operations.delete
