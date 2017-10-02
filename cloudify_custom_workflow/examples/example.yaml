@@ -1,9 +1,9 @@
-osca_definitions_version: cloudify_dsl_1_3
+tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
 
   - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
-  - cloudify-utilities-plugin
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.3.1/plugin.yaml
 
 node_templates:
 
@@ -13,23 +13,23 @@ node_templates:
     interfaces:
       custom:
         interfaceA:
-          implementation: custom_workflow.cloudify_custom_workflow.tasks.log
+          implementation: cloudify_custom_workflow.cloudify_custom_workflow.tasks.log
         interfaceB:
-          implementation: custom_workflow.cloudify_custom_workflow.tasks.log
+          implementation: cloudify_custom_workflow.cloudify_custom_workflow.tasks.log
 
   nodeB:
     type: cloudify.nodes.ApplicationModule
     interfaces:
       custom:
         interfaceA:
-          implementation: custom_workflow.cloudify_custom_workflow.tasks.log
+          implementation: cloudify_custom_workflow.cloudify_custom_workflow.tasks.log
         interfaceB:
-          implementation: custom_workflow.cloudify_custom_workflow.tasks.log
+          implementation: cloudify_custom_workflow.cloudify_custom_workflow.tasks.log
 
 
 workflows:
   MyFlatWorkFlow:
-    mapping: custom_workflow.cloudify_custom_workflow.tasks.customwf
+    mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.customwf
     parameters:
       nodes_to_runon:
         default:

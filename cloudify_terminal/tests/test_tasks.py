@@ -138,6 +138,28 @@ class TestTasks(unittest.TestCase):
         self.assertIsNone(
             _ctx.instance.runtime_properties.get('place_for_save'))
 
+    def test_run_run_with_text_template(self):
+        _ctx = self._gen_ctx()
+        connection_mock = MagicMock()
+        connection_mock.connect = MagicMock(return_value="")
+        connection_mock.run = MagicMock(return_value="localhost")
+
+        with patch("cloudify_terminal.terminal_connection.connection",
+                   MagicMock(return_value=connection_mock)):
+            tasks.run(
+                calls=[{'template_text': ""},
+                       {'template_text': "bb"},
+                       {'template_text': "{{ aa }}", 'params': {'aa': 'gg'}}],
+                terminal_auth={'ip': 'ip', 'user': 'user',
+                               'password': 'password'}
+            )
+
+        connection_mock.run.assert_has_calls([call('bb', None, None, []),
+                                              call('gg', None, None, [])])
+
+        self.assertIsNone(
+            _ctx.instance.runtime_properties.get('place_for_save'))
+
     def test_run_with_save(self):
         _ctx = self._gen_ctx()
         connection_mock = MagicMock()
