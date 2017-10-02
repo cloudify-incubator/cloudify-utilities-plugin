@@ -1,0 +1,41 @@
+
+node_types:
+
+  configuration_loader:
+    derived_from: cloudify.nodes.ApplicationServer
+    properties:
+      parameters_json:
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: configuration.cloudify_configuration.tasks.load_configuration
+          inputs:
+            parameters:
+              default: { get_property: [SELF, parameters_json] }
+
+relationships:
+
+  load_from_config:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: configuration.cloudify_configuration.tasks.load_configuration_to_runtime_properties
+          inputs:
+            source_config:
+              default: { get_attribute: [TARGET , params ]  }
+
+workflows:
+
+  configuration_update:
+    mapping: configuration.cloudify_configuration.tasks.update
+    parameters:
+      params:
+        description: json string
+      configuration_node_type:
+        default: configuration_loader
+      node_types_to_update:
+        default:
+          - juniper_node_config
+          - fortinet_vnf_type

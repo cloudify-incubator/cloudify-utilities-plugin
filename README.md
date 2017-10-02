@@ -35,3 +35,7 @@ Utilities for extending Cloudify features.
             * added configuration plugin examples
   - v1.2.5: Added Cloud-init type.
   - v1.3.0: Added File type.
+  - v1.3.1: Adding Suspend/Resume Workflow
+            * Adding Custom Workflow Tool
+            * Removing Files Feature
+            * Reorganizing Plugin YAMLs
