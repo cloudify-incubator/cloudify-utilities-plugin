@@ -33,7 +33,18 @@ OLD_PARAMS = 'old_params'
 DIFF_PARAMS = 'diff_params'
 
 
-def load_configuration(parameters, **kwargs):
+def _merge_dicts(d1, d2):
+    result = d1.copy()
+    for key, new_val in d2.iteritems():
+        current_val = result.get(key)
+        if isinstance(current_val, dict) and isinstance(new_val, dict):
+            result[key] = _merge_dicts(current_val, new_val)
+        else:
+            result[key] = new_val
+    return result
+
+
+def load_configuration(parameters, merge_dicts, **kwargs):
     # load params
     if isinstance(parameters, dict):
         params = parameters
@@ -43,24 +54,24 @@ def load_configuration(parameters, **kwargs):
     # get previous params
     p = ctx.instance.runtime_properties.get(PARAMS, {})
     # update params
-    p.update(params)
-    ctx.instance.runtime_properties[PARAMS] = p
+    if merge_dicts:
+        p = _merge_dicts(p, params)
+    else:
+        p.update(params)
+    ctx.instance.runtime_properties['params'] = p
 
 
 def load_configuration_to_runtime_properties(source_config, **kwargs):
-    old_params = ctx.source.instance.runtime_properties.get(PARAMS, {})
-
-    # privent recursion by removing old_params from old_params
-    old_params[OLD_PARAMS] = {}
-
-    # retrive relevant parameters list from node properties
+    old_params = ctx.source.instance.runtime_properties.get('params', {})
+    # prevent recursion by removing old_params from old_params
+    old_params['old_params'] = {}
+   # retrive relevant parameters list from node properties
     params_list = ctx.source.node.properties['params_list']
 
     # populate params from main configuration with only relevant values
     params = {k: v for k, v in source_config.iteritems() if k in params_list}
-
-    # overide params with HARD coded node params
-    params.update(ctx.source.node.properties[PARAMS])
+    # override params with HARD coded node params
+    params.update(ctx.source.node.properties['params'])
 
     # create in params old_params key with empty dict
     # so it wll match to the old_params
@@ -215,7 +226,7 @@ def preconfigure(sequence, relationship, ctx):
         relationship.execute_target_operation(
             LIFECYCLE_RELATIONSHIP_OPERATION_PRECONFIGURE
         )
-    sequence.add(operation_task)`
+    sequence.add(operation_task)
 
 
 def execute_function_on_configuration_node(

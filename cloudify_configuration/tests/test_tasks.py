@@ -33,7 +33,7 @@ class TestTasks(unittest.TestCase):
             runtime_properties={}
         )
         current_ctx.set(_ctx)
-        tasks.load_configuration({'a': 'b'})
+        tasks.load_configuration({'a': 'b'}, False)
         self.assertEqual(_ctx.instance.runtime_properties, {
             'params': {
                 'a': 'b'
@@ -47,10 +47,47 @@ class TestTasks(unittest.TestCase):
             runtime_properties={}
         )
         current_ctx.set(_ctx)
-        tasks.load_configuration('{"a": "b"}')
+        tasks.load_configuration('{"a": "b"}', False)
         self.assertEqual(_ctx.instance.runtime_properties, {
             'params': {
                 'a': 'b'
+            }
+        })
+
+    def test_load_configuration_can_merge_dicts(self):
+        _ctx = MockCloudifyContext(
+            'node_name',
+            properties={},
+            runtime_properties={
+              'params': {
+                  'a': 'override_me',
+                  'b': 'staying',
+                  'dictionary': {
+                      'key1': 'override_me',
+                      'key2': 'i_should_stay'
+                  }
+                }
+            }
+        )
+        current_ctx.set(_ctx)
+        tasks.load_configuration({
+            'a': 'overridden',
+            'c': 'new',
+            'dictionary': {
+                'key1': 'overridden',
+                'key3': 'new'
+            }
+        }, True)
+        self.assertEqual(_ctx.instance.runtime_properties, {
+            'params': {
+                'a': 'overridden',
+                'b': 'staying',
+                'c': 'new',
+                'dictionary': {
+                    'key1': 'overridden',
+                    'key2': 'i_should_stay',
+                    'key3': 'new'
+                }
             }
         })
 

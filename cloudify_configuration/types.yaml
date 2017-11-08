@@ -6,6 +6,8 @@ node_types:
     properties:
       parameters_json:
         default: ''
+      merge_dicts:
+        default: false
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -13,6 +15,8 @@ node_types:
           inputs:
             parameters:
               default: { get_property: [SELF, parameters_json] }
+            merge_dicts:
+              default: { get_property: [SELF, merge_dicts] }
 
 relationships:
 
