@@ -39,3 +39,4 @@ Utilities for extending Cloudify features.
             * Adding Custom Workflow Tool
             * Removing Files Feature
             * Reorganizing Plugin YAMLs
+  - v1.4.0: Added back the files feature in a simplified form.
