@@ -74,11 +74,11 @@ class CloudifyFile(object):
 
         if self.use_sudo:
             cp_out = execute_command('sudo cp {0} {1}'.format(
-                downloaded_file_path, self.file_path))
+                repr(downloaded_file_path), repr(self.file_path)))
             chown_out = execute_command('sudo chown {0} {1}'.format(
-                self.owner, self.file_path))
+                repr(self.owner), self.file_path))
             chmod_out = execute_command('sudo chmod {0} {1}'.format(
-                self.mode, self.file_path))
+                repr(self.mode), self.file_path))
             if cp_out is False or chown_out is False or chmod_out is False:
                 raise NonRecoverableError(
                     'Failed, see previous ERROR log message.')
