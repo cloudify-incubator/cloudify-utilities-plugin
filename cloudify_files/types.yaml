@@ -1,0 +1,45 @@
+data_types:
+
+  cloudify.datatypes.File:
+    properties:
+      resource_path:
+        type: string
+        description: >
+          The path relative to the blueprint where the file is stored.
+          Currently this must be packaged in the blueprint. An external URI is not valid.
+        required: true
+      file_path:
+        type: string
+        description: >
+          The path on the machine where the file should be saved.
+        required: true
+      owner:
+        type: string
+        description: >
+          The owner string, such as "centos:wheel"
+        required: true
+      mode:
+        type: integer
+        description: >
+          The file permissions, such as 777. Must be provided as an integer. "0777" and 0777 are not valid. Only 777.
+        required: true
+      use_sudo:
+        type: boolean
+        description: >
+          Whether or not to use sudo to move, rename, delete, chown, chmod, the file.
+        default: false
+
+node_types:
+
+  cloudify.nodes.File:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        type: cloudify.datatypes.File
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_files.cloudify_files.tasks.create
+        delete:
+          implementation: cfy_files.cloudify_files.tasks.delete

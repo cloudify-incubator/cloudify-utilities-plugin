@@ -1,43 +1,21 @@
 plugins:
 
-  cfy_util:
+  cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.1.zip
-    package_version: '1.3.1'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.4.0.zip
+    package_version: '1.4.0'
 
-  cloudify_custom_workflow:
-    executor: central_deployment_agent
-    package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.1.zip
-    package_version: '1.3.1'
+  cfy_files: *utilities_plugin
 
-  cloudinit:
-    executor: central_deployment_agent
-    package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.1.zip
-    package_version: '1.3.1'
+  cloudify_custom_workflow: *utilities_plugin
 
-  configuration:
-    executor: central_deployment_agent
-    package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.1.zip
-    package_version: '1.3.1'
+  cloudinit: *utilities_plugin
 
-  keys:
-    executor: central_deployment_agent
-    package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.1.zip
-    package_version: '1.3.1'
+  configuration: *utilities_plugin
 
-  suspend:
-    executor: central_deployment_agent
-    package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.1.zip
-    package_version: '1.3.1'
+  keys: *utilities_plugin
 
-  terminal:
-    executor: central_deployment_agent
-    package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.3.1.zip
-    package_version: '1.3.1'
+  suspend: *utilities_plugin
+
+  terminal: *utilities_plugin

@@ -44,3 +44,6 @@ releases:
   - Adding Custom Workflow Tool
   - Removing Files Feature
   - Reorganizing plugin.yaml into types.yaml.
+
+  v1.4.0:
+  - Added support for files back in a simplified form.
