@@ -91,6 +91,7 @@ class CloudifyFile(object):
             if self.allow_failure is False:
                 raise NonRecoverableError(err)
             ctx.logger.error(err)
+            return True
 
         if self.use_sudo:
             cp_out = execute_command('sudo cp {0} {1}'.format(
