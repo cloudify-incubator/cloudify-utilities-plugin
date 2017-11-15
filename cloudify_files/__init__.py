@@ -18,7 +18,10 @@ import pwd
 import subprocess
 
 from cloudify import ctx
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import (
+    NonRecoverableError,
+    HttpException
+)
 
 
 def execute_command(_command, extra_args=None):
@@ -58,7 +61,11 @@ class CloudifyFile(object):
         self.file_path = self.config.get('file_path')
         self.owner = self.config.get('owner')
         self.mode = self.config.get('mode')
+        self.template_variables = \
+            self.config.get('template_variables')
         self.use_sudo = self.config.get('use_sudo')
+        self.allow_failure = \
+            self.config.get('allow_failure')
 
     @staticmethod
     def get_config(inputs):
@@ -70,7 +77,20 @@ class CloudifyFile(object):
 
     def create(self):
 
-        downloaded_file_path = ctx.download_resource(self.resource_path)
+        try:
+            if isinstance(self.template_variables, dict):
+                downloaded_file_path = \
+                    ctx.download_resource_and_render(
+                        self.resource_path,
+                        template_variables=self.template_variables)
+            else:
+                downloaded_file_path = \
+                    ctx.download_resource(self.resource_path)
+        except HttpException as e:
+            err = '{0}'.format(str(e))
+            if self.allow_failure is False:
+                raise NonRecoverableError(err)
+            ctx.logger.error(err)
 
         if self.use_sudo:
             cp_out = execute_command('sudo cp {0} {1}'.format(
@@ -116,8 +136,8 @@ class CloudifyFile(object):
         return True
 
     def delete(self):
-        if not self.use_sudo:
-            os.remove(self.file_path)
+        if self.use_sudo:
+            execute_command('sudo rm {0}'.format(self.file_path))
             return True
-        execute_command('sudo rm {0}'.format(self.file_path))
+        os.remove(self.file_path)
         return True
