@@ -35,6 +35,7 @@ class TestTasks(unittest.TestCase):
         )
 
         _ctx._execution_id = "execution_id"
+        _ctx.instance.host_ip = None
 
         current_ctx.set(_ctx)
         return _ctx
@@ -53,7 +54,7 @@ class TestTasks(unittest.TestCase):
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
-            with self.assertRaises(OSError):
+            with self.assertRaises(NonRecoverableError):
                 tasks.run(
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': 'ip', 'user': 'user',
@@ -63,13 +64,46 @@ class TestTasks(unittest.TestCase):
             'ip', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user')
 
+    def test_run_auth_with_host_ip(self):
+        _ctx = self._gen_ctx()
+        ssh_mock = MagicMock()
+        ssh_mock.connect = MagicMock(side_effect=OSError("e"))
+        with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
+            with self.assertRaises(NonRecoverableError):
+                _ctx.instance.host_ip = 'ip'
+                tasks.run(
+                    calls=[{'action': 'ls'}],
+                    terminal_auth={'user': 'user',
+                                   'password': 'password'}
+                )
+        ssh_mock.connect.assert_called_with(
+            'ip', allow_agent=False, look_for_keys=False, password='password',
+            port=22, timeout=5, username='user')
+
+    def test_run_auth_several_ips(self):
+        self._gen_ctx()
+        ssh_mock = MagicMock()
+        ssh_mock.connect = MagicMock(side_effect=OSError("e"))
+        with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
+            with self.assertRaises(NonRecoverableError):
+                tasks.run(
+                    calls=[{'action': 'ls'}],
+                    terminal_auth={'ip': ['ip1', 'ip2'], 'user': 'user',
+                                   'password': 'password'}
+                )
+        ssh_mock.connect.assert_has_calls([call(
+            'ip1', allow_agent=False, look_for_keys=False, password='password',
+            port=22, timeout=5, username='user'), call(
+            'ip2', allow_agent=False, look_for_keys=False, password='password',
+            port=22, timeout=5, username='user')])
+
     def test_run_auth_enabled_logs(self):
         _ctx = self._gen_ctx()
         connection_mock = MagicMock()
         connection_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("cloudify_terminal.terminal_connection.connection",
                    MagicMock(return_value=connection_mock)):
-            with self.assertRaises(OSError):
+            with self.assertRaises(NonRecoverableError):
                 tasks.run(
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': 'ip', 'user': 'user',

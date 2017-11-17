@@ -32,12 +32,15 @@ def run(**kwargs):
     properties = ctx.node.properties
     terminal_auth = properties.get('terminal_auth', {})
     terminal_auth.update(kwargs.get('terminal_auth', {}))
-    ip = terminal_auth.get('ip')
+    ip_list = terminal_auth.get('ip', [ctx.instance.host_ip])
+    if isinstance(ip_list, basestring):
+        ip_list = [ip_list]
     user = terminal_auth.get('user')
     password = terminal_auth.get('password')
     key_content = terminal_auth.get('key_content')
     port = terminal_auth.get('port', 22)
-    if not ip or not user:
+
+    if not ip_list or not user:
         raise cfy_exc.NonRecoverableError(
             "please check your credentials, ip or user not set"
         )
@@ -58,9 +61,21 @@ def run(**kwargs):
 
     connection = terminal_connection.connection()
 
-    prompt = connection.connect(ip, user, password, key_content, port,
-                                global_promt_check, logger=ctx.logger,
-                                log_file_name=log_file_name)
+    for ip in ip_list:
+        try:
+            prompt = connection.connect(ip, user, password, key_content, port,
+                                        global_promt_check, logger=ctx.logger,
+                                        log_file_name=log_file_name)
+            ctx.logger.info("Will be used: " + ip)
+            break
+        except Exception as ex:
+            ctx.logger.info("Can't connect to %s with %s" % (
+                repr(ip), str(ex)
+            ))
+    else:
+        raise cfy_exc.NonRecoverableError(
+            "please check your ip list"
+        )
 
     ctx.logger.info("Device prompt: " + prompt)
 

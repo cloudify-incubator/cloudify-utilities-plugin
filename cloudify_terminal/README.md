@@ -26,7 +26,7 @@ and that reuse such node in other part of your blueprint. For implicit reuse ip 
             terminal_auth:
               user: <user for instance>
               password: <optional, password for instance>
-              ip: <optional, instance ip, plugin can get such ip from parent node>
+              ip: <optional, ip for device or list of ip's if have failback ip's>
               key_content: <optional, ssh key content for instance>
               port: <optional, by default 22>
               errors: <list strings that must raise error if contained in output>
