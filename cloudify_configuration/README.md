@@ -216,5 +216,5 @@ Workflow for update all nodes with types from `node_types_to_update` by values f
 
 **Parameters:**
 * `params`: list of parameters.
-* `configuration_node_type`: type of configuration node, by default: `configuration_loader`.
+* `configuration_node_id`: type of configuration node, by default: `configuration_loader`.
 * `node_types_to_update`: list of node types for update in workflow, by default: `juniper_node_config`, `fortinet_vnf_type`.

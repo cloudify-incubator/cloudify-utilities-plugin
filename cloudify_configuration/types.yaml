@@ -33,7 +33,7 @@ workflows:
     parameters:
       params:
         description: json string
-      configuration_node_type:
+      configuration_node_id:
         default: configuration_loader
       node_types_to_update:
         default:

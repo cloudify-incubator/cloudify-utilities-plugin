@@ -12,4 +12,23 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+from functools import wraps
+from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
+
 __author__ = 'michael'
+
+IS_ALIVE_PROPERTY = 'is_alive'
+
+
+def is_alive(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        isalive = func(*args, **kwargs)
+        if isalive:
+            ctx.instance.runtime_properties[IS_ALIVE_PROPERTY] = isalive
+        else:
+            raise NonRecoverableError("Node is not alive")
+    return wrapper
+
+
