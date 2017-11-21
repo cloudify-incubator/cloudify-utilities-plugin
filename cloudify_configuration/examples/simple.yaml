@@ -96,6 +96,20 @@ node_templates:
             calls:
               - template: ssh.cmd
                 params: { get_attribute: [SELF, params] }
+        update:
+          inputs:
+            calls:
+              - template: ssh.cmd
+                params: { get_attribute: [SELF, params] }
+        is_alive:
+          inputs:
+            calls:
+              - template: isalive.cmd
     relationships:
       - type: load_from_config
         target: configuration
+
+
+
+
+
