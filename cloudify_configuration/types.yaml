@@ -6,8 +6,6 @@ node_types:
     properties:
       parameters_json:
         default: ''
-      merge_dicts:
-        default: false
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -16,7 +14,7 @@ node_types:
             parameters:
               default: { get_property: [SELF, parameters_json] }
             merge_dicts:
-              default: { get_property: [SELF, merge_dicts] }
+              default: false
 
 relationships:
 
@@ -39,6 +37,8 @@ workflows:
         description: json string
       configuration_node_id:
         default: configuration_loader
+      merge_dict:
+        default: false
       node_types_to_update:
         default:
           - juniper_node_config

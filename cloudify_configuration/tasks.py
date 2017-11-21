@@ -28,7 +28,9 @@ LIFECYCLE_RELATIONSHIP_OPERATION_PRECONFIGURE = \
     'cloudify.interfaces.relationship_lifecycle.preconfigure'
 LIFECYCLE_OPERATION_IS_ALIVE = \
     'cloudify.interfaces.lifecycle.is_alive'
+
 PARAMS = 'params'
+PARAMS_LIST = 'params_list'
 OLD_PARAMS = 'old_params'
 DIFF_PARAMS = 'diff_params'
 
@@ -44,12 +46,16 @@ def _merge_dicts(d1, d2):
     return result
 
 
+def _handle_parameters(parameters):
+    if isinstance(parameters, dict):
+        return parameters
+    else:
+        return json.loads(parameters)
+
+
 def load_configuration(parameters, merge_dicts, **kwargs):
     # load params
-    if isinstance(parameters, dict):
-        params = parameters
-    else:
-        params = json.loads(parameters)
+    params = _handle_parameters(parameters)
 
     # get previous params
     p = ctx.instance.runtime_properties.get(PARAMS, {})
@@ -65,7 +71,7 @@ def load_configuration_to_runtime_properties(source_config, **kwargs):
     old_params = ctx.source.instance.runtime_properties.get('params', {})
     # prevent recursion by removing old_params from old_params
     old_params['old_params'] = {}
-   # retrive relevant parameters list from node properties
+    # retrive relevant parameters list from node properties
     params_list = ctx.source.node.properties['params_list']
 
     # populate params from main configuration with only relevant values
@@ -98,6 +104,7 @@ def load_configuration_to_runtime_properties(source_config, **kwargs):
 def update(params,
            configuration_node_id,
            node_types_to_update,
+           merge_dict,
            **kwargs):
     ctx = workflow_ctx
     ctx.logger.info("Starting Update Workflow")
@@ -111,11 +118,13 @@ def update(params,
     perform_availability_check(graph,
                                node_types,
                                configuration_node_id,
+                               restcli,
                                ctx)
 
     configure_and_preconfigure(graph,
                                configuration_node_id,
                                params,
+                               merge_dict,
                                node_types,
                                ctx)
     return update_on_nodes(graph,
@@ -128,12 +137,14 @@ def update(params,
 def perform_availability_check(graph,
                                node_types,
                                configuration_node_id,
+                               restcli,
                                ctx):
     sequence = graph.sequence()
 
     execute_function_on_instance_connected_to_configuration(
         node_types,
         configuration_node_id,
+        restcli,
         availability_check,
         {'sequence': sequence},
         ctx
@@ -163,6 +174,7 @@ def update_on_nodes(graph,
     execute_function_on_instance_connected_to_configuration(
         node_types,
         configuration_node_id,
+        restcli,
         execute_update,
         {'restcli': restcli, 'sequence': sequence},
         ctx
@@ -174,21 +186,21 @@ def update_on_nodes(graph,
 def execute_update(restcli, sequence, instance, ctx):
     currentinstance = restcli.node_instances.get(instance.id)
     params = currentinstance.runtime_properties[PARAMS]
-    if len(params[DIFF_PARAMS]) > 0:
-        ctx.logger.info(
-            "Updating instance ID: {} with diff_params {}".format(
-                instance.id, params[DIFF_PARAMS]
-            )
+    ctx.logger.info(
+        "Updating instance ID: {} with diff_params {}".format(
+            instance.id, params[DIFF_PARAMS]
         )
-        operation_task = instance.execute_operation(
-            LIFECYCLE_OPERATION_UPDATE
-        )
-        sequence.add(operation_task)
+    )
+    operation_task = instance.execute_operation(
+        LIFECYCLE_OPERATION_UPDATE
+    )
+    sequence.add(operation_task)
 
 
 def configure_and_preconfigure(graph,
                                configuration_node_id,
                                params,
+                               merge_dict,
                                node_types,
                                ctx):
 
@@ -196,8 +208,9 @@ def configure_and_preconfigure(graph,
     execute_function_on_configuration_node(
         configuration_node_id,
         configure,
-        {'params': params},
-        ctx)
+        {'sequence': sequence, 'parameters': params, 'merge_dict': merge_dict},
+        ctx
+    )
 
     execute_function_on_instances_relationship_connected_to_configuration(
         node_types,
@@ -209,12 +222,12 @@ def configure_and_preconfigure(graph,
     graph.execute()
 
 
-def configure(sequence, params, instance, ctx):
+def configure(sequence, parameters, merge_dict, instance, ctx):
     ctx.logger.info('Execute configure operation on instance ' + instance.id)
     load_config_task = instance.execute_operation(
         LIFECYCLE_OPERATION_CONFIGURE,
         allow_kwargs_override=True,
-        kwargs={'parameters': params}
+        kwargs={'parameters': parameters, 'merge_dict': merge_dict}
     )
     sequence.add(load_config_task)
 
@@ -227,6 +240,12 @@ def preconfigure(sequence, relationship, ctx):
             LIFECYCLE_RELATIONSHIP_OPERATION_PRECONFIGURE
         )
     sequence.add(operation_task)
+
+
+def needs_to_get_updated(restcli, instance):
+    currentinstance = restcli.node_instances.get(instance.id)
+    params = currentinstance.runtime_properties[PARAMS]
+    return params.get(DIFF_PARAMS, False)
 
 
 def execute_function_on_configuration_node(
@@ -257,6 +276,7 @@ def execute_function_on_instances_relationship_connected_to_configuration(
 def execute_function_on_instance_connected_to_configuration(
         node_types,
         configuration_node_id,
+        restcli,
         func,
         func_kwargs,
         ctx):
@@ -264,7 +284,9 @@ def execute_function_on_instance_connected_to_configuration(
         if node_types.intersection(set(node.type_hierarchy)):
             for instance in node.instances:
                 if any(configuration_node_id == relationship.target_node_instance.node_id
-                       for relationship in instance.relationships):
+                       for relationship in instance.relationships) \
+                        and needs_to_get_updated(restcli, instance):
+                    ctx.logger.info("Executing operation on node instance " + instance.id)
                     func(instance=instance, ctx=ctx, **func_kwargs)
 
 
