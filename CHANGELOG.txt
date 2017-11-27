@@ -48,3 +48,6 @@ releases:
   v1.4.0:
   - Added support for files back in a simplified form.
 
+  v1.4.1:
+  - Added support for multiple IPs in Terminal plugin.
+
