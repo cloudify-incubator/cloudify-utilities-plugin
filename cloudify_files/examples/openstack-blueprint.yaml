@@ -4,11 +4,9 @@ description: >
   This blueprint provides the basic architecture for an Openstack blueprint.
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.2/resources/rest-service/cloudify/types/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.3.0/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.0/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.0/cloudify_files/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.0/cloudify_cloudinit/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.1.2/plugin.yaml
 
 inputs:
 

@@ -32,7 +32,13 @@ def run(**kwargs):
     properties = ctx.node.properties
     terminal_auth = properties.get('terminal_auth', {})
     terminal_auth.update(kwargs.get('terminal_auth', {}))
-    ip_list = terminal_auth.get('ip', [ctx.instance.host_ip])
+    ip_list = terminal_auth.get('ip')
+
+    # if node contained in some other node, try to overwrite ip
+    if not ip_list:
+        ip_list = [ctx.instance.host_ip]
+        ctx.logger.info("Used host from container: %s" % str(ip_list))
+
     if isinstance(ip_list, basestring):
         ip_list = [ip_list]
     user = terminal_auth.get('user')

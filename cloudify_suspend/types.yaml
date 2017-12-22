@@ -1,6 +1,0 @@
-workflows:
-
-  suspend:
-    mapping: suspend.cloudify_suspend.workflows.suspend
-  resume:
-    mapping: suspend.cloudify_suspend.workflows.resume

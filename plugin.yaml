@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.4.1.zip
-    package_version: '1.4.1'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.4.1.2.zip
+    package_version: '1.4.1.2'
 
   cfy_files: *utilities_plugin
 
@@ -19,3 +19,337 @@ plugins:
   suspend: *utilities_plugin
 
   terminal: *utilities_plugin
+
+data_types:
+
+  cloudify.datatypes.Blueprint:
+    properties:
+      external_resource:
+        description: >
+          Use external resource.
+        default: false
+      id:
+        description: >
+          This is the blueprint that the deployment node is a proxy to.
+        required: false
+      main_file_name:
+        description: >
+          The application blueprint filename. If the blueprint consists many imported files this is the main blueprint.
+        default: blueprint.yaml
+      blueprint_archive:
+        description: >
+          The URL of a .zip to upload to the manager. (Can be skipped if external_resource == True)
+        default: ""
+        required: true
+
+  cloudify.datatypes.Deployment:
+    properties:
+      external_resource:
+        description: >
+          Use external resource.
+        default: false
+      id:
+        description: >
+          This is the deployment that the node is a proxy to.
+        required: false
+      inputs:
+        description: >
+          The inputs to the deployment.
+        default: {}
+      outputs:
+        description: >
+          A dictionary of "{ key: value, key: value }".
+          Get "key" the deployment.
+          Set "value" runtime property to the value of the output.
+        required: false
+      logs:
+        description: >
+          Logs redirect settings, by default {redirect: true}
+        required: false
+
+  cloudify.datatypes.Node:
+    properties:
+      id:
+        type: string
+
+  cloudify.datatypes.NodeInstance:
+    properties:
+      node:
+        type: cloudify.datatypes.Node
+        required: false
+      id:
+        type: string
+        required: false
+
+  cloudify.datatypes.DeploymentProxy:
+    properties:
+      blueprint:
+        type: cloudify.datatypes.Blueprint
+        required: true
+      deployment:
+        type: cloudify.datatypes.Deployment
+        required: true
+      executions_start_args:
+        default: {}
+        description: >
+          Optional parems for executions
+      reexecute:
+        default: false
+        description: >
+          Reexecte workflows, on external deployment
+
+  cloudify.datatypes.NodeInstanceProxy:
+    properties:
+      blueprint:
+        type: cloudify.datatypes.Blueprint
+        required: true
+      deployment:
+        type: cloudify.datatypes.Deployment
+        required: true
+      executions_start_args:
+        default: {}
+        description: >
+          Optional params for executions
+      reexecute:
+        default: false
+        description: >
+          Reexecte workflows, on external deployment
+      node_instance:
+        type: cloudify.datatypes.NodeInstance
+
+  cloudify.datatypes.key:
+    properties:
+      private_key_path:
+        type: string
+        required: false
+      public_key_path:
+        type: string
+        default: '~/.ssh/id_rsa.pub'
+      key_name:
+        type: string
+        required: false
+      algorithm:
+        type: string
+        default: 'RSA'
+      bits:
+        type: integer
+        default: 2048
+      comment:
+        type: string
+        required: false
+      passphrase:
+        type: string
+        required: false
+      openssh_format:
+        type: boolean
+        required: false
+      unvalidated:
+        description: Unvalidated parameters.
+        required: false
+
+  cloudify.datatypes.terminal_auth:
+    properties:
+      user:
+        description: The login credentials for ios server.
+        default: ''
+      password:
+        description: optional, ssh password
+        default: ''
+      ip:
+        description: optional, device ip
+        default: ''
+      key_content:
+        description: optional, ssh user key
+        default: ''
+      port:
+        description: optional, ssh port
+        default: 22
+      store_logs:
+        description: optional, save communication logs
+        default: false
+      promt_check:
+        description: optional, list of prompts accepted from device, by default: #/$
+        default: []
+      errors:
+        description: optional, list of possible errors without new line
+        default: []
+      exit_command:
+        description: optional, command for close connection, default 'exit'
+        default: exit
+
+node_types:
+
+  cloudify.nodes.DeploymentProxy:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        type: cloudify.datatypes.DeploymentProxy
+        default: {}
+      client:
+        description: >
+          Client configuration, if empty will be reused manager client:
+            host: Host of Cloudify's management machine.
+            port: Port of REST API service on management machine.
+            protocol: Protocol of REST API service on management machine,
+                      defaults to http.
+            api_version: version of REST API service on management machine.
+            headers: Headers to be added to request.
+            query_params: Query parameters to be added to the request.
+            cert: Path to a copy of the server's self-signed certificate.
+            trust_all: if `False`, the server's certificate
+                       (self-signed or not) will be verified.
+            username: Cloudify User username.
+            password: Cloudify User password.
+            token: Cloudify User token.
+            tenant: Cloudify Tenant name.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.upload_blueprint
+        configure:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.create_deployment
+        start:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id:
+              default: install
+        stop:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id:
+              default: uninstall
+        delete:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
+
+  cloudify.nodes.NodeInstanceProxy:
+    derived_from: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        type: cloudify.datatypes.NodeInstanceProxy
+        default: {}
+
+  cloudify.nodes.CloudInit.CloudConfig:
+    derived_from: cloudify.nodes.Root
+    properties:
+      header:
+        default: '#cloud-config'
+      encode_base64:
+        default: false
+      resource_config:
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        configure:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        start:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        stop:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        delete:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+
+  configuration_loader:
+    derived_from: cloudify.nodes.ApplicationServer
+    properties:
+      parameters_json:
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: configuration.cloudify_configuration.tasks.load_configuration
+          inputs:
+            parameters:
+              default: { get_property: [SELF, parameters_json] }
+            merge_dicts:
+              default: false
+
+  cloudify.keys.nodes.RSAKey:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_secret_store:
+        type: boolean
+        default: true
+      key_name:
+        type: string
+        description: Deprecated. Use resource_config.key_name.
+        required: false
+      resource_config:
+        description: >
+          A dictionary of values to pass to configure the key.
+        type: cloudify.datatypes.key
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_public_key_material:
+              description: >
+                Allow the public key material to be stored as a runtime property. Recommended.
+              type: boolean
+              default: true
+            store_private_key_material:
+              description: Allow the private key material to be stored as a runtime property. Not recommended for manager deployments.
+              type: boolean
+              default: false
+        delete:
+          implementation: keys.cloudify_ssh_key.operations.delete
+
+  cloudify.terminal.raw:
+    derived_from: cloudify.nodes.Root
+    properties:
+      terminal_auth:
+        type: cloudify.datatypes.terminal_auth
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        configure:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        start:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        stop:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        delete:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+
+relationships:
+
+  load_from_config:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: configuration.cloudify_configuration.tasks.load_configuration_to_runtime_properties
+          inputs:
+            source_config:
+              default: { get_attribute: [TARGET , params ]  }
+
+workflows:
+
+  configuration_update:
+    mapping: configuration.cloudify_configuration.tasks.update
+    parameters:
+      params:
+        description: json string
+      configuration_node_id:
+        default: configuration_loader
+      merge_dict:
+        default: false
+      node_types_to_update:
+        default:
+          - juniper_node_config
+          - fortinet_vnf_type
+  suspend:
+    mapping: suspend.cloudify_suspend.workflows.suspend
+
+  resume:
+    mapping: suspend.cloudify_suspend.workflows.resume
