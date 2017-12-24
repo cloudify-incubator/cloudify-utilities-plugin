@@ -1,7 +1,7 @@
 # Cloudify Utilities: Suspend
 Additional suport for `suspend`/`resume` workflows.
 
-## Supported workwlows
+## Supported workflows
 
 * `suspend`: Workflow call `cloudify.interfaces.lifecycle.suspend` for each node that have such operation.
 * `resume`: Workflow call `cloudify.interfaces.lifecycle.resume` for each node that have such operation.
