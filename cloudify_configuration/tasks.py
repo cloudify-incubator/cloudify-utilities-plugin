@@ -298,5 +298,3 @@ def execute_function_on_instance_connected_to_configuration(
                        for relationship in instance.relationships) \
                         and needs_to_get_updated(params, instance):
                     func(instance=instance, ctx=ctx, **func_kwargs)
-
-

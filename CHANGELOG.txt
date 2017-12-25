@@ -54,3 +54,6 @@ releases:
   v1.4.1.1:
   - Fixed bug in multiple IP handling.
 
+  v1.4.2:
+  - Configuration Plugin IP regression fixes.
+  - Merging Types YAML into single Plugin YAML.
