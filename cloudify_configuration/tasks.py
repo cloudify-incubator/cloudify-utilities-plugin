@@ -23,7 +23,18 @@ from cloudify import manager
 import json
 
 
-def load_configuration(parameters, **kwargs):
+def _merge_dicts(d1, d2):
+    result = d1.copy()
+    for key, new_val in d2.iteritems():
+        current_val = result.get(key)
+        if isinstance(current_val, dict) and isinstance(new_val, dict):
+            result[key] = _merge_dicts(current_val, new_val)
+        else:
+            result[key] = new_val
+    return result
+
+
+def load_configuration(parameters, merge_dicts, **kwargs):
     # load params
     if isinstance(parameters, dict):
         params = parameters
@@ -33,14 +44,16 @@ def load_configuration(parameters, **kwargs):
     # get previous params
     p = ctx.instance.runtime_properties.get('params', {})
     # update params
-    p.update(params)
+    if merge_dicts:
+        p = _merge_dicts(p, params)
+    else:
+        p.update(params)
     ctx.instance.runtime_properties['params'] = p
 
 
 def load_configuration_to_runtime_properties(source_config, **kwargs):
     old_params = ctx.source.instance.runtime_properties.get('params', {})
-
-    # privent recursion by removing old_params from old_params
+    # prevent recursion by removing old_params from old_params
     old_params['old_params'] = {}
 
     # retrive relevant parameters list from node properties
@@ -48,8 +61,7 @@ def load_configuration_to_runtime_properties(source_config, **kwargs):
 
     # populate params from main configuration with only relevant values
     params = {k: v for k, v in source_config.iteritems() if k in params_list}
-
-    # overide params with HARD coded node params
+    # override params with HARD coded node params
     params.update(ctx.source.node.properties['params'])
 
     # create in params old_params key with empty dict
