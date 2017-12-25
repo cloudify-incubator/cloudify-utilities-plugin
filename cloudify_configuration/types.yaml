@@ -13,6 +13,8 @@ node_types:
           inputs:
             parameters:
               default: { get_property: [SELF, parameters_json] }
+            merge_dicts:
+              default: false
 
 relationships:
 
@@ -33,8 +35,10 @@ workflows:
     parameters:
       params:
         description: json string
-      configuration_node_type:
+      configuration_node_id:
         default: configuration_loader
+      merge_dict:
+        default: false
       node_types_to_update:
         default:
           - juniper_node_config

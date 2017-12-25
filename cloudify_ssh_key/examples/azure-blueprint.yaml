@@ -1,12 +1,6 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-azure-plugin/1.4.1.1/plugin.yaml # Special release that supports VM Creations Input Args
-  - https://raw.githubusercontent.com/cloudify-examples/aws-azure-openstack-blueprint/master/azure/resource-group.yaml
-  - https://raw.githubusercontent.com/cloudify-examples/aws-azure-openstack-blueprint/master/azure/network/blueprint.yaml
-  - https://raw.githubusercontent.com/cloudify-examples/aws-azure-openstack-blueprint/master/azure/storage/blueprint.yaml
-  - https://raw.githubusercontent.com/cloudify-examples/aws-azure-openstack-blueprint/master/azure/compute/availability-set.yaml
   - ssh-key-blueprint.yaml
 
 inputs:
