@@ -168,7 +168,7 @@ data_types:
         description: optional, save communication logs
         default: false
       promt_check:
-        description: optional, list of prompts accepted from device, by default: #/$
+        description: optional, list of prompts accepted from device, default is "#/$"
         default: []
       errors:
         description: optional, list of possible errors without new line
