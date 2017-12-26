@@ -117,9 +117,9 @@ def update(params,
     node_types = set(node_types_to_update)
     # update interface on the config node
     graph = ctx.graph_mode()
-    
-    params =  _handle_parameters(params)
-    
+
+    params = _handle_parameters(params)
+
     perform_availability_check(graph,
                                node_types,
                                configuration_node_id,

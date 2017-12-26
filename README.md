@@ -40,4 +40,5 @@ Utilities for extending Cloudify features.
             * Removing Files Feature
             * Reorganizing Plugin YAMLs
   - v1.4.0: Added back the files feature in a simplified form.
-  - v1.4.1: Added support for multiple ips in terminal plugin.
+  - v1.4.1: Configuration Plugin IP regression fixes.
+  - v1.4.2: Handle parameters correctly in configuration update operation.
