@@ -69,6 +69,8 @@ def poll_with_timeout(pollster,
     timeout = float('infinity') if timeout == -1 else timeout
     current_time = time.time()
 
+    ctx.logger.debug('Timeout value is {}'.format(timeout))
+
     while time.time() <= current_time + timeout:
         if pollster(**pollster_args) != expected_result:
             ctx.logger.debug('Polling...')
