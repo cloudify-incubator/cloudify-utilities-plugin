@@ -64,7 +64,9 @@ def poll_with_timeout(pollster,
                       expected_result=True):
 
     pollster_args = pollster_args or dict()
-
+    # Check if timeout value is -1 that allows infinite timeout
+    # If timeout value is not -1 then it is a finite timeout
+    timeout = float('infinity') if timeout == -1 else timeout
     current_time = time.time()
 
     while time.time() <= current_time + timeout:
