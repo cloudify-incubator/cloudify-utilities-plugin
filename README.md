@@ -42,3 +42,4 @@ Utilities for extending Cloudify features.
   - v1.4.0: Added back the files feature in a simplified form.
   - v1.4.1: Configuration Plugin IP regression fixes.
   - v1.4.2: Handle parameters correctly in configuration update operation.
+  - v1.4.3: Allow infinite timeout in deployment proxy.
