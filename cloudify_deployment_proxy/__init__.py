@@ -21,7 +21,6 @@ import time
 
 from .constants import (
     UNINSTALL_ARGS,
-    DEPLOYMENTS_TIMEOUT,
     EXECUTIONS_TIMEOUT,
     POLLING_INTERVAL,
     EXTERNAL_RESOURCE,
