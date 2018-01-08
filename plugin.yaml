@@ -253,7 +253,7 @@ node_types:
             workflow_id:
               default: install
             timeout:
-              default: 120
+              default: 900
         stop:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
           inputs:
