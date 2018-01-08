@@ -21,7 +21,6 @@ import time
 
 from .constants import (
     UNINSTALL_ARGS,
-    DEPLOYMENTS_TIMEOUT,
     EXECUTIONS_TIMEOUT,
     POLLING_INTERVAL,
     EXTERNAL_RESOURCE,
@@ -104,10 +103,7 @@ class DeploymentProxyBase(object):
         # Polling-related properties
         self.interval = operation_inputs.get('interval', POLLING_INTERVAL)
         self.state = operation_inputs.get('state', 'terminated')
-        self.timeout = \
-            operation_inputs.get(
-                'timeout',
-                EXECUTIONS_TIMEOUT if 'execute_start' else DEPLOYMENTS_TIMEOUT)
+        self.timeout = operation_inputs.get('timeout', EXECUTIONS_TIMEOUT)
 
     def dp_get_client_response(self,
                                _client,
