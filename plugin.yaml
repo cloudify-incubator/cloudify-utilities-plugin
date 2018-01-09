@@ -251,9 +251,16 @@ node_types:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
           inputs:
             workflow_id:
+              type: string
               default: install
             timeout:
+              type: integer
+              description: How long (in seconds) to wait for execution to finish before timing out
               default: 900
+            interval:
+              type: integer
+              description: Polling interval (seconds)
+              default: 10
         stop:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
           inputs:
