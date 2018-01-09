@@ -91,12 +91,15 @@ class MockNodeInstancesClient(BaseMockClient):
 class MockEventsClient(BaseMockClient):
 
     list_events = []
+    count = -1
 
-    def _set(self, list_events):
+    def _set(self, list_events, full_count=True):
         self.list_events = list_events
+        if full_count:
+            self.count = len(self.list_events)
 
     def get(self, *args, **_):
-        return self.list_events, len(self.list_events)
+        return self.list_events, self.count
 
 
 class MockCloudifyRestClient(object):
