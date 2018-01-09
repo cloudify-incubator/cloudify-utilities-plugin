@@ -129,6 +129,14 @@ def dep_logs_redirect(_client, execution_id):
                 ctx.logger.log(20, message)
 
         last_event += len(events)
+        # returned infinite count
+        if full_count < 0:
+            full_count = last_event + 100
+        # returned nothing, let's do it next time
+        if len(events) == 0:
+            ctx.logger.log(20, "Returned nothing, let's get logs next time.")
+            break
+
     ctx.instance.runtime_properties[COUNT_EVENTS][execution_id] = last_event
 
 

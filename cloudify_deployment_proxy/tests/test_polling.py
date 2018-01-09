@@ -448,3 +448,18 @@ class TestPolling(DeploymentProxyTestBase):
             20,
             "2017-03-22T11:42:00.083Z [vm_ke9e2d.create] Task succeeded "
             "'cloudify_agent.installer.operations.create'")
+
+    def test_dep_logs_empty_infinity(self):
+        test_name = "dep_logs_redirect_predefined_level"
+        _ctx = self.get_mock_ctx(test_name)
+        _ctx.logger.log = mock.MagicMock(return_value=None)
+        current_ctx.set(_ctx)
+
+        cfy_mock_client = MockCloudifyRestClient()
+
+        cfy_mock_client.events._set([], False)
+
+        dep_logs_redirect(cfy_mock_client, 'some_execution_id')
+        _ctx.logger.log.assert_called_with(
+            20,
+            "Returned nothing, let's get logs next time.")
