@@ -99,7 +99,8 @@ def dep_logs_redirect(_client, execution_id):
         events, full_count = _client.events.get(execution_id, last_event,
                                                 250, True)
         for event in events:
-
+            ctx.logger.debug(
+                'Event {0} for execution_id {1}'.format(event, execution_id))
             instance_prompt = event.get('node_instance_id', "")
             if instance_prompt:
                 if event.get('operation'):
@@ -115,6 +116,12 @@ def dep_logs_redirect(_client, execution_id):
                 instance_prompt if instance_prompt else "",
                 event.get('message', "")
             )
+            message = message.encode('utf-8')
+
+            ctx.logger.debug(
+                'Message {0} for Event {1} for execution_id {1}'.format(
+                    message, event))
+
             level = event.get('level')
             predefined_levels = {
                 'critical': 50,
@@ -174,6 +181,10 @@ def dep_workflow_in_state_pollster(_client,
         _execs = \
             _client.executions.list(deployment_id=_dep_id,
                                     _include=exec_list_fields)
+
+        ctx.logger.debug(
+            'The execs list response form {0} is {1}'.format(_dep_id, _execs))
+
     except CloudifyClientError as ex:
         raise NonRecoverableError(
             'Executions list failed {0}.'.format(str(ex)))
@@ -182,6 +193,8 @@ def dep_workflow_in_state_pollster(_client,
             if _workflow_id and _exec.get('workflow_id', '') != _workflow_id:
                 continue
             if _log_redirect:
+                ctx.logger.debug(
+                    '_exec info for _log_redirect is {0}'.format(_exec))
                 dep_logs_redirect(_client, _exec.get('id'))
             if _exec.get('status') == _state:
                 return True

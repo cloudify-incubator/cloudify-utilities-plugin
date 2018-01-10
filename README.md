@@ -45,3 +45,4 @@ Utilities for extending Cloudify features.
   - v1.4.1: Configuration Plugin IP regression fixes.
   - v1.4.2: Handle parameters correctly in configuration update operation.
   - v1.4.3: Allow infinite timeout in deployment proxy.
+  - v1.4.4: Fix issue with encoding event message in post deployment proxy

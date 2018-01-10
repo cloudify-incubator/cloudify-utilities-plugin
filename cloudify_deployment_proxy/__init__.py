@@ -270,15 +270,22 @@ class DeploymentProxyBase(object):
                 dict(deployment_id=self.deployment_id,
                      workflow_id=self.workflow_id,
                      **execution_args)
-            self.dp_get_client_response('executions', EXEC_START, client_args)
+            response = self.dp_get_client_response('executions',
+                                                   EXEC_START, client_args)
+
+            ctx.logger.debug('Executions start response: {0}'.format(response))
 
             # Poll for execution success.
             if not self.verify_execution_successful():
                 ctx.logger.error('Deployment error.')
 
+            ctx.logger.debug('Polling execution succeeded')
+
         if NIP_TYPE == ctx.node.type:
+            ctx.logger.debug('Start post execute node proxy')
             return self.post_execute_node_instance_proxy()
         elif DEP_TYPE == ctx.node.type:
+            ctx.logger.debug('Start post execute deployment proxy')
             return self.post_execute_deployment_proxy()
         return False
 
@@ -304,13 +311,23 @@ class DeploymentProxyBase(object):
         return True
 
     def post_execute_deployment_proxy(self):
+        runtime_prop = ctx.instance.runtime_properties['deployment']
+        ctx.logger.debug(
+            'Runtime  deployment properties {0}'.format(runtime_prop))
 
         if 'outputs' \
                 not in ctx.instance.runtime_properties['deployment'].keys():
             update_attributes('deployment', 'outputs', dict())
+            ctx.logger.debug('No deployment proxy outputs exist.')
 
         try:
+            ctx.logger.debug('Deployment Id is {0}'.format(self.deployment_id))
+
             response = self.client.deployments.outputs.get(self.deployment_id)
+
+            ctx.logger.debug(
+                'Deployment outputs response {0}'.format(response))
+
         except CloudifyClientError as ex:
             ctx.logger.error(
                 'Failed to query deployment outputs: {0}'.format(str(ex)))
