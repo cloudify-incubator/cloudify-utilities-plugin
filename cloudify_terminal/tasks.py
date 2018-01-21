@@ -11,10 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import socket
+from jinja2 import Template
+
+
 from cloudify import ctx
 from cloudify import exceptions as cfy_exc
 from cloudify.decorators import operation
-from jinja2 import Template
+
+
+
 
 import terminal_connection
 
@@ -67,6 +73,7 @@ def run(**kwargs):
 
     connection = terminal_connection.connection()
 
+
     for ip in ip_list:
         try:
             prompt = connection.connect(ip, user, password, key_content, port,
@@ -74,13 +81,19 @@ def run(**kwargs):
                                         log_file_name=log_file_name)
             ctx.logger.info("Will be used: " + ip)
             break
+
+
+        except socket.timeout as err:
+            raise cfy_exc.OperationRetry(message="Socket timeout retrying...".format(str(err)))
+
+
         except Exception as ex:
             ctx.logger.info("Can't connect to %s with %s" % (
                 repr(ip), str(ex)
             ))
     else:
         raise cfy_exc.NonRecoverableError(
-            "please check your ip list"
+            "Please check your ip list"
         )
 
     ctx.logger.info("Device prompt: " + prompt)
