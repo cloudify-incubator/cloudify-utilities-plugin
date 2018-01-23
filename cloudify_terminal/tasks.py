@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import socket
-from paramiko import ssh_exception
 from jinja2 import Template
 
 from cloudify import ctx
@@ -78,14 +76,6 @@ def run(**kwargs):
                                         log_file_name=log_file_name)
             ctx.logger.info("Will be used: " + ip)
             break
-
-        except socket.timeout as err:
-            ctx.logger.info("Socket timeout retrying... {}"
-                            .format(str(err)))
-
-        except ssh_exception.NoValidConnectionsError as err:
-            ctx.logger.info("NoValidConnectionsError retrying... {}"
-                            .format(str(err)))
 
         except Exception as ex:
             ctx.logger.info("Can't connect to:{} with exception:{} and type:{}"
