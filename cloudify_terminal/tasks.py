@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import socket
-import paramiko
+from paramiko import ssh_exception
 from jinja2 import Template
-
 
 from cloudify import ctx
 from cloudify import exceptions as cfy_exc
 from cloudify.decorators import operation
-
 
 
 import terminal_connection
@@ -82,19 +80,18 @@ def run(**kwargs):
             break
 
         except socket.timeout as err:
-            return ctx.operation.retry(message="Socket timeout retrying...".format(str(err)))
+            ctx.logger.info("Socket timeout retrying... {}"
+                            .format(str(err)))
 
         except ssh_exception.NoValidConnectionsError as err:
-            return ctx.operation.retry(message="NoValidConnectionsError retrying...".format(str(err)))
+            ctx.logger.info("NoValidConnectionsError retrying... {}"
+                            .format(str(err)))
 
         except Exception as ex:
-            ctx.logger.info("Can't connect to:%s with exception:%s and type:%s" % (
-                repr(ip), str(ex), str(type(ex))
-            ))
+            ctx.logger.info("Can't connect to:{} with exception:{} and type:{}"
+                            .format(repr(ip), str(ex), str(type(ex))))
     else:
-        raise cfy_exc.NonRecoverableError(
-            "Please check your ip list"
-        )
+        raise cfy_exc.OperationRetry(message="Please check your ip list")
 
     ctx.logger.info("Device prompt: " + prompt)
 
