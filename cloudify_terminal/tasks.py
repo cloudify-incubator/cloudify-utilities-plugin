@@ -91,7 +91,7 @@ def run(**kwargs):
             ctx.logger.info("Can't connect to:{} with exception:{} and type:{}"
                             .format(repr(ip), str(ex), str(type(ex))))
     else:
-        raise cfy_exc.OperationRetry(message="Please check your ip list")
+        raise cfy_exc.OperationRetry(message="Let's try one more time?")
 
     ctx.logger.info("Device prompt: " + prompt)
 
