@@ -63,3 +63,9 @@ releases:
 
   v1.4.3:
   - Allow infinite timeout in deployment proxy.
+
+  v1.4.4:
+  - Add Debug Logging to Deployment Proxy.
+
+  v.1.4.5:
+  - Terminal Plugin Handle Socket Timeout.
