@@ -16,7 +16,7 @@ from mock import MagicMock, patch, call
 
 from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, OperationRetry
 
 import cloudify_terminal.tasks as tasks
 
@@ -54,7 +54,7 @@ class TestTasks(unittest.TestCase):
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
-            with self.assertRaises(NonRecoverableError):
+            with self.assertRaises(OperationRetry):
                 tasks.run(
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': 'ip', 'user': 'user',
@@ -69,7 +69,7 @@ class TestTasks(unittest.TestCase):
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
-            with self.assertRaises(NonRecoverableError):
+            with self.assertRaises(OperationRetry):
                 _ctx.instance.host_ip = 'ip'
                 tasks.run(
                     calls=[{'action': 'ls'}],
@@ -85,7 +85,7 @@ class TestTasks(unittest.TestCase):
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
-            with self.assertRaises(NonRecoverableError):
+            with self.assertRaises(OperationRetry):
                 tasks.run(
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': ['ip1', 'ip2'], 'user': 'user',
@@ -103,7 +103,7 @@ class TestTasks(unittest.TestCase):
         connection_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("cloudify_terminal.terminal_connection.connection",
                    MagicMock(return_value=connection_mock)):
-            with self.assertRaises(NonRecoverableError):
+            with self.assertRaises(OperationRetry):
                 tasks.run(
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': 'ip', 'user': 'user',
