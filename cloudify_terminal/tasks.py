@@ -126,7 +126,7 @@ def run(**kwargs):
         if responses:
             ctx.logger.info("We have predefined responses: " + str(responses))
 
-        ctx.logger.info("Template: \n" + str(operation))
+        ctx.logger.debug("Template: \n" + str(operation))
 
         result = ""
         for op_line in operation.split("\n"):
@@ -134,7 +134,8 @@ def run(**kwargs):
             if not op_line.strip():
                 continue
 
-            ctx.logger.info("Execute: " + op_line)
+            ctx.logger.info("Executing template...")
+            ctx.logger.debug("Execute: " + op_line)
             result_part = connection.run(op_line, promt_check,
                                          error_examples, responses)
 
