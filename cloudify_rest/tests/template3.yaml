@@ -1,0 +1,8 @@
+rest_calls:
+  - path: /v1/put_ response3
+    method: PUT
+    payload: >
+      Any [payload
+    response_format: json
+    response_expectation: ['list',0,'key','proper_value|good']
+    hosts: ['hostFrom Template.test']

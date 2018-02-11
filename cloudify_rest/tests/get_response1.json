@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1",
+    "dscr": "very interesting description",
+    "status": "active",
+    "nested": {
+      "nested_key": "nested_value1"
+    }
+  },
+  {
+    "id": "101",
+    "dscr": "broing description",
+    "status": "activating",
+    "nested": {
+      "nested_key": "nested_value2"
+    }
+  }
+]

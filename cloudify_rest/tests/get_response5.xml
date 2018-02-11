@@ -1,0 +1,25 @@
+<response status="success">
+    <result>
+        <system>
+            <hostname>PA-VM</hostname>
+            <ip-address>10.127.33.33</ip-address>
+            <netmask>255.255.255.224</netmask>
+            <default-gateway>10.127.20.20</default-gateway>
+            <is-dhcp>no</is-dhcp>
+            <ipv6-address>unknown</ipv6-address>
+            <ipv6-link-local-address>fe80::250:56ff:fea8:57f/64</ipv6-link-local-address>
+            <ipv6-default-gateway></ipv6-default-gateway>
+            <mac-address>00:10:56:b8:15:8f</mac-address>
+            <time>Thu Dec  7 07:33:10 2017</time>
+            <uptime>2 days, 2:03:24</uptime>
+            <devicename>PA-VM</devicename>
+            <family>vm</family>
+            <serial>unknown</serial>
+            <vm-mac-base>BA:DB:EE:FB:AD:00</vm-mac-base>
+            <vm-mac-count>255</vm-mac-count>
+            <vm-uuid>111111111111111111111111111111</vm-uuid>
+            <vm-cpuid>ABS:FFF222777</vm-cpuid>
+            <vm-license>none</vm-license>
+        </system>
+    </result>
+</response>

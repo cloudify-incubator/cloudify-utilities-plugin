@@ -27,7 +27,8 @@ setuptools.setup(
               'cloudify_configuration',
               'cloudify_custom_workflow',
               'cloudify_suspend',
-              'cloudify_cloudinit'],
+              'cloudify_cloudinit',
+              'cloudify_rest', 'cloudify_rest/rest_sdk'],
     license='LICENSE',
     install_requires=[
         'cloudify-plugins-common>=3.4.2',
@@ -35,5 +36,6 @@ setuptools.setup(
         'paramiko',  # for ssh netconf connection
         "Jinja2>=2.7.2",  # for template support
         'pycrypto',
-        'pyyaml']
+        'pyyaml',
+        'xmltodict']
 )

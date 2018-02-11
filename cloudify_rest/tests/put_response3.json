@@ -1,0 +1,10 @@
+{
+    "list": [
+      {
+        "key" : "wrong_value"
+      },
+      {
+        "key" : "proper_value"
+
+      }]
+}
