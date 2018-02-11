@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/master.zip
-    package_version: '1.4.5'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.5.0.zip
+    package_version: '1.5.0'
 
   cfy_files: *utilities_plugin
 
@@ -19,6 +19,8 @@ plugins:
   suspend: *utilities_plugin
 
   terminal: *utilities_plugin
+
+  rest: *utilities_plugin
 
 data_types:
 
@@ -380,6 +382,74 @@ node_types:
           implementation: cfy_files.cloudify_files.tasks.create
         delete:
           implementation: cfy_files.cloudify_files.tasks.delete
+
+  cloudify.rest.Requests:
+    derived_from: cloudify.nodes.Root
+    properties:
+      hosts:
+        description: >
+          list of hosts name or IP addresses of Rest Servers
+        default: []
+      host:
+        description: >
+          host name or IP addresses of Rest Servers
+          if list of hosts is not needed single host can be provided by this property.
+          NOTE: the 'hosts' property overwirte the 'host' property
+        default: []
+      port:
+        description: >
+          port number. When -1 default ports are used (80 for ssl = false and 443 for ssl = true)
+        type: integer
+        default: -1
+      ssl:
+        description: >
+          http or https
+        type: boolean
+        default: false
+      verify:
+        description: >
+          A boolean which controls whether we verify
+          the server's TLS certificate.
+        type: boolean
+        default: true
+
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs:
+            params:
+              default: {}
+            template_file:
+              default: ''
+        configure:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs:
+            params:
+              default: {}
+            template_file:
+              default: ''
+        start:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs:
+            params:
+              default: {}
+            template_file:
+              default: ''
+        stop:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs:
+            params:
+              default: {}
+            template_file:
+              default: ''
+        delete:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs:
+            params:
+              default: {}
+            template_file:
+              default: ''
 
 relationships:
 
