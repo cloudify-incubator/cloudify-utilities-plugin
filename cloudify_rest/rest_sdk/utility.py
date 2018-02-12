@@ -67,6 +67,12 @@ def _send_request(call):
         if call.get('payload_format', 'json') == 'json':
             data = None
             json_payload = call.get('payload', None)
+            
+        elif call.get('payload_format', 'json') == 'urlencode':
+            
+            data = urllib.urlencode(call.get('payload', None))
+            json_payload = None
+    
         else:
             data = call.get('payload', None)
             json_payload = None
