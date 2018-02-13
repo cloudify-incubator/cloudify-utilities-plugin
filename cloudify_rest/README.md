@@ -8,9 +8,7 @@ Features:
 - selective update of runtime properties with REST response content
 - configurable recoverable errors
 - context sensitive "response expectation"
-
-Caveats:
-- only JSON supported
+- JSON and XML based payload supported
 
 
 
