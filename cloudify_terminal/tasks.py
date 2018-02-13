@@ -22,8 +22,8 @@ import terminal_connection
 @operation
 def run(**kwargs):
     """main entry point for all calls"""
-
     calls = kwargs.get('calls', [])
+
     if not calls:
         ctx.logger.info("No calls")
         return
@@ -32,7 +32,12 @@ def run(**kwargs):
     properties = ctx.node.properties
     terminal_auth = properties.get('terminal_auth', {})
     terminal_auth.update(kwargs.get('terminal_auth', {}))
+
     ip_list = terminal_auth.get('ip')
+
+    # testing against "None" value - when ip property in term_auth is wrongly set
+    if ip_list is None:
+        raise cfy_exc.NonRecoverableError("Property ip in terminal_auth is set to: %s" % str(ip_list))
 
     # if node contained in some other node, try to overwrite ip
     if not ip_list:
@@ -48,7 +53,7 @@ def run(**kwargs):
 
     if not ip_list or not user:
         raise cfy_exc.NonRecoverableError(
-            "please check your credentials, ip or user not set"
+            "Please check your credentials, ip or user not set"
         )
 
     # additional settings

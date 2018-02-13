@@ -127,7 +127,7 @@ class connection(object):
             lines = self.hostname.split("\n")
             self.hostname = lines[-1]
             if self.logger:
-                self.logger.info("Wellcome message: " + "\n".join(lines[:-1]))
+                self.logger.info("Welcome message: " + "\n".join(lines[:-1]))
         return self.hostname
 
     def _cleanup_response(self, text, prefix, error_examples):
