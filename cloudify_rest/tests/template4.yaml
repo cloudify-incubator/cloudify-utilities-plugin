@@ -1,0 +1,11 @@
+rest_calls:
+  - path: /v1/put_response4
+    method: PUT
+    payload:
+      data:
+        - key0: value00
+          key: value01
+        - key1: value10
+          key: value11
+    response_format: json
+    response_unexpectation: ['list',0,'key','failed|wrong_value']
