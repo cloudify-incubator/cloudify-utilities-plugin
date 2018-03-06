@@ -13,24 +13,31 @@
 #    * limitations under the License.
 
 from cloudify.decorators import operation
+
+
+from . import utils
 from . import DeploymentProxyBase
 
 
 @operation
-def upload_blueprint(**_):
-    return DeploymentProxyBase(_).upload_blueprint()
+@utils.proxy_operation('upload_blueprint')
+def upload_blueprint(operation, **_):
+    return getattr(DeploymentProxyBase(_), operation)()
 
 
 @operation
-def create_deployment(**_):
-    return DeploymentProxyBase(_).create_deployment()
+@utils.proxy_operation('create_deployment')
+def create_deployment(operation, **_):
+    return getattr(DeploymentProxyBase(_), operation)()
 
 
 @operation
-def delete_deployment(**_):
-    return DeploymentProxyBase(_).delete_deployment()
+@utils.proxy_operation('delete_deployment')
+def delete_deployment(operation, **_):
+    return getattr(DeploymentProxyBase(_), operation)()
 
 
 @operation
-def execute_start(**_):
-    return DeploymentProxyBase(_).execute_workflow()
+@utils.proxy_operation('execute_workflow')
+def execute_start(operation, **_):
+    return getattr(DeploymentProxyBase(_), operation)()
