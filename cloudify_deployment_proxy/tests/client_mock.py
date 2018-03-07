@@ -83,6 +83,15 @@ class MockExecutionsClient(BaseMockClient):
         del args
         return MagicMock(_return_value)
 
+    def get(self, *args, **_):
+        del args
+        return {
+            'id': MagicMock,
+            'deployment_id': MagicMock,
+            'status': MagicMock,
+            'workflow_id': MagicMock,
+        }
+
 
 class MockNodeInstancesClient(BaseMockClient):
     pass

@@ -271,22 +271,23 @@ class TestPolling(DeploymentProxyTestBase):
         test_name = 'test_dep_workflow_in_state_pollster_matching_executions'
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
-            list_response = cfy_mock_client.blueprints.list()
-            list_response[0]['id'] = test_name
-            list_response[0]['status'] = 'terminated'
+            response = cfy_mock_client.executions.get()
+            response['id'] = test_name
+            response['status'] = 'terminated'
 
             def mock_return(*args, **kwargs):
                 del args, kwargs
-                return list_response
+                return response
 
-            cfy_mock_client.executions.list = mock_return
+            cfy_mock_client.executions.get = mock_return
             mock_client.return_value = cfy_mock_client
             output = \
                 dep_workflow_in_state_pollster(
                     cfy_mock_client,
                     test_name,
                     'terminated',
-                    0)
+                    0,
+                    _execution_id='_exec_id')
             self.assertTrue(output)
 
     # Test that matching executions returns True with get empty logs
@@ -294,18 +295,18 @@ class TestPolling(DeploymentProxyTestBase):
         test_name = 'test_dep_workflow_in_state_pollster_matching_executions'
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
-            list_response = cfy_mock_client.blueprints.list()
+            response = cfy_mock_client.executions.get()
 
             cfy_mock_client.events._set([])
 
-            list_response[0]['id'] = test_name
-            list_response[0]['status'] = 'terminated'
+            response['id'] = test_name
+            response['status'] = 'terminated'
 
             def mock_return(*args, **kwargs):
                 del args, kwargs
-                return list_response
+                return response
 
-            cfy_mock_client.executions.list = mock_return
+            cfy_mock_client.executions.get = mock_return
             mock_client.return_value = cfy_mock_client
             output = \
                 dep_workflow_in_state_pollster(
@@ -321,37 +322,38 @@ class TestPolling(DeploymentProxyTestBase):
         test_name = 'test_dep_workflow_in_state_pollster_matching_executions'
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
-            list_response = cfy_mock_client.blueprints.list()
-            list_response[0]['status'] = 'terminated'
-            list_response[0]['workflow_id'] = 'workflow_id1'
+            response = cfy_mock_client.executions.get()
+            response['status'] = 'terminated'
+            response['workflow_id'] = 'workflow_id1'
 
             def mock_return(*args, **kwargs):
                 del args, kwargs
-                return list_response
+                return response
 
-            cfy_mock_client.executions.list = mock_return
+            cfy_mock_client.executions.get = mock_return
             mock_client.return_value = cfy_mock_client
             output = \
                 dep_workflow_in_state_pollster(
                     cfy_mock_client,
                     test_name,
                     _state='terminated',
-                    _workflow_id='workflow_id0')
-            self.assertFalse(output)
+                    _workflow_id='workflow_id1',
+                    _execution_id='_exec_id')
+            self.assertTrue(output)
 
     # test that raises Exception is handled.
     def test_dep_workflow_in_state_pollster_raises(self):
         test_name = 'test_dep_workflow_in_state_pollster_raises'
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
-            list_response = cfy_mock_client.blueprints.list()
-            list_response[0]['id'] = test_name
+            response = cfy_mock_client.executions.get()
+            response['id'] = test_name
 
             def mock_return(*args, **kwargs):
                 del args, kwargs
                 raise CloudifyClientError('Mistake')
 
-            cfy_mock_client.executions.list = mock_return
+            cfy_mock_client.executions.get = mock_return
             mock_client.return_value = cfy_mock_client
             output = \
                 self.assertRaises(
@@ -373,7 +375,7 @@ class TestPolling(DeploymentProxyTestBase):
                 self.assertRaises(
                     NonRecoverableError,
                     poll_workflow_after_execute,
-                    None, None, None, None, None, None)
+                    None, None, None, None, None, None, None)
             self.assertIn('Execution timeout', output.message)
 
     # test that success=True returns True
@@ -384,7 +386,7 @@ class TestPolling(DeploymentProxyTestBase):
             mocked_fn.return_value = True
             output = \
                 poll_workflow_after_execute(
-                    None, None, None, None, None, None)
+                    None, None, None, None, None, None,  None)
             self.assertTrue(output)
 
     def test_dep_logs_redirect_predefined_level(self):

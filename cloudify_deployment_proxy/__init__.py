@@ -29,6 +29,7 @@ from .constants import (
     DEP_CREATE,
     DEP_DELETE,
     EXEC_START,
+    EXEC_LIST,
     NIP,
     NIP_TYPE,
     DEP_TYPE
@@ -105,6 +106,10 @@ class DeploymentProxyBase(object):
         self.state = operation_inputs.get('state', 'terminated')
         self.timeout = operation_inputs.get('timeout', EXECUTIONS_TIMEOUT)
 
+        # This ``execution_id`` will be set once execute workflow done
+        # successfully
+        self.execution_id = None
+
     def dp_get_client_response(self,
                                _client,
                                _client_attr,
@@ -174,6 +179,37 @@ class DeploymentProxyBase(object):
             ctx.logger.info("Create deployment {0}."
                             .format(self.deployment_id))
             self.dp_get_client_response('deployments', DEP_CREATE, client_args)
+
+        # In order to set the ``self.execution_id`` need to get the
+        # ``execution_id`` of current deployment ``self.deployment_id``
+
+        # Prepare executions list fields
+        exec_list_fields = \
+            ['status', 'workflow_id', 'created_at', 'id', 'deployment_id']
+
+        # Call list executions for the current deployment
+        _execs = self.dp_get_client_response(
+            'executions', EXEC_LIST,
+            {
+                'deployment_id': self.deployment_id,
+                '_include': exec_list_fields
+            }
+        )
+
+        # Retrieve the ``execution_id`` associated with the current deployment
+        for _exec in _execs:
+            if _exec.get('workflow_id') == 'create_deployment_environment':
+                self.execution_id = _exec.get('id')
+                ctx.logger.info("Found execution_id {0} for deployment_id {1}"
+                                .format(_exec.get('id'), self.deployment_id))
+                break
+
+        # If the ``execution_id`` cannot be found raise error
+        if not self.execution_id:
+            raise NonRecoverableError(
+                'No execution id Found for deployment'
+                ' {0}'.format(self.deployment_id)
+            )
 
         return self.verify_execution_successful()
 
@@ -273,6 +309,8 @@ class DeploymentProxyBase(object):
             response = self.dp_get_client_response('executions',
                                                    EXEC_START, client_args)
 
+            # Set the execution_id for the last execution process created
+            self.execution_id = response['id']
             ctx.logger.debug('Executions start response: {0}'.format(response))
 
             # Poll for execution success.
@@ -348,4 +386,5 @@ class DeploymentProxyBase(object):
             self.deployment_id,
             self.workflow_state,
             self.workflow_id,
+            self.execution_id,
             _log_redirect=self.deployment_logs.get('redirect', True))
