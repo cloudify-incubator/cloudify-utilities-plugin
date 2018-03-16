@@ -22,7 +22,7 @@ class ExpectationException(RestSdkException):
     pass
 
 
-class RecoverebleStatusCodeCodeException(RestSdkException):
+class RecoverableStatusCodeCodeException(RestSdkException):
     pass
 
 

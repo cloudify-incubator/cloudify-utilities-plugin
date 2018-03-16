@@ -21,7 +21,7 @@ import xmltodict
 from jinja2 import Template
 import requests
 from . import LOGGER_NAME
-from .exceptions import RecoverebleStatusCodeCodeException, \
+from .exceptions import RecoverableStatusCodeCodeException, \
     ExpectationException, WrongTemplateDataException, NonRecoverableResponseException, RecoverableResponseException
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -92,7 +92,7 @@ def _send_request(call):
         response.raise_for_status()
     except requests.exceptions.HTTPError:
         if response.status_code in call.get('recoverable_codes', []):
-            raise RecoverebleStatusCodeCodeException(
+            raise RecoverableStatusCodeCodeException(
                 'Response code {} defined as recoverable'.format(
                     response.status_code))
         raise
@@ -116,7 +116,7 @@ def _process_response(response, call, store_props):
             logger.debug('xml transformed to dict \n{}'.format(json))
 
         _check_response(json, call.get('nonrecoverable_response'), False)
-        _check_response(json, call.get('response_expectation', True))
+        _check_response(json, call.get('response_expectation'), True)
 
         _translate_and_save(json, call.get('response_translation', None),
                             store_props)
@@ -199,6 +199,8 @@ def _translate_and_save(response_json, response_translation, runtime_dict):
     else:
         _translate_and_save_v1(response_json, response_translation,
                                runtime_dict)
+
+
 def _translate_and_save_v2(response_json, response_translation, runtime_dict):
     for translation in response_translation:
         json = response_json
@@ -240,7 +242,8 @@ def _save(runtime_properties_dict_or_subdict, list, value):
         runtime_properties_dict_or_subdict[first_el] = value
     else:
         runtime_properties_dict_or_subdict[
-            first_el] = runtime_properties_dict_or_subdict.get(first_el, {}) if isinstance(runtime_properties_dict_or_subdict,dict) else runtime_properties_dict_or_subdict[first_el]
+            first_el] = runtime_properties_dict_or_subdict.get(first_el, {}) if isinstance(
+            runtime_properties_dict_or_subdict,dict) else runtime_properties_dict_or_subdict[first_el]
         _save(runtime_properties_dict_or_subdict[first_el], list, value)
 
 
