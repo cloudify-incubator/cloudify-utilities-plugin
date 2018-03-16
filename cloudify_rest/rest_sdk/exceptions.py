@@ -22,13 +22,18 @@ class ExpectationException(RestSdkException):
     pass
 
 
-class UnExpectationException(RestSdkException):
-    pass
-
-
-class RecoverebleStatusCodeCodeException(RestSdkException):
+class RecoverableStatusCodeCodeException(RestSdkException):
     pass
 
 
 class WrongTemplateDataException(RestSdkException):
     pass
+
+
+class RecoverableResponseException(RestSdkException):
+    pass
+
+
+class NonRecoverableResponseException(RestSdkException):
+    pass
+

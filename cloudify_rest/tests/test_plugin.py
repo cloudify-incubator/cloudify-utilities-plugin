@@ -27,15 +27,12 @@ import logging
 
 class TestPlugin(unittest.TestCase):
     def test_execute_http_no_exception(self):
-        _properties = \
-            {
-              'hosts': ['--fake.cake--', 'test123.test'],
-              'port': -1,
-              'ssl': False,
-              'verify': False
-            }
         _ctx = MockCloudifyContext('node_name',
-                                   properties=_properties,
+                                   properties={'hosts': ['--fake.cake--',
+                                                         'test123.test'],
+                                               'port': -1,
+                                               'ssl': False,
+                                               'verify': False},
                                    runtime_properties={})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -72,7 +69,7 @@ class TestPlugin(unittest.TestCase):
 
             tasks.execute(params, 'mock_param')
             self.assertDictEqual(
-                _ctx.instance.runtime_properties,
+                current_ctx.get_ctx().instance.runtime_properties,
                 {'nested_key0': u'nested_value1',
                  'nested_key1': u'nested_value2',
                  'id0': u'1',
@@ -104,7 +101,7 @@ class TestPlugin(unittest.TestCase):
                 'Response code 477 '
                 'defined as recoverable' in context.exception.message)
 
-    def test_execute_overwrite_host_resposnse_expecation(self):
+    def test_execute_overwrite_host_response_expecation(self):
         _ctx = MockCloudifyContext('node_name',
                                    properties={'hosts': ['test123.test'],
                                                'port': 12345,
@@ -127,11 +124,11 @@ class TestPlugin(unittest.TestCase):
             with self.assertRaises(RecoverableError) as context:
                 tasks.execute({}, 'mock_param')
             self.assertSequenceEqual(
-                'Response value "wrong_value" does not match regexp '
-                '"proper_value|good" from response_expectation',
+                'Trying one more time...\n'
+                "Response value:wrong_value does not match regexp:proper_value|good from response_expectation",
                 str(context.exception.message))
 
-    def test_execute_payload_json_resposnse_unexpecation(self):
+    def test_execute_nonrecoverable_response(self):
         _ctx = MockCloudifyContext('node_name',
                                    properties={'hosts': ['test123.test'],
                                                'port': 12345,
@@ -146,16 +143,16 @@ class TestPlugin(unittest.TestCase):
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
-            m.put('https://test123.test:12345/v1/put_response4',
+            m.get('https://test123.test:12345/v1/get_response1',
                   json=json.load(
-                      file(os.path.join(__location__, 'put_response4.json'),
+                      file(os.path.join(__location__, 'get_response1.json'),
                            'r')),
                   status_code=200)
             with self.assertRaises(NonRecoverableError) as context:
                 tasks.execute({}, 'mock_param')
             self.assertSequenceEqual(
-                'Response value "wrong_value" matches regexp '
-                '"failed|wrong_value" from response_unexpectation',
+                'Giving up... \n'
+                "Response value:active matches regexp:active from nonrecoverable_response. ",
                 str(context.exception.message))
 
     def test_execute_http_xml(self):
@@ -180,6 +177,6 @@ class TestPlugin(unittest.TestCase):
 
             tasks.execute({}, 'mock_param')
             self.assertDictEqual(
-                _ctx.instance.runtime_properties,
+                current_ctx.get_ctx().instance.runtime_properties,
                 {'UUID': '111111111111111111111111111111',
                  'CPUID': 'ABS:FFF222777'})
