@@ -21,7 +21,7 @@ from rest_sdk import utility, exceptions
 
 def execute(params, template_file, **kwargs):
     ctx.logger.debug(
-        'execute \n params {} \n template \n'.format(params, template_file))
+        'execute \n params {} \n template \n {}'.format(params, template_file))
     runtime_properties = ctx.instance.runtime_properties.copy()
     if not params:
         params = {}
@@ -32,7 +32,7 @@ def execute(params, template_file, **kwargs):
 def execute_as_relationship(params, template_file, **kwargs):
     ctx.logger.debug(
         'execute_as_relationship \n '
-        'params {} \n template \n'.format(params, template_file))
+        'params {} \n template {}\n'.format(params, template_file))
     if not params:
         params = {}
     runtime_properties = ctx.target.instance.runtime_properties.copy()

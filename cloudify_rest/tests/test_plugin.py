@@ -68,8 +68,9 @@ class TestPlugin(unittest.TestCase):
                   status_code=200)
 
             tasks.execute(params, 'mock_param')
+            # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
-                current_ctx.get_ctx().instance.runtime_properties,
+                _ctx.instance.runtime_properties,
                 {'nested_key0': u'nested_value1',
                  'nested_key1': u'nested_value2',
                  'id0': u'1',
@@ -125,7 +126,9 @@ class TestPlugin(unittest.TestCase):
                 tasks.execute({}, 'mock_param')
             self.assertSequenceEqual(
                 'Trying one more time...\n'
-                "Response value:wrong_value does not match regexp:proper_value|good from response_expectation",
+                "Response value:wrong_value "
+                "does not match regexp: proper_value|good"
+                " from response_expectation",
                 str(context.exception.message))
 
     def test_execute_nonrecoverable_response(self):
@@ -152,7 +155,8 @@ class TestPlugin(unittest.TestCase):
                 tasks.execute({}, 'mock_param')
             self.assertSequenceEqual(
                 'Giving up... \n'
-                "Response value:active matches regexp:active from nonrecoverable_response. ",
+                "Response value: active matches "
+                "regexp:active from nonrecoverable_response. ",
                 str(context.exception.message))
 
     def test_execute_http_xml(self):
@@ -176,7 +180,8 @@ class TestPlugin(unittest.TestCase):
                   status_code=200)
 
             tasks.execute({}, 'mock_param')
+            # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
-                current_ctx.get_ctx().instance.runtime_properties,
+                _ctx.instance.runtime_properties,
                 {'UUID': '111111111111111111111111111111',
                  'CPUID': 'ABS:FFF222777'})

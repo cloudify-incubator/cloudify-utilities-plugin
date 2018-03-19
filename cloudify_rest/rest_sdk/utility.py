@@ -21,8 +21,12 @@ import xmltodict
 from jinja2 import Template
 import requests
 from . import LOGGER_NAME
-from .exceptions import RecoverableStatusCodeCodeException, \
-    ExpectationException, WrongTemplateDataException, NonRecoverableResponseException, RecoverableResponseException
+from .exceptions import (
+    RecoverableStatusCodeCodeException,
+    ExpectationException,
+    WrongTemplateDataException,
+    NonRecoverableResponseException,
+    RecoverableResponseException)
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -56,7 +60,7 @@ def _send_request(call):
     ssl = call['ssl']
     if port == -1:
         port = 443 if ssl else 80
-    if not call.get('hosts',None):
+    if not call.get('hosts', None):
         call['hosts'] = [call['host']]
     for i, host in enumerate(call['hosts']):
         full_url = '{}://{}:{}{}'.format('https' if ssl else 'http', host,
@@ -172,12 +176,14 @@ def _check_response(json, response, is_recoverable):
         if re.match(str(pattern), str(json)) and not is_recoverable:
             raise NonRecoverableResponseException(
                 "Giving up... \n"
-                "Response value:{} matches regexp:{} from nonrecoverable_response. ".format(
+                "Response value: "
+                "{} matches regexp:{} from nonrecoverable_response. ".format(
                     str(json), str(pattern)))
         if not re.match(str(pattern), str(json)) and is_recoverable:
             raise RecoverableResponseException(
                 "Trying one more time...\n"
-                "Response value:{} does not match regexp:{} from response_expectation".format(
+                "Response value:{} does not match regexp: {} "
+                "from response_expectation".format(
                     str(json), str(pattern)))
 
 
@@ -186,8 +192,8 @@ def _check_if_v2(response_translation):
     if isinstance(response_translation, list) and \
             isinstance(response_translation[0], list) and \
             len(response_translation[0]) == 2 and \
-            isinstance(response_translation[0][0],list) and \
-            isinstance(response_translation[0][1],list) :
+            isinstance(response_translation[0][0], list) and \
+            isinstance(response_translation[0][1], list):
         return True
     return False
 
@@ -205,23 +211,24 @@ def _translate_and_save_v2(response_json, response_translation, runtime_dict):
     for translation in response_translation:
         json = response_json
         for idx, key in enumerate(translation[0]):
-            if isinstance(key,list):
+            if isinstance(key, list):
                 _prepare_runtime_props_for_list(runtime_dict,
                                                 translation[1],
                                                 len(json))
                 for response_list_idx, response_list_value in enumerate(json):
                     list_path = translation[0][idx+1:]
-                    list_path.insert(0,key[0])
-                    list_path.insert(0,response_list_idx)
-
-                    _translate_and_save_v2(
-                        json,
-                        [[list_path, _prepare_runtime_props_path_for_list(translation[1],response_list_idx)]],
-                        runtime_dict)
+                    list_path.insert(0, key[0])
+                    list_path.insert(0, response_list_idx)
+                    list_path_arg = [[
+                        list_path,
+                        _prepare_runtime_props_path_for_list(
+                            translation[1], response_list_idx)
+                    ]]
+                    _translate_and_save_v2(json, list_path_arg, runtime_dict)
                 return
             else:
                 json = json[key]
-        _save(runtime_dict, translation[1],json )
+        _save(runtime_dict, translation[1], json)
 
 
 def _translate_and_save_v1(response_json, response_translation, runtime_dict):
@@ -242,15 +249,18 @@ def _save(runtime_properties_dict_or_subdict, list, value):
         runtime_properties_dict_or_subdict[first_el] = value
     else:
         runtime_properties_dict_or_subdict[
-            first_el] = runtime_properties_dict_or_subdict.get(first_el, {}) if isinstance(
-            runtime_properties_dict_or_subdict,dict) else runtime_properties_dict_or_subdict[first_el]
+            first_el] = \
+                runtime_properties_dict_or_subdict.get(
+                    first_el, {}) if isinstance(
+            runtime_properties_dict_or_subdict, dict) else \
+                runtime_properties_dict_or_subdict[first_el]
         _save(runtime_properties_dict_or_subdict[first_el], list, value)
 
 
 def _prepare_runtime_props_path_for_list(runtime_props_path, idx):
     path = list(runtime_props_path)
     last_one = path[-1]
-    if isinstance(last_one,list):
+    if isinstance(last_one, list):
         path.pop()
         path.append(idx)
         path.extend(last_one)
@@ -259,9 +269,10 @@ def _prepare_runtime_props_path_for_list(runtime_props_path, idx):
     return path
 
 
-def _prepare_runtime_props_for_list(runtime_props, runtime_props_path , count):
+def _prepare_runtime_props_for_list(runtime_props, runtime_props_path, count):
     for l_idx, value in enumerate(runtime_props_path):
-        if value == runtime_props_path[-1] or isinstance(runtime_props_path[l_idx+1],list):
+        if value == runtime_props_path[-1] or \
+                isinstance(runtime_props_path[l_idx+1], list):
             runtime_props[value] = [{}] * count
             return
         else:

@@ -36,4 +36,3 @@ class RecoverableResponseException(RestSdkException):
 
 class NonRecoverableResponseException(RestSdkException):
     pass
-
