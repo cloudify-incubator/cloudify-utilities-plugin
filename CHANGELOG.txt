@@ -72,3 +72,6 @@ releases:
 
   v.1.5.0:
   - Add REST Plugin for generic interaction with REST APIs.
+
+  v.1.5.1:
+  - Support user configuration of failure success on certain responses in REST plugin.
