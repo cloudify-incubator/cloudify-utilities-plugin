@@ -29,6 +29,7 @@ BP_DELETE = 'delete'
 DEP_CREATE = 'create'
 DEP_DELETE = 'delete'
 EXEC_START = 'start'
+EXEC_LIST = 'list'
 
 NIP = 'NodeInstanceProxy'
 NIP_TYPE = 'cloudify.nodes.NodeInstanceProxy'

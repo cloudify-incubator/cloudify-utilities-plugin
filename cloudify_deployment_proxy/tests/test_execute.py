@@ -99,7 +99,8 @@ class TestExecute(DeploymentProxyTestBase):
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
-                output = execute_start(deployment_id=test_name,
+                output = execute_start(operation='execute_workflow',
+                                       deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
                 self.assertTrue(output)
@@ -135,7 +136,8 @@ class TestExecute(DeploymentProxyTestBase):
 
             mock_client.return_value = cfy_mock_client
 
-            output = execute_start(deployment_id=test_name,
+            output = execute_start(operation='execute_workflow',
+                                   deployment_id=test_name,
                                    workflow_id='install',
                                    timeout=.001)
             self.assertIsNone(output)
@@ -155,7 +157,8 @@ class TestExecute(DeploymentProxyTestBase):
                 'verify_execution_successful'
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = False
-                output = execute_start(deployment_id=test_name,
+                output = execute_start(operation='execute_workflow',
+                                       deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
                 self.assertTrue(output)
@@ -177,7 +180,8 @@ class TestExecute(DeploymentProxyTestBase):
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
-                output = execute_start(deployment_id=test_name,
+                output = execute_start(operation='execute_workflow',
+                                       deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
                 self.assertTrue(output)
@@ -197,7 +201,8 @@ class TestExecute(DeploymentProxyTestBase):
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
-                output = execute_start(deployment_id=test_name,
+                output = execute_start(operation='execute_workflow',
+                                       deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
                 self.assertFalse(output)
@@ -231,7 +236,8 @@ class TestExecute(DeploymentProxyTestBase):
 
                 with mock.patch(poll_with_timeout_test) as poll:
                     poll.return_value = False
-                    output = execute_start(deployment_id=test_name,
+                    output = execute_start(operation='execute_workflow',
+                                           deployment_id=test_name,
                                            workflow_id='install',
                                            client={'host': 'localhost'},
                                            timeout=.001)
@@ -254,7 +260,8 @@ class TestExecute(DeploymentProxyTestBase):
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
-                output = execute_start(deployment_id=test_name,
+                output = execute_start(operation='execute_workflow',
+                                       deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
                 self.assertTrue(output)

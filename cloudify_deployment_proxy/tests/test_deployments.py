@@ -79,6 +79,7 @@ class TestDeployment(DeploymentProxyTestBase):
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
                 output = delete_deployment(
+                    operation='delete_deployment',
                     deployment_id='test_deployments_delete',
                     timeout=.001)
                 self.assertTrue(output)
@@ -97,8 +98,10 @@ class TestDeployment(DeploymentProxyTestBase):
             mock_client.return_value = MockCloudifyRestClient()
             _ctx.instance.runtime_properties['deployment'] = {}
             _ctx.instance.runtime_properties['deployment']['id'] = test_name
-            output = delete_deployment(deployment_id='test_deployments_delete',
-                                       timeout=.01)
+            output = delete_deployment(
+                operation='delete_deployment',
+                deployment_id='test_deployments_delete',
+                timeout=.01)
             self.assertTrue(output)
 
     def test_create_deployment_rest_client_error(self):
@@ -133,18 +136,31 @@ class TestDeployment(DeploymentProxyTestBase):
         _ctx.instance.runtime_properties['deployment']['id'] = test_name
         _ctx.instance.runtime_properties['deployment']['outputs'] = {}
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            mock_client.return_value = MockCloudifyRestClient()
+            cfy_mock_client = MockCloudifyRestClient()
+            list_response = cfy_mock_client.executions.list()
+
+            list_response[0]['id'] = 'exec_id'
+            list_response[0]['workflow_id'] = 'create_deployment_environment'
+            list_response[0]['deployment_id'] =\
+                'test_create_deployment_timeout'
+
+            def mock_return(*args, **kwargs):
+                del args, kwargs
+                return list_response
+
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
+
+            cfy_mock_client.executions.list = mock_return
+            mock_client.return_value = cfy_mock_client
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = False
-                error = self.assertRaises(NonRecoverableError,
-                                          create_deployment,
-                                          deployment_id='test',
-                                          blueprint_id='test',
-                                          timeout=.01)
-                self.assertIn('Execution timeout',
-                              error.message)
+                error = self.assertRaises(
+                    NonRecoverableError, create_deployment,
+                    deployment_id='test_create_deployment_timeout',
+                    blueprint_id='test', timeout=.01)
+
+                self.assertIn('Execution timeout', error.message)
 
     def test_create_deployment_success(self):
         # Tests that create deployment succeeds
@@ -153,12 +169,27 @@ class TestDeployment(DeploymentProxyTestBase):
         _ctx = self.get_mock_ctx(test_name)
         current_ctx.set(_ctx)
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            mock_client.return_value = MockCloudifyRestClient()
+            cfy_mock_client = MockCloudifyRestClient()
+            list_response = cfy_mock_client.executions.list()
+            list_response[0]['id'] = 'exec_id'
+            list_response[0]['workflow_id'] = 'create_deployment_environment'
+            list_response[0]['deployment_id'] =\
+                'test_create_deployment_success'
+
+            def mock_return(*args, **kwargs):
+                del args, kwargs
+                return list_response
+
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
+
+            cfy_mock_client.executions.list = mock_return
+            mock_client.return_value = cfy_mock_client
+
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
-                output = create_deployment(timeout=.01)
+                output = create_deployment(operation='create_deployment',
+                                           timeout=.01)
                 self.assertTrue(output)
 
     def test_create_deployment_exists(self):
@@ -178,5 +209,6 @@ class TestDeployment(DeploymentProxyTestBase):
 
             cfy_mock_client.deployments.list = mock_return
             mock_client.return_value = cfy_mock_client
-            output = create_deployment(timeout=.01)
+            output = create_deployment(operation='create_deployment',
+                                       timeout=.01)
             self.assertFalse(output)
