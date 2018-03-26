@@ -9,10 +9,6 @@ Features:
 - configurable recoverable errors
 - context sensitive "response expectation"
 
-Caveats:
-- only JSON supported
-
-
 
 ### Blueprint
 
@@ -40,10 +36,12 @@ Template parameters:
 - **path** - represents URI of REST call
 - **method** - REST emethods (GET/PUT/POST/PATCH/DELETE)
 - **headers** - REST headers
+- **payload** - YAML representation of data that is to be sent as payload in REST call
 - **response_format** - JSON/XML
 - **recoverable_codes** - recoverable codes allow to triger operation retry
 - **response_translation** - translates response into runtime properties (please see example)
-- **response_expectation** - what we expect in a response content
+- **response_expectation** - what we expect in a response content. If response is different than specified, system is raising recoverable error and trying until response is equal to specified
+- **nonrecoverable_response** - response which is raising non-recoverable error and triggers workflow to stop (give up)
 
 
 ```
@@ -168,3 +166,12 @@ Same as above we're using test REST API but this time we'll demonstrate how we c
 blueprint: example-2-blueprint.yaml
 
 Real life example how F5 BigIP can be provisioned with REST API
+
+
+
+
+
+
+
+
+

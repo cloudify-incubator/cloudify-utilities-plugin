@@ -16,13 +16,12 @@
 import traceback
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
-from cloudify_rest.rest_sdk import utility, exceptions
+from rest_sdk import utility, exceptions
 
 
 def execute(params, template_file, **kwargs):
     ctx.logger.debug(
-        'execute_as_relationship params {0} template {1}'.format(
-            params, template_file))
+        'execute \n params {} \n template \n {}'.format(params, template_file))
     runtime_properties = ctx.instance.runtime_properties.copy()
     if not params:
         params = {}
@@ -32,8 +31,8 @@ def execute(params, template_file, **kwargs):
 
 def execute_as_relationship(params, template_file, **kwargs):
     ctx.logger.debug(
-        'execute_as_relationship params {0} template {1}'.format(
-            params, template_file))
+        'execute_as_relationship \n '
+        'params {} \n template {}\n'.format(params, template_file))
     if not params:
         params = {}
     runtime_properties = ctx.target.instance.runtime_properties.copy()
@@ -52,8 +51,11 @@ def _execute(params, template_file, instance, node):
     try:
         instance.runtime_properties.update(
             utility.process(params, template, node.properties.copy()))
-    except (exceptions.ExpectationException,
-            exceptions.RecoverebleStatusCodeCodeException)as e:
+    except exceptions.NonRecoverableResponseException as e:
+        raise NonRecoverableError(e)
+
+    except (exceptions.RecoverableResponseException,
+            exceptions.RecoverableStatusCodeCodeException)as e:
         raise RecoverableError(e)
     except Exception as e:
         ctx.logger.info(

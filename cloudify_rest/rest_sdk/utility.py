@@ -18,12 +18,15 @@ import logging
 import ast
 import re
 import xmltodict
-import urllib
 from jinja2 import Template
 import requests
 from . import LOGGER_NAME
-from .exceptions import RecoverebleStatusCodeCodeException, \
-    ExpectationException, UnExpectationException, WrongTemplateDataException
+from .exceptions import (
+    RecoverableStatusCodeCodeException,
+    ExpectationException,
+    WrongTemplateDataException,
+    NonRecoverableResponseException,
+    RecoverableResponseException)
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -68,12 +71,6 @@ def _send_request(call):
         if call.get('payload_format', 'json') == 'json':
             data = None
             json_payload = call.get('payload', None)
-
-        elif call.get('payload_format', 'json') == 'urlencode':
-
-            data = urllib.urlencode(call.get('payload', None))
-            json_payload = None
-
         else:
             data = call.get('payload', None)
             json_payload = None
@@ -93,13 +90,13 @@ def _send_request(call):
                 continue
 
     logger.info(
-        'response \n text:{}\n status_code:{}\n'.format(response.text,
+        'Response \n text:{}\n status_code:{}\n'.format(response.text,
                                                         response.status_code))
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError:
         if response.status_code in call.get('recoverable_codes', []):
-            raise RecoverebleStatusCodeCodeException(
+            raise RecoverableStatusCodeCodeException(
                 'Response code {} defined as recoverable'.format(
                     response.status_code))
         raise
@@ -121,57 +118,73 @@ def _process_response(response, call, store_props):
             logger.debug('response_format xml')
             json = xmltodict.parse(response.text)
             logger.debug('xml transformed to dict \n{}'.format(json))
-        _check_expectation(json, call.get('response_expectation', None))
-        _check_expectation(json, call.get('response_unexpectation', None),
-                           True)
+
+        _check_response(json, call.get('nonrecoverable_response'), False)
+        _check_response(json, call.get('response_expectation'), True)
+
         _translate_and_save(json, call.get('response_translation', None),
                             store_props)
     elif response_format == 'RAW':
         logger.debug('no action for raw response_format')
     else:
         raise WrongTemplateDataException(
-            "response_format {} is not supported. "
+            "Response_format {} is not supported. "
             "Only json or raw response_format is supported".format(
                 response_format))
 
 
-def _check_expectation(json, expectation, unexpectation=False):
-    logger.debug(
-        '_check_expectation \n json:{}\n '
-        'expectation:{}\n '
-        'unexpectation:{}'.format(
-            json, expectation, unexpectation))
-    if not expectation:
-        return
-    if not isinstance(expectation, list):
-        raise WrongTemplateDataException(
-            "response_expectation had to be list. "
-            "Type {} not supported. ".format(
-                type(expectation)))
-    if isinstance(expectation[0], list):
-        for item in expectation:
-            _check_expectation(json, item, unexpectation)
+def _check_response(json, response, is_recoverable):
+    if not is_recoverable:
+        logger.debug(
+            '_check_response (nonrecoverable)\n json:{}\n '
+            'response:{} \n'.format(
+                json, response))
     else:
-        pattern = expectation.pop(-1)
-        for key in expectation:
+        logger.debug(
+            '_check_response (recoverable)\n json:{}\n '
+            'response:{} \n'.format(
+                json, response))
+
+    if not response:
+        return
+
+    if not isinstance(response, list) and not is_recoverable:
+        raise WrongTemplateDataException(
+            "Response (nonrecoverable) had to be list. "
+            "Type {} not supported. ".format(
+                type(response)))
+
+    if not isinstance(response, list) and is_recoverable:
+        raise WrongTemplateDataException(
+            "Response (recoverable) had to be list. "
+            "Type {} not supported. ".format(
+                type(response)))
+
+    if isinstance(response[0], list):
+        for item in response:
+            _check_response(json, item, is_recoverable)
+    else:
+        pattern = response.pop(-1)
+        for key in response:
+
             try:
                 json = json[key]
             except (IndexError, KeyError):
-                if not unexpectation:
-                    raise ExpectationException(
-                        'No key or index {} in json {}'.format(key, json))
-        if unexpectation:
-            if re.match(pattern, str(json)):
-                raise UnExpectationException(
-                    'Response value "{}" matches regexp "{}" from '
-                    'response_unexpectation'.format(
-                        json, pattern))
-        else:
-            if not re.match(pattern, str(json)):
                 raise ExpectationException(
-                    'Response value "{}" does not match regexp "{}" from '
-                    'response_expectation'.format(
-                        json, pattern))
+                        'No key or index {} in json {}'.format(key, json))
+
+        if re.match(str(pattern), str(json)) and not is_recoverable:
+            raise NonRecoverableResponseException(
+                "Giving up... \n"
+                "Response value: "
+                "{} matches regexp:{} from nonrecoverable_response. ".format(
+                    str(json), str(pattern)))
+        if not re.match(str(pattern), str(json)) and is_recoverable:
+            raise RecoverableResponseException(
+                "Trying one more time...\n"
+                "Response value:{} does not match regexp: {} "
+                "from response_expectation".format(
+                    str(json), str(pattern)))
 
 
 def _check_if_v2(response_translation):
@@ -206,13 +219,12 @@ def _translate_and_save_v2(response_json, response_translation, runtime_dict):
                     list_path = translation[0][idx+1:]
                     list_path.insert(0, key[0])
                     list_path.insert(0, response_list_idx)
-                    prepared_runtime_props = \
+                    list_path_arg = [[
+                        list_path,
                         _prepare_runtime_props_path_for_list(
                             translation[1], response_list_idx)
-                    _translate_and_save_v2(
-                        json,
-                        [[list_path, prepared_runtime_props]],
-                        runtime_dict)
+                    ]]
+                    _translate_and_save_v2(json, list_path_arg, runtime_dict)
                 return
             else:
                 json = json[key]
@@ -236,10 +248,12 @@ def _save(runtime_properties_dict_or_subdict, list, value):
     if len(list) == 0:
         runtime_properties_dict_or_subdict[first_el] = value
     else:
-        runtime_properties_dict_or_subdict[first_el] = \
-            runtime_properties_dict_or_subdict.get(first_el, {}) if \
-            isinstance(runtime_properties_dict_or_subdict, dict) else \
-            runtime_properties_dict_or_subdict[first_el]
+        runtime_properties_dict_or_subdict[
+            first_el] = \
+                runtime_properties_dict_or_subdict.get(
+                    first_el, {}) if isinstance(
+            runtime_properties_dict_or_subdict, dict) else \
+                runtime_properties_dict_or_subdict[first_el]
         _save(runtime_properties_dict_or_subdict[first_el], list, value)
 
 
@@ -257,8 +271,7 @@ def _prepare_runtime_props_path_for_list(runtime_props_path, idx):
 
 def _prepare_runtime_props_for_list(runtime_props, runtime_props_path, count):
     for l_idx, value in enumerate(runtime_props_path):
-        if value == \
-                runtime_props_path[-1] or \
+        if value == runtime_props_path[-1] or \
                 isinstance(runtime_props_path[l_idx+1], list):
             runtime_props[value] = [{}] * count
             return

@@ -76,3 +76,5 @@ releases:
   v1.5.0.1:
   - Deployment proxy bug fix. Ensure that correct execution ID is polled for deployment, when workflow ID is identical.
 
+  v.1.5.1:
+  - Support user configuration of failure success on certain responses in REST plugin.
