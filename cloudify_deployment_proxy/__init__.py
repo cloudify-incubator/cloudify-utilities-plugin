@@ -372,10 +372,11 @@ class DeploymentProxyBase(object):
         else:
             dep_outputs = response.get('outputs')
             ctx.logger.debug('Deployment outputs: {0}'.format(dep_outputs))
-            for key, val in self.deployment_outputs.items():
+            for key, val in dep_outputs.items():
                 ctx.instance.runtime_properties[
-                    'deployment']['outputs'][val] = \
+                    'deployment']['outputs'][key] = \
                     dep_outputs.get(key, '')
+
         return True
 
     def verify_execution_successful(self):
