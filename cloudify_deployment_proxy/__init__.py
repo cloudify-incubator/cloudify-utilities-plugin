@@ -81,8 +81,8 @@ class DeploymentProxyBase(object):
         # Deployment-related properties
         self.deployment = self.config.get('deployment', {})
         self.deployment_id = self.deployment.get('id') or ctx.instance.id
-        self.deployment_inputs = self.deployment.get('inputs')
-        self.deployment_outputs = self.deployment.get('outputs')
+        self.deployment_inputs = self.deployment.get('inputs', {})
+        self.deployment_outputs = self.deployment.get('outputs', {})
         self.deployment_logs = self.deployment.get('logs', {})
 
         # Node-instance-related properties
