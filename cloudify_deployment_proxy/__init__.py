@@ -41,7 +41,11 @@ from .polling import (
     poll_workflow_after_execute,
     dep_system_workflows_finished
 )
-from .utils import get_desired_value, update_attributes
+from .utils import (
+    get_desired_value,
+    update_attributes,
+    generate_traceback_exception
+)
 
 
 class DeploymentProxyBase(object):
@@ -121,9 +125,21 @@ class DeploymentProxyBase(object):
         _special_client = \
             getattr(_generic_client, _client_attr)
 
+        ctx.logger.debug(
+            'Call {0} action on {1} client'
+            ' with the following args {2}'.format(
+                _client_attr, _client_attr, _client_args)
+        )
+
         try:
             response = _special_client(**_client_args)
         except CloudifyClientError as ex:
+            stack_track = generate_traceback_exception()
+
+            ctx.logger.error(
+                'Error traceback {0} with message {1}'.format(
+                    stack_track['traceback'], stack_track['message']))
+
             raise NonRecoverableError(
                 'Client action {0} failed: {1}.'.format(_client_attr, str(ex)))
         else:
