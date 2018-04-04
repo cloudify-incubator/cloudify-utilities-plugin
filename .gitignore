@@ -66,3 +66,5 @@ AUTHORS
 ChangeLog
 .cloudify
 local-storage/
+
+plugin_docs
