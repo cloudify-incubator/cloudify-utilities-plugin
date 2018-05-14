@@ -81,3 +81,6 @@ releases:
 
   v.1.5.2:
   - Bug fix for empty deployment outputs in deployment proxy.
+
+  v.1.5.3:
+  - Handle retries in REST type.
