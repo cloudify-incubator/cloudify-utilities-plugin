@@ -30,6 +30,8 @@ from .exceptions import (
 
 logger = logging.getLogger(LOGGER_NAME)
 
+TEMPLATE_PROPERTY_RETRY_ON_CONNECTION_ERROR = 'retry_on_connection_error'
+
 
 #  request_props (port, ssl, verify, hosts )
 def process(params, template, request_props):
@@ -81,13 +83,24 @@ def _send_request(call):
                                         data=data,
                                         json=json_payload,
                                         verify=call['verify'])
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as e:
             logger.debug('ConnectionError for host : {}'.format(host))
+
+            if TEMPLATE_PROPERTY_RETRY_ON_CONNECTION_ERROR in call and \
+                    call[TEMPLATE_PROPERTY_RETRY_ON_CONNECTION_ERROR]:
+
+                raise RecoverableResponseException(
+                    'ConnectionError {0} has occurred, but flag {1} is set. '
+                    'Retrying...'
+                    .format(
+                        str(e),
+                        TEMPLATE_PROPERTY_RETRY_ON_CONNECTION_ERROR
+                    )
+                )
+
             if i == len(call['hosts']) - 1:
                 logger.error('No host from list available')
                 raise
-            else:
-                continue
 
     logger.info(
         'Response \n text:{}\n status_code:{}\n'.format(response.text,

@@ -42,6 +42,7 @@ Template parameters:
 - **response_translation** - translates response into runtime properties (please see example)
 - **response_expectation** - what we expect in a response content. If response is different than specified, system is raising recoverable error and trying until response is equal to specified
 - **nonrecoverable_response** - response which is raising non-recoverable error and triggers workflow to stop (give up)
+- **retry_on_connection_error** - try to send request again even in case when REST endpoint is not available (ConnectionError). It may be useful in cases that we need to wait for some REST service to be up.
 
 
 ```
