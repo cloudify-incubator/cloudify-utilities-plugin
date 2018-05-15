@@ -149,6 +149,7 @@ and that reuse such node in other part of your blueprint. For implicit reuse ip 
                 responses: <optional, list for possible question that required action from user with answers>
                   - question: <sequence on chars that required some response>
                     answer: <response from plugin>
+                    newline: <optional, send new line after response, by default false>
                 errors: <optional, list strings that must raise error if contained in output, will overwrite values from terminal_auth>
                 promt_check: <optional, list of prompt's, will overwrite values from terminal_auth>
 
