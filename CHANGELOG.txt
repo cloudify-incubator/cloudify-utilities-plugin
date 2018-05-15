@@ -1,5 +1,5 @@
 releases:
- 
+
   v1.0.0:
   - rename plugin
   - change property structure
@@ -84,3 +84,6 @@ releases:
 
   v.1.5.3:
   - Handle retries in REST type.
+
+  v.1.5.4:
+  - Add ability to send newline after answer question in terminal plugin.

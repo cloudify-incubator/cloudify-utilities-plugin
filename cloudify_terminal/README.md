@@ -111,6 +111,7 @@ and that reuse such node in other part of your blueprint. For implicit reuse ip 
                 responses: # list of responses
                   - question: Do you want to continue? (y/n) # if plugin see 'Do you want to continue? (y/n)'
                     answer: y # plugin will response 'y'
+                    newline: false # send new line after response
               - action: aaa # same as previous
 ```
 

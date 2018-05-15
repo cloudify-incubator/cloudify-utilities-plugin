@@ -85,7 +85,10 @@ class connection(object):
         # delete all invisible chars
         backspace = text.find("\b")
         while backspace != -1:
-            text = text[:backspace - 1] + text[backspace + 1:]
+            if backspace == 0:
+                text = text[1:]
+            else:
+                text = text[:backspace - 1] + text[backspace + 1:]
             backspace = text.find("\b")
         return text
 
@@ -181,7 +184,9 @@ class connection(object):
                 question_pos = line.find(response['question'])
                 if question_pos != -1:
                     # response to question
-                    self._conn_send(response['answer'])
+                    self._conn_send(response.get('answer', ""))
+                    if response.get('newline', False):
+                        self._conn_send("\n")
                     return question_pos + len(response['question'])
         return -1
 
