@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.2/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.5.3/plugin.yaml
 
 inputs:
 
@@ -38,26 +38,39 @@ inputs:
 
 node_templates:
 
-  ios_impl:
+  cisco:
     type: cloudify.terminal.raw
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           inputs:
-            terminal_auth:
+            terminal_auth: &terminal_auth
               user: { get_input: terminal_user }
-              password: { get_input: terminal_password }
+              password:  { get_input: terminal_password }
               ip: { get_input: terminal_ip }
               key_content: { get_input: terminal_key_content }
               port: { get_input: terminal_port }
+              exit_command: "exit"
+              promt_check:
+                - "#"
               errors:
                 - "% "
+              store_logs: True
             calls:
-              - action: show ip http server all
-              - action: show ip domain
-                save_to: domain
-
-outputs:
-  responses:
-    description: repsonses from commands
-    value: { get_attribute: [ ios_impl, domain ] }
+              - action: "exit"
+        start:
+          inputs:
+            terminal_auth: *terminal_auth
+            calls:
+              - action: "copy startup-config flash:"
+                responses:
+                - question: "Destination filename [startup-config]?"
+                  answer: dupa2.txt
+                  newline: true
+                - question: "Do you want to over write? [confirm]"
+                  answer: y
+              - action: "dir flash:"
+                responses:
+                - question: "--More--"
+                  answer: ""
+                  newline: true

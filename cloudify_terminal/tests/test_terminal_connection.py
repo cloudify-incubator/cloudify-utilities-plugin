@@ -117,14 +117,18 @@ class TestTasks(unittest.TestCase):
 
     def test_delete_backspace(self):
         conn = terminal_connection.connection()
-
+        # simple case
         self.assertEqual(conn._delete_backspace("abc\bd\n$a\bbc"), "abd\n$bc")
+        # \b in begging of line
+        self.assertEqual(conn._delete_backspace("\bcd\n$a\bbc"), "cd\n$bc")
+        # \b at the end
+        self.assertEqual(conn._delete_backspace("abc\b\b\b\b\b"), "")
 
     def test_send_response(self):
         conn = terminal_connection.connection()
-
+        # no responses
         self.assertEqual(conn._send_response("abcd?", []), -1)
-
+        # wrong question
         self.assertEqual(
             conn._send_response(
                 "abcd?", [{
@@ -132,13 +136,12 @@ class TestTasks(unittest.TestCase):
                     'answer': 'no'
                 }]), -1
         )
-
+        # correct question
         conn.conn = MagicMock()
         conn.logger = MagicMock()
         conn.conn.send = Mock(return_value=2)
         conn.conn.closed = False
         conn.conn.log_file_name = False
-
         self.assertEqual(
             conn._send_response(
                 "continue, yes?", [{
@@ -146,8 +149,18 @@ class TestTasks(unittest.TestCase):
                     'answer': 'no'
                 }]), 14
         )
-
         conn.conn.send.assert_called_with("no")
+        # question with new line response
+        conn.conn.send = Mock(return_value=1)
+        self.assertEqual(
+            conn._send_response(
+                "continue, yes?", [{
+                    'question': 'yes?',
+                    'answer': 'n',
+                    'newline': True
+                }]), 14
+        )
+        conn.conn.send.assert_has_calls([call("n"), call('\n')])
 
     def test_is_closed(self):
         conn = terminal_connection.connection()
