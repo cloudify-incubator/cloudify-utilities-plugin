@@ -57,7 +57,6 @@ class TestBackups(unittest.TestCase):
                 'cloudify.interfaces.statistics.perfomance': {}
             }
 
-
         _instance = MagicMock()
         _instance.send_event = MagicMock(
             return_value='event')
@@ -98,7 +97,7 @@ class TestBackups(unittest.TestCase):
 
         with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
             workflows.restore(ctx=_workflow_ctx,
-                                    snapshot_name="backup_name")
+                              snapshot_name="backup_name")
 
         _workflow_ctx.graph_mode.assert_called_with()
         _graph_mock.execute.assert_called_with()
@@ -121,7 +120,7 @@ class TestBackups(unittest.TestCase):
 
         with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
             workflows.restore(ctx=_workflow_ctx,
-                                    snapshot_name="backup_name")
+                              snapshot_name="backup_name")
 
         _workflow_ctx.graph_mode.assert_called_with()
         _graph_mock.execute.assert_called_with()
@@ -147,7 +146,7 @@ class TestBackups(unittest.TestCase):
         _workflow_ctx, _graph_mock, _instance = self._gen_ctx(fs_check=True)
         with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
             workflows.backup(ctx=_workflow_ctx,
-                                    snapshot_name="backup_name")
+                             snapshot_name="backup_name")
         _workflow_ctx.graph_mode.assert_called_with()
         _graph_mock.execute.assert_called_with()
         _graph_mock._sequence.add.assert_called_with('event',
@@ -188,7 +187,7 @@ class TestBackups(unittest.TestCase):
         _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
         with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
             workflows.backup(ctx=_workflow_ctx,
-                                    snapshot_name="backup_name")
+                             snapshot_name="backup_name")
         _workflow_ctx.graph_mode.assert_called_with()
         _graph_mock.execute.assert_called_with()
         _graph_mock._sequence.add.assert_called_with('event',
@@ -202,11 +201,10 @@ class TestBackups(unittest.TestCase):
         _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
         with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
             workflows.backup(ctx=_workflow_ctx,
-                                    snapshot_name="other_name",
-                                    snapshot_type="week",
-                                    snapshot_rotation=10,
-                                    snapshot_incremental=False
-                                    )
+                             snapshot_name="other_name",
+                             snapshot_type="week",
+                             snapshot_rotation=10,
+                             snapshot_incremental=False)
         _workflow_ctx.graph_mode.assert_called_with()
         _graph_mock.execute.assert_called_with()
         _graph_mock._sequence.add.assert_called_with('event',

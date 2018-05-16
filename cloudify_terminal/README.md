@@ -1,6 +1,10 @@
 # Cloudify Utilities: Terminal
 
-Terminal plugin provide support run command one by one and save result from executions each command to runtime properties.
+Terminal plugin provide support run command one by one and save result from
+executions each command to runtime properties.  Plugin is supposed to use with
+hardware devices with limited ssh support and IoT devices. For machines with
+full ssh implementation - consider to use fabric plugin.
+
 
 Plugin have support:
 * communication by ssh connection
@@ -158,5 +162,6 @@ and that reuse such node in other part of your blueprint. For implicit reuse ip 
 # Examples
 
 * [Cisco](examples/cisco.yaml) - show currently assigned ip's.
+* [Cisco](examples/cisco_flash_list.yaml) - list flash contents.
 * [Fortigate](examples/fortigate.yaml) - show assigned ip's with example for error settings.
 * [SSH to VM](examples/linux-ssh.yaml) - Simple ssh to linux vm with `run hostname`.

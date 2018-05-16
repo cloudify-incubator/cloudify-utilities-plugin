@@ -122,5 +122,6 @@ class TestSuspend(unittest.TestCase):
         _graph_mock._sequence.add.assert_not_called()
         _instance.execute_operation.assert_not_called()
 
+
 if __name__ == '__main__':
     unittest.main()
