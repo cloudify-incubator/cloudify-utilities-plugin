@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.5.4.zip
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/backup_workflow.zip
     package_version: '1.5.4'
 
   cfy_files: *utilities_plugin
@@ -36,11 +36,13 @@ data_types:
         required: false
       main_file_name:
         description: >
-          The application blueprint filename. If the blueprint consists many imported files this is the main blueprint.
+          The application blueprint filename. If the blueprint consists many
+          imported files this is the main blueprint.
         default: blueprint.yaml
       blueprint_archive:
         description: >
-          The URL of a .zip to upload to the manager. (Can be skipped if external_resource == True)
+          The URL of a .zip to upload to the manager.
+          (Can be skipped if external_resource == True)
         default: ""
         required: true
 
@@ -146,37 +148,47 @@ data_types:
         type: boolean
         required: false
       unvalidated:
-        description: Unvalidated parameters.
+        description: >
+          Unvalidated parameters.
         required: false
 
   cloudify.datatypes.terminal_auth:
     properties:
       user:
-        description: The login credentials for ios server.
+        description: >
+          The login credentials for ios server.
         default: ''
       password:
-        description: optional, ssh password
+        description: >
+          optional, ssh password
         default: ''
       ip:
-        description: optional, device ip
+        description: >
+          optional, device ip
         default: ''
       key_content:
-        description: optional, ssh user key
+        description: >
+          optional, ssh user key
         default: ''
       port:
-        description: optional, ssh port
+        description: >
+          optional, ssh port
         default: 22
       store_logs:
-        description: optional, save communication logs
+        description: >
+          optional, save communication logs
         default: false
       promt_check:
-        description: optional, list of prompts accepted from device, default is "#/$"
+        description: >
+          optional, list of prompts accepted from device, default is "#/$"
         default: []
       errors:
-        description: optional, list of possible errors without new line
+        description: >
+          optional, list of possible errors without new line
         default: []
       exit_command:
-        description: optional, command for close connection, default 'exit'
+        description: >
+          optional, command for close connection, default 'exit'
         default: exit
 
   cloudify.datatypes.File:
@@ -185,7 +197,8 @@ data_types:
         type: string
         description: >
           The path relative to the blueprint where the file is stored.
-          Currently this must be packaged in the blueprint. An external URI is not valid.
+          Currently this must be packaged in the blueprint. An external URI is
+          not valid.
         required: true
       file_path:
         type: string
@@ -200,7 +213,8 @@ data_types:
       mode:
         type: integer
         description: >
-          The file permissions, such as 777. Must be provided as an integer. "0777" and 0777 are not valid. Only 777.
+          The file permissions, such as 777. Must be provided as an integer.
+          "0777" and 0777 are not valid. Only 777.
         required: true
       template_variables:
         description: >
@@ -209,7 +223,8 @@ data_types:
       use_sudo:
         type: boolean
         description: >
-          Whether or not to use sudo to move, rename, delete, chown, chmod, the file.
+          Whether or not to use sudo to move, rename, delete, chown, chmod,
+          the file.
         default: false
       allow_failure:
         type: boolean
@@ -337,11 +352,14 @@ node_types:
           inputs:
             store_public_key_material:
               description: >
-                Allow the public key material to be stored as a runtime property. Recommended.
+                Allow the public key material to be stored as a runtime
+                property. Recommended.
               type: boolean
               default: true
             store_private_key_material:
-              description: Allow the private key material to be stored as a runtime property. Not recommended for manager deployments.
+              description: >
+                Allow the private key material to be stored as a runtime
+                property. Not recommended for manager deployments.
               type: boolean
               default: false
         delete:
@@ -393,12 +411,13 @@ node_types:
       host:
         description: >
           host name or IP addresses of Rest Servers
-          if list of hosts is not needed single host can be provided by this property.
-          NOTE: the 'hosts' property overwirte the 'host' property
+          if list of hosts is not needed single host can be provided by this
+          property. NOTE: the 'hosts' property overwirte the 'host' property
         default: []
       port:
         description: >
-          port number. When -1 default ports are used (80 for ssl = false and 443 for ssl = true)
+          port number. When -1 default ports are used
+          (80 for ssl = false and 443 for ssl = true)
         type: integer
         default: -1
       ssl:
@@ -408,8 +427,8 @@ node_types:
         default: false
       verify:
         description: >
-          A boolean which controls whether we verify
-          the server's TLS certificate.
+          A boolean which controls whether we verify the server's TLS
+          certificate.
         type: boolean
         default: true
 
@@ -478,8 +497,64 @@ workflows:
         default:
           - juniper_node_config
           - fortinet_vnf_type
+
+  # suspend/wake up/resume
   suspend:
     mapping: suspend.cloudify_suspend.workflows.suspend
 
   resume:
     mapping: suspend.cloudify_suspend.workflows.resume
+
+  # force to dump native usage by cloud providers
+  statistics:
+    mapping: suspend.cloudify_suspend.workflows.statistics
+
+  # backup related workflows
+  backup:
+    mapping: suspend.cloudify_suspend.workflows.backup
+    parameters:
+      snapshot_name:
+        description: >
+          Backup name/tag.
+        default: ""
+      snapshot_incremental:
+        description: >
+          Create incremental snapshots or full backup.
+          By default created snapshots.
+        default: true
+      snapshot_type:
+        description: >
+          The backup type, like 'daily' or 'weekly'.
+        default: irregular
+      snapshot_rotation:
+        description: >
+          How many backups to keep around.
+        default: 1
+
+  restore:
+    mapping: suspend.cloudify_suspend.workflows.restore
+    parameters:
+      snapshot_name:
+        description: >
+          Backup name/tag.
+        default: ""
+      snapshot_incremental:
+        description: >
+          Create incremental snapshots or full backup.
+          By default created snapshots.
+        default: true
+
+  # some cloud's parially lock vm's reconfigure if we have backup
+  # so better remove before reconfigure
+  remove_backup:
+    mapping: suspend.cloudify_suspend.workflows.remove_backup
+    parameters:
+      snapshot_name:
+        description: >
+          Backup name/tag.
+        default: ""
+      snapshot_incremental:
+        description: >
+          Create incremental snapshots or full backup.
+          By default created snapshots.
+        default: true

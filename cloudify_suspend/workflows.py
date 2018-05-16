@@ -11,31 +11,202 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import time
+
 from cloudify.decorators import workflow
+from cloudify import constants
+from cloudify import exceptions as cfy_exc
 
 
-def _run_operation(ctx, operation, **kwargs):
-    full_operation_name = 'cloudify.interfaces.lifecycle.' + operation
-    ctx.logger.debug(operation)
-    graph = ctx.graph_mode()
+def _check_type(node, include_node_types, exclude_node_types):
+    """check that we have correct type for run action"""
+
+    # check by include types
+    if include_node_types:
+        for node_type in include_node_types:
+            if node_type not in node.type_hierarchy:
+                return False
+
+    # check by exclude types
+    if exclude_node_types:
+        for node_type in exclude_node_types:
+            if node_type in node.type_hierarchy:
+                return False
+
+    return True
+
+
+def _run_operation(ctx, graph, operation, **kwargs):
+    ctx.logger.debug("Run {}({})".format(operation, repr(kwargs)))
+
+    include_node_types = kwargs.get('include_node_types', [])
+    exclude_node_types = kwargs.get('exclude_node_types', [])
+    include_instances = kwargs.get('include_instances', [])
 
     for node in ctx.nodes:
-        if full_operation_name in node.operations:
+        if not _check_type(node, include_node_types, exclude_node_types):
+            continue
+
+        if operation in node.operations:
             for instance in node.instances:
+                # check for skip instances
+                if include_instances:
+                    if instance.id not in include_instances:
+                        continue
+                # add to run operation
                 sequence = graph.sequence()
                 sequence.add(
                     instance.send_event('Starting to {}'.format(operation)),
-                    instance.execute_operation(full_operation_name, **kwargs),
+                    instance.execute_operation(operation,
+                                               kwargs=kwargs),
                     instance.send_event('Done {}'.format(operation)))
-
-    return graph.execute()
 
 
 @workflow
 def suspend(ctx, **kwargs):
-    _run_operation(ctx, "suspend", **kwargs)
+    graph = ctx.graph_mode()
+    # deprecated
+    _run_operation(ctx, graph, 'cloudify.interfaces.lifecycle.suspend',
+                   **kwargs)
+    # new way
+    _run_operation(ctx, graph, 'cloudify.interfaces.freeze.suspend',
+                   **kwargs)
+    graph.execute()
 
 
 @workflow
 def resume(ctx, **kwargs):
-    _run_operation(ctx, "resume", **kwargs)
+    graph = ctx.graph_mode()
+    # new way
+    _run_operation(ctx, graph, "cloudify.interfaces.freeze.resume",
+                   **kwargs)
+    # deprecated
+    _run_operation(ctx, graph, "cloudify.interfaces.lifecycle.resume",
+                   **kwargs)
+    graph.execute()
+
+
+@workflow
+def statistics(ctx, **kwargs):
+    graph = ctx.graph_mode()
+    _run_operation(ctx, graph, "cloudify.interfaces.statistics.perfomance",
+                   **kwargs)
+    graph.execute()
+
+
+def _fs_prepare(ctx, graph, kwargs):
+    # stop all non compute nodes
+    ctx.logger.debug("Freeze services")
+
+    kwargs['exclude_node_types'] = [constants.COMPUTE_NODE_TYPE]
+    kwargs['include_node_types'] = []
+    _run_operation(ctx, graph, "cloudify.interfaces.freeze.fs_prepare",
+                   **kwargs)
+
+    # stop all compute nodes
+    ctx.logger.debug("Freeze computes")
+
+    kwargs['exclude_node_types'] = []
+    kwargs['include_node_types'] = [constants.COMPUTE_NODE_TYPE]
+    _run_operation(ctx, graph, "cloudify.interfaces.freeze.fs_prepare",
+                   **kwargs)
+    del kwargs['exclude_node_types']
+    del kwargs['include_node_types']
+
+
+def _fs_finalize(ctx, graph, kwargs):
+    # start all compute nodes
+    ctx.logger.debug("Unfreeze computes")
+
+    kwargs['exclude_node_types'] = []
+    kwargs['include_node_types'] = [constants.COMPUTE_NODE_TYPE]
+    _run_operation(ctx, graph, "cloudify.interfaces.freeze.fs_finalize",
+                   **kwargs)
+
+    # start all non compute nodes
+    ctx.logger.debug("Unfreeze services")
+
+    kwargs['exclude_node_types'] = [constants.COMPUTE_NODE_TYPE]
+    kwargs['include_node_types'] = []
+    _run_operation(ctx, graph, "cloudify.interfaces.freeze.fs_finalize",
+                   **kwargs)
+
+    del kwargs['exclude_node_types']
+    del kwargs['include_node_types']
+
+
+@workflow
+def backup(ctx, **kwargs):
+    if not kwargs.get("snapshot_name"):
+        kwargs["snapshot_name"] = "backup-{}".format(int(time.time()))
+
+    if not kwargs.get("snapshot_type"):
+        kwargs["snapshot_type"] = "irregular"
+
+    if not kwargs.get("snapshot_rotation"):
+        kwargs["snapshot_rotation"] = -1
+
+    if 'snapshot_incremental' not in kwargs:
+        kwargs['snapshot_incremental'] = True
+
+    graph = ctx.graph_mode()
+
+    # suspend fs operations
+    _fs_prepare(ctx, graph, kwargs)
+
+    # backup state
+    ctx.logger.debug("Backing up")
+    _run_operation(ctx, graph, "cloudify.interfaces.snapshot.create",
+                   **kwargs)
+    # resume fs operations
+    _fs_finalize(ctx, graph, kwargs)
+
+    graph.execute()
+
+    ctx.logger.info("Backuped to {}".format(repr(kwargs["snapshot_name"])))
+
+
+@workflow
+def restore(ctx, **kwargs):
+    if not kwargs.get("snapshot_name"):
+        raise cfy_exc.NonRecoverableError(
+            'Backup name must be provided.'
+        )
+    if 'snapshot_incremental' not in kwargs:
+        kwargs['snapshot_incremental'] = True
+
+    graph = ctx.graph_mode()
+
+    # suspend fs operations
+    # need for correctly stop any io operations or shutdown vm if required
+    _fs_prepare(ctx, graph, kwargs)
+
+    # restore fs
+    ctx.logger.debug("Restoring")
+    _run_operation(ctx, graph, "cloudify.interfaces.snapshot.apply",
+                   **kwargs)
+
+    # resume fs operations
+    # we need such for case if in backup stored "freeze state"
+    _fs_finalize(ctx, graph, kwargs)
+
+    graph.execute()
+
+    ctx.logger.info("Restored from {}".format(repr(kwargs["snapshot_name"])))
+
+
+@workflow
+def remove_backup(ctx, **kwargs):
+    if not kwargs.get("snapshot_name"):
+        raise cfy_exc.NonRecoverableError(
+            'Backup name must be provided.'
+        )
+    if 'snapshot_incremental' not in kwargs:
+        kwargs['snapshot_incremental'] = True
+
+    graph = ctx.graph_mode()
+    _run_operation(ctx, graph, "cloudify.interfaces.snapshot.delete",
+                   **kwargs)
+    graph.execute()
+
+    ctx.logger.info("Removed {}".format(repr(kwargs["snapshot_name"])))
