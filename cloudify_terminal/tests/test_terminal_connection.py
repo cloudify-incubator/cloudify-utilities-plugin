@@ -325,6 +325,7 @@ class TestTasks(unittest.TestCase):
         conn = terminal_connection.connection()
         conn.logger = MagicMock()
 
+        # check with closed connection
         with self.assertRaises(RecoverableError) as error:
             conn._cleanup_response(
                 "prompt> text\n some\nerror", "prompt>", ['error']
@@ -336,6 +337,15 @@ class TestTasks(unittest.TestCase):
             str(error.exception),
             'Looks as we have error in response: prompt> text\n some\nerror'
         )
+
+        # check with alive connection
+        conn.conn = MagicMock()
+        conn.conn.closed = False
+        with self.assertRaises(RecoverableError) as error:
+            conn._cleanup_response(
+                "prompt> text\n some\nerror", "prompt>", ['error']
+            )
+        conn.conn.close.assert_called_with()
 
     def test_run_with_closed_connection(self):
         conn = terminal_connection.connection()
@@ -385,6 +395,9 @@ class TestTasks(unittest.TestCase):
 
             def recv(self, size):
                 return "+\n"
+
+            def close(self):
+                pass
 
             @property
             def closed(self):
