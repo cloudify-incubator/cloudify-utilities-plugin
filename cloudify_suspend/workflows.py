@@ -95,6 +95,8 @@ def statistics(ctx, **kwargs):
 
 
 def _fs_prepare(ctx, graph, kwargs):
+    """Freeze file system after action, called for services !COMPUTE_NODE_TYPE
+    nodes, than for COMPUTE_NODE_TYPE nodes"""
     # stop all non compute nodes
     ctx.logger.debug("Freeze services")
 
@@ -115,6 +117,8 @@ def _fs_prepare(ctx, graph, kwargs):
 
 
 def _fs_finalize(ctx, graph, kwargs):
+    """Unfreeze file system after action, called for COMPUTE_NODE_TYPE nodes,
+    than for service !COMPUTE_NODE_TYPE nodes"""
     # start all compute nodes
     ctx.logger.debug("Unfreeze computes")
 
