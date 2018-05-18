@@ -11,14 +11,14 @@ workflows.
   that has such operation. For backward compatibility also run deprecated
   `cloudify.interfaces.lifecycle.resume`.
 * `backup`: Workflow call such calls for each node that has such operation.
-  * `cloudify.interfaces.freeze.fs_finalize` for all **services** nodes,
-  * `cloudify.interfaces.freeze.fs_finalize` for all **compute** nodes,
+  * `cloudify.interfaces.freeze.fs_prepare` for all **services** nodes,
+  * `cloudify.interfaces.freeze.fs_prepare` for all **compute** nodes,
   * `cloudify.interfaces.snapshot.create` for all nodes in deployment,
   * `cloudify.interfaces.freeze.fs_finalize` for all **compute** nodes,
   * `cloudify.interfaces.freeze.fs_finalize` for all **services** nodes.
 * `restore`:  Workflow call such calls for each node that have such operation.
-  * `cloudify.interfaces.freeze.fs_finalize` for all **services** nodes,
-  * `cloudify.interfaces.freeze.fs_finalize` for all **compute** nodes,
+  * `cloudify.interfaces.freeze.fs_prepare` for all **services** nodes,
+  * `cloudify.interfaces.freeze.fs_prepare` for all **compute** nodes,
   * `cloudify.interfaces.snapshot.apply` for all nodes in deployment,
   * `cloudify.interfaces.freeze.fs_finalize` for all **compute** nodes,
   * `cloudify.interfaces.freeze.fs_finalize` for all **services** nodes.
