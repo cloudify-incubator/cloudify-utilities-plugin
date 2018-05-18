@@ -55,7 +55,8 @@ def _execute(params, template_file, instance, node):
         raise NonRecoverableError(e)
 
     except (exceptions.RecoverableResponseException,
-            exceptions.RecoverableStatusCodeCodeException)as e:
+            exceptions.RecoverableStatusCodeCodeException,
+            exceptions.ExpectationException)as e:
         raise RecoverableError(e)
     except Exception as e:
         ctx.logger.info(
