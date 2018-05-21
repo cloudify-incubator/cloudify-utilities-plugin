@@ -44,8 +44,15 @@ def _run_operation(ctx, graph, operation, **kwargs):
     include_instances = kwargs.get('include_instances', [])
 
     for node in ctx.nodes:
+        # check by node type
         if not _check_type(node, include_node_types, exclude_node_types):
             continue
+
+        # check for skipped actions
+        skip_actions = node.properties.get("skip_actions", [])
+        if skip_actions:
+            if operation in skip_actions:
+                continue
 
         if operation in node.operations:
             for instance in node.instances:

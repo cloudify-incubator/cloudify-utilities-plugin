@@ -62,6 +62,7 @@ class TestSuspend(unittest.TestCase):
         return _workflow_ctx, _graph_mock, _instance
 
     def test_suspend(self):
+        # enabled actions
         _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
 
         with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
@@ -74,6 +75,26 @@ class TestSuspend(unittest.TestCase):
                                                      'event')
         _instance.execute_operation.assert_has_calls([
             call('cloudify.interfaces.lifecycle.suspend', kwargs={}),
+            call('cloudify.interfaces.freeze.suspend', kwargs={})
+        ])
+
+    def test_suspend_skipped(self):
+        # skipped actions
+        _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
+
+        _workflow_ctx.nodes[0].properties["skip_actions"] = [
+            'cloudify.interfaces.lifecycle.suspend'
+        ]
+
+        with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
+            workflows.suspend(ctx=_workflow_ctx)
+
+        _workflow_ctx.graph_mode.assert_called_with()
+        _graph_mock.execute.assert_called_with()
+        _graph_mock._sequence.add.assert_called_with('event',
+                                                     'execute_operation',
+                                                     'event')
+        _instance.execute_operation.assert_has_calls([
             call('cloudify.interfaces.freeze.suspend', kwargs={})
         ])
 

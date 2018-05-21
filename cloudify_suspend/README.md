@@ -58,8 +58,9 @@ Abbreviations:
 * Y - Supported by plugin
 * N - Unsupported by infrastructure API
 
-All workflows support `include_instances` for limit list of instances where we
-call operations.
+All workflows have support for:
+* `include_instances` parameter for limit list of instances where we call operations.
+* `skip_actions` node property check for disable specific actions on node.
 
 For partial backup can be used `include_instances` for limit list of instances or
 split installation to several deployments and run on deployments one by one.
