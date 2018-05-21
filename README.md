@@ -60,6 +60,6 @@ Utilities for extending Cloudify features.
   - v1.5.3: Handle retries in REST type.
   - v1.5.4: Add ability to send newline after answer question in terminal
             plugin.
-  - v1.5.4:
+  - v1.6.0:
     * Backup/Restore workflows.
     * Close connection after error in terminal plugin.
