@@ -8,22 +8,22 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import unittest
-from mock import MagicMock, patch
+from mock import MagicMock, patch, call
 
 from cloudify.state import current_ctx
 
 import cloudify_suspend.workflows as workflows
 
 
-class TestTasks(unittest.TestCase):
+class TestSuspend(unittest.TestCase):
 
     def tearDown(self):
         current_ctx.clear()
-        super(TestTasks, self).tearDown()
+        super(TestSuspend, self).tearDown()
 
     def _gen_ctx(self):
         _ctx = MagicMock()
@@ -38,11 +38,16 @@ class TestTasks(unittest.TestCase):
 
         _node = MagicMock()
         _node.operations = {
+            # deprecated calls
             'cloudify.interfaces.lifecycle.suspend': {},
-            'cloudify.interfaces.lifecycle.resume': {}
+            'cloudify.interfaces.lifecycle.resume': {},
+            # upstream calls
+            'cloudify.interfaces.freeze.suspend': {},
+            'cloudify.interfaces.freeze.resume': {},
         }
 
         _instance = MagicMock()
+        _instance.id = "correct_id"
         _instance.send_event = MagicMock(
             return_value='event')
         _instance.execute_operation = MagicMock(
@@ -57,6 +62,7 @@ class TestTasks(unittest.TestCase):
         return _workflow_ctx, _graph_mock, _instance
 
     def test_suspend(self):
+        # enabled actions
         _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
 
         with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
@@ -67,12 +73,34 @@ class TestTasks(unittest.TestCase):
         _graph_mock._sequence.add.assert_called_with('event',
                                                      'execute_operation',
                                                      'event')
-        _instance.execute_operation.assert_called_with(
-            'cloudify.interfaces.lifecycle.suspend')
+        _instance.execute_operation.assert_has_calls([
+            call('cloudify.interfaces.lifecycle.suspend', kwargs={}),
+            call('cloudify.interfaces.freeze.suspend', kwargs={})
+        ])
 
-    def test_resume(self):
+    def test_suspend_skipped(self):
+        # skipped actions
         _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
 
+        _workflow_ctx.nodes[0].properties["skip_actions"] = [
+            'cloudify.interfaces.lifecycle.suspend'
+        ]
+
+        with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
+            workflows.suspend(ctx=_workflow_ctx)
+
+        _workflow_ctx.graph_mode.assert_called_with()
+        _graph_mock.execute.assert_called_with()
+        _graph_mock._sequence.add.assert_called_with('event',
+                                                     'execute_operation',
+                                                     'event')
+        _instance.execute_operation.assert_has_calls([
+            call('cloudify.interfaces.freeze.suspend', kwargs={})
+        ])
+
+    def test_resume(self):
+        # resume all
+        _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
         with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
             workflows.resume(ctx=_workflow_ctx)
 
@@ -81,8 +109,39 @@ class TestTasks(unittest.TestCase):
         _graph_mock._sequence.add.assert_called_with('event',
                                                      'execute_operation',
                                                      'event')
-        _instance.execute_operation.assert_called_with(
-            'cloudify.interfaces.lifecycle.resume')
+        _instance.execute_operation.assert_has_calls([
+            call('cloudify.interfaces.freeze.resume', kwargs={}),
+            call('cloudify.interfaces.lifecycle.resume', kwargs={})
+        ])
+        # resume only selected
+        _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
+        with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
+            workflows.resume(ctx=_workflow_ctx,
+                             include_instances=["correct_id"])
+
+        _workflow_ctx.graph_mode.assert_called_with()
+        _graph_mock.execute.assert_called_with()
+        _graph_mock._sequence.add.assert_called_with('event',
+                                                     'execute_operation',
+                                                     'event')
+        _instance.execute_operation.assert_has_calls([
+            call('cloudify.interfaces.freeze.resume', kwargs={
+                "include_instances": ["correct_id"]
+            }),
+            call('cloudify.interfaces.lifecycle.resume', kwargs={
+                "include_instances": ["correct_id"]
+            })
+        ])
+        # no instances for resume
+        _workflow_ctx, _graph_mock, _instance = self._gen_ctx()
+        with patch('cloudify.state.current_workflow_ctx', _workflow_ctx):
+            workflows.resume(ctx=_workflow_ctx,
+                             include_instances=["wrong_id"])
+
+        _workflow_ctx.graph_mode.assert_called_with()
+        _graph_mock.execute.assert_called_with()
+        _graph_mock._sequence.add.assert_not_called()
+        _instance.execute_operation.assert_not_called()
 
 
 if __name__ == '__main__':

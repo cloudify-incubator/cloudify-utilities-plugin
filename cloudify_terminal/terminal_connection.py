@@ -171,6 +171,8 @@ class connection(object):
         # check for errors started only from new line
         errors_with_new_line = ["\n" + error for error in error_examples]
         if self._find_any_in(response, errors_with_new_line) != -1:
+            if not self.is_closed():
+                self.close()
             raise cfy_exc.RecoverableError(
                 "Looks as we have error in response: %s" % (text)
             )
@@ -262,7 +264,13 @@ class connection(object):
     def close(self):
         """close connection"""
         try:
-            # sometime code can't close in time
-            self.conn.close()
+            if self.conn:
+                # sometime code can't close in time
+                self.conn.close()
         finally:
-            self.ssh.close()
+            if self.ssh:
+                self.ssh.close()
+
+    def __del__(self):
+        """Close connections for sure"""
+        self.close()
