@@ -103,8 +103,10 @@ def _send_request(call):
                 raise
 
     logger.info(
-        'Response \n text:{}\n status_code:{}\n'.format(response.text,
-                                                        response.status_code))
+        'Response \n content:{}\n status_code:{}\n'
+        .format(response.content, response.status_code)
+    )
+
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError:
@@ -184,7 +186,7 @@ def _check_response(json, response, is_recoverable):
                 json = json[key]
             except (IndexError, KeyError):
                 raise ExpectationException(
-                        'No key or index {} in json {}'.format(key, json))
+                        'No key or index "{}" in json {}'.format(key, json))
 
         if re.match(str(pattern), str(json)) and not is_recoverable:
             raise NonRecoverableResponseException(
