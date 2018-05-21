@@ -91,3 +91,6 @@ releases:
   v.1.6.0:
   - Backup/Restore workflows
   - Close connection after error in terminal plugin.
+
+  v.1.6.1:
+  - Improve Rest Plugin with recoverable error.

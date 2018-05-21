@@ -63,3 +63,5 @@ Utilities for extending Cloudify features.
   - v1.6.0:
     * Backup/Restore workflows.
     * Close connection after error in terminal plugin.
+  - v1.6.1:
+    * Improve REST Plugin Failure with recoverable errors.
