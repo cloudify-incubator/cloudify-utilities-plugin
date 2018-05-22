@@ -12,12 +12,14 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+import time
+from urlparse import urlparse
+
 from cloudify import ctx
 from cloudify import manager
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
-import time
 
 from .constants import (
     UNINSTALL_ARGS,
@@ -32,7 +34,7 @@ from .constants import (
     EXEC_LIST,
     NIP,
     NIP_TYPE,
-    DEP_TYPE
+    DEP_TYPE,
 )
 from .polling import (
     any_bp_by_id,
@@ -130,6 +132,15 @@ class DeploymentProxyBase(object):
             return response
 
     def upload_blueprint(self):
+
+        # Parse the blueprint_archive in order to get url parts
+        parse_url = urlparse(self.blueprint_archive)
+
+        # Check if the ``blueprint_archive`` is not a URL then we need to
+        # download it and pass the binaries to the client_args
+        if not(parse_url.netloc and parse_url.scheme):
+            self.blueprint_archive = \
+                ctx.download_resource(self.blueprint_archive)
 
         client_args = \
             dict(blueprint_id=self.blueprint_id,
