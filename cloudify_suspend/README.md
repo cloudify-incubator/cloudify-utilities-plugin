@@ -29,27 +29,27 @@ workflows.
 
 ### Suspend/Resume support by plugins:
 
-Plugin    | VM Suspend/Resume | File System freeze/unfreeze
---------- | ----------------- | ---------------------------
-Openstack | Y                 | N (N/A)
-LibVirt   | Y                 | N (N/A)
+Plugin           | VM Suspend/Resume | File System freeze/unfreeze
+---------------- | ----------------- | ---------------------------
+Openstack 2.9.0+ | Y                 | N (N/A)
+LibVirt          | Y                 | N (N/A)
 
 
 ### VM Backup/Snapshot support by plugins:
 
-Plugin    | VM Snapshot | VM Backup  | VM Snapshot Restore | VM Backup Restore | VM Snapshot Remove | VM Backup Remove
---------- | ----------- | -----------| ------------------- | ----------------- |------------------- | ----------------------
-Openstack | Y           | Y          | Y                   | Y                 | Y                  | Y
-LibVirt   | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
-vSphere   | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
+Plugin           | VM Snapshot | VM Backup  | VM Snapshot Restore | VM Backup Restore | VM Snapshot Remove | VM Backup Remove
+---------------- | ----------- | -----------| ------------------- | ----------------- |------------------- | ----------------------
+Openstack 2.9.0+ | Y           | Y          | Y                   | Y                 | Y                  | Y
+LibVirt          | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
+vSphere          | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
 
 ### Volume Backup/Snapshot support by plugins:
 
-Plugin    | Volume Snapshot | Volume Backup | Volume Snapshot Restore | Volume Backup Restore | Volume Snapshot Remove | Volume Backup Remove
---------- | --------------- | ------------- | ----------------------- | --------------------- |----------------------- | --------------------
-Openstack | Y               | Y             | N (No API)              | Y                     | Y                      | Y
-LibVirt   | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
-vSphere   | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
+Plugin           | Volume Snapshot | Volume Backup | Volume Snapshot Restore | Volume Backup Restore | Volume Snapshot Remove | Volume Backup Remove
+---------------- | --------------- | ------------- | ----------------------- | --------------------- |----------------------- | --------------------
+Openstack 2.9.0+ | Y               | Y             | N (No API)              | Y                     | Y                      | Y
+LibVirt          | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
+vSphere          | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
 
 ### Notes:
 
