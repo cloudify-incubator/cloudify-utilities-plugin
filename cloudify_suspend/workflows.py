@@ -36,7 +36,7 @@ def _check_type(node, include_node_types, exclude_node_types):
     return True
 
 
-def _run_operation(ctx, graph, operation, **kwargs):
+def _run_operation(ctx, sequence, operation, **kwargs):
     ctx.logger.debug("Run {}({})".format(operation, repr(kwargs)))
 
     include_node_types = kwargs.get('include_node_types', [])
@@ -61,7 +61,6 @@ def _run_operation(ctx, graph, operation, **kwargs):
                     if instance.id not in include_instances:
                         continue
                 # add to run operation
-                sequence = graph.sequence()
                 sequence.add(
                     instance.send_event('Starting to {}'.format(operation)),
                     instance.execute_operation(operation,
@@ -72,11 +71,13 @@ def _run_operation(ctx, graph, operation, **kwargs):
 @workflow
 def suspend(ctx, **kwargs):
     graph = ctx.graph_mode()
+    sequence = graph.sequence()
+
     # deprecated
-    _run_operation(ctx, graph, 'cloudify.interfaces.lifecycle.suspend',
+    _run_operation(ctx, sequence, 'cloudify.interfaces.lifecycle.suspend',
                    **kwargs)
     # new way
-    _run_operation(ctx, graph, 'cloudify.interfaces.freeze.suspend',
+    _run_operation(ctx, sequence, 'cloudify.interfaces.freeze.suspend',
                    **kwargs)
     graph.execute()
 
@@ -84,11 +85,13 @@ def suspend(ctx, **kwargs):
 @workflow
 def resume(ctx, **kwargs):
     graph = ctx.graph_mode()
+    sequence = graph.sequence()
+
     # new way
-    _run_operation(ctx, graph, "cloudify.interfaces.freeze.resume",
+    _run_operation(ctx, sequence, "cloudify.interfaces.freeze.resume",
                    **kwargs)
     # deprecated
-    _run_operation(ctx, graph, "cloudify.interfaces.lifecycle.resume",
+    _run_operation(ctx, sequence, "cloudify.interfaces.lifecycle.resume",
                    **kwargs)
     graph.execute()
 
@@ -96,12 +99,14 @@ def resume(ctx, **kwargs):
 @workflow
 def statistics(ctx, **kwargs):
     graph = ctx.graph_mode()
-    _run_operation(ctx, graph, "cloudify.interfaces.statistics.perfomance",
+    sequence = graph.sequence()
+
+    _run_operation(ctx, sequence, "cloudify.interfaces.statistics.perfomance",
                    **kwargs)
     graph.execute()
 
 
-def _fs_prepare(ctx, graph, kwargs):
+def _fs_prepare(ctx, sequence, kwargs):
     """Freeze file system after action, called for services !COMPUTE_NODE_TYPE
     nodes, than for COMPUTE_NODE_TYPE nodes"""
     # stop all non compute nodes
@@ -109,7 +114,7 @@ def _fs_prepare(ctx, graph, kwargs):
 
     kwargs['exclude_node_types'] = [constants.COMPUTE_NODE_TYPE]
     kwargs['include_node_types'] = []
-    _run_operation(ctx, graph, "cloudify.interfaces.freeze.fs_prepare",
+    _run_operation(ctx, sequence, "cloudify.interfaces.freeze.fs_prepare",
                    **kwargs)
 
     # stop all compute nodes
@@ -117,13 +122,13 @@ def _fs_prepare(ctx, graph, kwargs):
 
     kwargs['exclude_node_types'] = []
     kwargs['include_node_types'] = [constants.COMPUTE_NODE_TYPE]
-    _run_operation(ctx, graph, "cloudify.interfaces.freeze.fs_prepare",
+    _run_operation(ctx, sequence, "cloudify.interfaces.freeze.fs_prepare",
                    **kwargs)
     del kwargs['exclude_node_types']
     del kwargs['include_node_types']
 
 
-def _fs_finalize(ctx, graph, kwargs):
+def _fs_finalize(ctx, sequence, kwargs):
     """Unfreeze file system after action, called for COMPUTE_NODE_TYPE nodes,
     than for service !COMPUTE_NODE_TYPE nodes"""
     # start all compute nodes
@@ -131,7 +136,7 @@ def _fs_finalize(ctx, graph, kwargs):
 
     kwargs['exclude_node_types'] = []
     kwargs['include_node_types'] = [constants.COMPUTE_NODE_TYPE]
-    _run_operation(ctx, graph, "cloudify.interfaces.freeze.fs_finalize",
+    _run_operation(ctx, sequence, "cloudify.interfaces.freeze.fs_finalize",
                    **kwargs)
 
     # start all non compute nodes
@@ -139,7 +144,7 @@ def _fs_finalize(ctx, graph, kwargs):
 
     kwargs['exclude_node_types'] = [constants.COMPUTE_NODE_TYPE]
     kwargs['include_node_types'] = []
-    _run_operation(ctx, graph, "cloudify.interfaces.freeze.fs_finalize",
+    _run_operation(ctx, sequence, "cloudify.interfaces.freeze.fs_finalize",
                    **kwargs)
 
     del kwargs['exclude_node_types']
@@ -161,16 +166,17 @@ def backup(ctx, **kwargs):
         kwargs['snapshot_incremental'] = True
 
     graph = ctx.graph_mode()
+    sequence = graph.sequence()
 
     # suspend fs operations
-    _fs_prepare(ctx, graph, kwargs)
+    _fs_prepare(ctx, sequence, kwargs)
 
     # backup state
     ctx.logger.debug("Backing up")
-    _run_operation(ctx, graph, "cloudify.interfaces.snapshot.create",
+    _run_operation(ctx, sequence, "cloudify.interfaces.snapshot.create",
                    **kwargs)
     # resume fs operations
-    _fs_finalize(ctx, graph, kwargs)
+    _fs_finalize(ctx, sequence, kwargs)
 
     graph.execute()
 
@@ -187,19 +193,20 @@ def restore(ctx, **kwargs):
         kwargs['snapshot_incremental'] = True
 
     graph = ctx.graph_mode()
+    sequence = graph.sequence()
 
     # suspend fs operations
     # need for correctly stop any io operations or shutdown vm if required
-    _fs_prepare(ctx, graph, kwargs)
+    _fs_prepare(ctx, sequence, kwargs)
 
     # restore fs
     ctx.logger.debug("Restoring")
-    _run_operation(ctx, graph, "cloudify.interfaces.snapshot.apply",
+    _run_operation(ctx, sequence, "cloudify.interfaces.snapshot.apply",
                    **kwargs)
 
     # resume fs operations
     # we need such for case if in backup stored "freeze state"
-    _fs_finalize(ctx, graph, kwargs)
+    _fs_finalize(ctx, sequence, kwargs)
 
     graph.execute()
 
@@ -216,7 +223,9 @@ def remove_backup(ctx, **kwargs):
         kwargs['snapshot_incremental'] = True
 
     graph = ctx.graph_mode()
-    _run_operation(ctx, graph, "cloudify.interfaces.snapshot.delete",
+    sequence = graph.sequence()
+
+    _run_operation(ctx, sequence, "cloudify.interfaces.snapshot.delete",
                    **kwargs)
     graph.execute()
 
