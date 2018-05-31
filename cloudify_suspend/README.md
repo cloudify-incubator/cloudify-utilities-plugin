@@ -32,7 +32,8 @@ workflows.
 Plugin           | VM Suspend/Resume | File System freeze/unfreeze
 ---------------- | ----------------- | ---------------------------
 Openstack 2.9.0+ | Y                 | N (N/A)
-LibVirt          | Y                 | N (N/A)
+vSphere 2.7.0+   | Y                 | N (N/A)
+LibVirt 0.4+     | Y                 | N (N/A)
 
 
 ### VM Backup/Snapshot support by plugins:
@@ -40,37 +41,146 @@ LibVirt          | Y                 | N (N/A)
 Plugin           | VM Snapshot | VM Backup  | VM Snapshot Restore | VM Backup Restore | VM Snapshot Remove | VM Backup Remove
 ---------------- | ----------- | -----------| ------------------- | ----------------- |------------------- | ----------------------
 Openstack 2.9.0+ | Y           | Y          | Y                   | Y                 | Y                  | Y
-LibVirt          | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
-vSphere          | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
+vSphere 2.7.0+   | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
+LibVirt 0.4+     | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
 
 ### Volume Backup/Snapshot support by plugins:
 
 Plugin           | Volume Snapshot | Volume Backup | Volume Snapshot Restore | Volume Backup Restore | Volume Snapshot Remove | Volume Backup Remove
 ---------------- | --------------- | ------------- | ----------------------- | --------------------- |----------------------- | --------------------
 Openstack 2.9.0+ | Y               | Y             | N (No API)              | Y                     | Y                      | Y
-LibVirt          | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
-vSphere          | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
+vSphere 2.7.0+   | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
+LibVirt 0.4+     | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
 
 ### Notes:
 
 Abbreviations:
-* N/A - Not supported by plugin
-* Y - Supported by plugin
-* N - Unsupported by infrastructure API
+ * `N/A` - Not supported by plugin
+ * `Y` - Supported by plugin
+ * `N` - Unsupported by infrastructure API
 
 All workflows have support for:
-* `include_instances` parameter for limit list of instances where we call operations.
-* `skip_actions` node property check for disable specific actions on node.
+ * `include_instances` parameter for limit list of instances where we call operations.
+ * `skip_actions` node property check for disable specific actions on node.
+
+Backup types:
+ * `Snapshot` has such meaning - some objects that directly connected to parent object
+   (VM/Compute/Volume) and in object saved difference between different state of object
+   in time.
+ * `Backup` has such meaning - some object contain full copy of original object and can
+   be used after remove original object.
 
 For partial backup can be used `include_instances` for limit list of instances or
 split installation to several deployments and run on deployments one by one.
 
-### Create backup/shapshot parameters
+OpenStack:
+ * Plugin will remove all binded snapshot before delete volume automatically.
+ * Volume backups, VM backups, VM snapshots are removed only for delete backup
+   workflow, in other cases user should remove images manually.
 
-* `snapshot_name`: Backup name/tag. By default will be used "backup-<timestamp>"
-* `snapshot_incremental`: Create incremental snapshots or full backup. By default created snapshots.
-* `snapshot_type`: The backup type, like 'daily' or 'weekly'. By default: irregular
-* `snapshot_rotation`: How many backups to keep around. By default: 1
+VSphere:
+ * Plugin will remove all binded snapshot before delete vm.
+ * User should remove snapshots before attach/detach devices from/to vm.
+
+LibVirt:
+ * Plugin will remove all binded snapshot before delete vm.
+
+## Backup/Shapshot workflows:
+
+We provide for use 3 workflows: create/restore/remove_backup.
+
+### Backup
+
+`Backup` workflow has such parameters:
+ * `snapshot_name`: Backup name/tag. By default will be used "backup-<timestamp>"
+ * `snapshot_incremental`: Create incremental snapshots or full backup. By default
+    created snapshots.
+ * `snapshot_type`: The backup type, like 'daily' or 'weekly'. By default: irregular
+ * `snapshot_rotation`: How many backups to keep around. By default: 1
+
+Meaning of each params depends on plugin implementation and can have different sense
+for each plugin.
+
+For example, openstack use parameters in such way:
+ * `Snapshot name`: Used as suffix for created `objects`. As object can be different
+   things like images, volume snapshots or backups. Name of resulted object is
+   something like ```<object type>-<original object id>-<backup name>```. We need such
+   because result of VM snapshot, VM backup and Volume backup
+   is image. So we need some information in name for understand what id parent object
+   for backup.
+ * `Snapshot_incremental`: plugin use to separate type of resulted objects.
+   If `Snapshot_incremental=True` - code will try to create snapshot of object,
+   for different plugins it can be contain different information. In case Openstack it
+   will be Image with full copy of VM or subobject contained in volume that can be
+   exported as image.
+   If `Snapshot_incremental=False` - code will try to create copy of VM as image or
+   copy of Volume as image.
+ * `snapshot_rotation`: used only with VM snapshot as rotation field in metadata.
+ * `snapshot_type`: used with VM snapshots as part of image metadata and as
+   description in snapshot metadata.
+
+OpenStack plugin does not make any decisions based on `snapshot_type` / `snapshot_rotation`
+values and is passing this values without any changes. Cloudify plugins is not
+responsible for remove all old backups or snapshots by rotation field.
+
+### Restore
+
+`Restore` workflow has such parameters:
+ * `snapshot_name`: Backup name/tag. By default will be used "backup-<timestamp>"
+ * `snapshot_incremental`: Restore from incremental snapshots or full backup.
+   By default restored from snapshots.
+
+Both parameters have same meaning as in backup workflow.
+
+For openstack:
+ * VM's: Code search images with same name as we used for create backup/snapshot
+   image and rebuild VM with use such name as base.
+ * Volumes: if customer have tried to restore from snapshot - we show warning and
+   ignore action. In case when customer have used backup - we ask openstack for
+   restore volume from backup. Such logic is limitation of openstack, so we can
+   only restore volumes from backups for now.
+
+### Remove backup
+
+`Remove backup` workflow has such parameters:
+ * `snapshot_name`: Backup name/tag. By default will be used "backup-<timestamp>"
+ * `snapshot_incremental`: Delete incremental snapshots or full backup.
+    By default removed snapshots.
+
+Both parameters have same meaning as in backup workflow.
+
+For openstack:
+ * VM's - search image created by backup workflow and delete if found such.
+ * Volume - search image created as backup for volume or remove snapshot with
+  such name in volume.
+
+### Internal implementation/logic in utilities plugin.
+
+In backup/restore workflow:
+ * call action `cloudify.interfaces.freeze.fs_prepare` for all non compute nodes.
+   This action is supposed to stop service before run real backup.
+ * call action `cloudify.interfaces.freeze.fs_prepare` for compute nodes.
+   This action is supposed for run sync/freeze fs before run real backup.
+ * call action `cloudify.interfaces.snapshot.create` for all nodes in deployment.
+   This action is supposed for low level create backup of volume or vm in
+   infrastructure. if user implemented callback for action - can be used
+   for made backup of service db.
+ * call action `cloudify.interfaces.freeze.fs_finalize` for compute nodes.
+   This action is supposed for run unfreeze fs before run real backup.
+ * call action `cloudify.interfaces.freeze.fs_finalize` for all non compute nodes.
+   This action supposed for start all serviced stopped at the start of workflow.
+
+Plugin needs to run `fs_prepere` for `restore` workflow - because plugin needs
+to have consistent state before run any `restore`/`apply` backups - so if
+service has some suspend before backup we need to stop candidate for restore
+before any real action.
+
+All actions receive all params as we have as inputs for workflow without any changes.
+So user defined actions can make some decisions based on such params.
+
+In `remove backup workflow` plugin calls remove backup action on all instances in
+deployment without any additional `actions` for freeze or stop services.
+So remove backup is safe action without functionality degradation of deployment.
 
 # Usage example:
 
