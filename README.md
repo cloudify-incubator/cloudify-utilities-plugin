@@ -63,7 +63,6 @@ Utilities for extending Cloudify features.
   - v1.6.0:
     * Backup/Restore workflows.
     * Close connection after error in terminal plugin.
-  - v1.6.1:
-    * Improve REST Plugin Failure with recoverable errors.
-  - v.1.7.0:
-    * Add support for local blueprint archive
+  - v1.6.1: Improve REST Plugin Failure with recoverable errors.
+  - v1.7.0: Add support for local blueprint archive
+  - v1.7.1: Fix call sequence in backup workflow.

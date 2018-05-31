@@ -97,3 +97,6 @@ releases:
 
   v.1.7.0:
   - Add support for local blueprint archive
+
+  v1.7.1:
+  - Fix call sequence in backup workflow.
