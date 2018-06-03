@@ -142,9 +142,29 @@ class DeploymentProxyBase(object):
         update_attributes(
             'blueprint', 'application_file_name', self.blueprint_file_name)
 
-        if self.blueprint.get(EXTERNAL_RESOURCE):
+        blueprint_is = any_bp_by_id(self.client, self.blueprint_id)
+
+        if self.blueprint.get(EXTERNAL_RESOURCE) and not blueprint_is:
+            raise NonRecoverableError(
+                'Blueprint ID {0} does not exist, '
+                'but {1} is {2}.'.format(
+                    self.blueprint_id,
+                    EXTERNAL_RESOURCE,
+                    self.blueprint.get(EXTERNAL_RESOURCE)))
+        elif self.blueprint.get(EXTERNAL_RESOURCE) and blueprint_is:
             ctx.logger.info("Used external blueprint.")
             return False
+        elif blueprint_is:
+            ctx.logger.warn(
+                'Blueprint ID {0} exists, '
+                'but {1} is {2}.'.format(
+                    self.blueprint_id,
+                    EXTERNAL_RESOURCE,
+                    self.blueprint.get(EXTERNAL_RESOURCE)))
+        if not self.blueprint_archive:
+            raise NonRecoverableError(
+                'No blueprint_archive supplied, '
+                'but {0} is False'.format(EXTERNAL_RESOURCE))
 
         # Parse the blueprint_archive in order to get url parts
         parse_url = urlparse(self.blueprint_archive)
@@ -159,11 +179,6 @@ class DeploymentProxyBase(object):
             dict(blueprint_id=self.blueprint_id,
                  archive_location=self.blueprint_archive,
                  application_file_name=self.blueprint_file_name)
-
-        if any_bp_by_id(self.client, self.blueprint_id):
-            ctx.logger.info("Blueprint {0} already exists."
-                            .format(self.blueprint_id))
-            return False
 
         return self.dp_get_client_response('blueprints',
                                            BP_UPLOAD,
