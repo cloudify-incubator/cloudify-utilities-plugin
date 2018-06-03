@@ -133,6 +133,19 @@ class DeploymentProxyBase(object):
 
     def upload_blueprint(self):
 
+        if 'blueprint' not in ctx.instance.runtime_properties.keys():
+            ctx.instance.runtime_properties['blueprint'] = dict()
+
+        update_attributes('blueprint', 'id', self.blueprint_id)
+        update_attributes(
+            'blueprint', 'blueprint_archive', self.blueprint_archive)
+        update_attributes(
+            'blueprint', 'application_file_name', self.blueprint_file_name)
+
+        if self.blueprint.get(EXTERNAL_RESOURCE):
+            ctx.logger.info("Used external blueprint.")
+            return False
+
         # Parse the blueprint_archive in order to get url parts
         parse_url = urlparse(self.blueprint_archive)
 
@@ -146,19 +159,6 @@ class DeploymentProxyBase(object):
             dict(blueprint_id=self.blueprint_id,
                  archive_location=self.blueprint_archive,
                  application_file_name=self.blueprint_file_name)
-
-        if 'blueprint' not in ctx.instance.runtime_properties.keys():
-            ctx.instance.runtime_properties['blueprint'] = dict()
-
-        update_attributes('blueprint', 'id', self.blueprint_id)
-        update_attributes(
-            'blueprint', 'blueprint_archive', self.blueprint_archive)
-        update_attributes(
-            'blueprint', 'application_file_name', self.blueprint_file_name)
-
-        if self.blueprint.get(EXTERNAL_RESOURCE):
-            ctx.logger.info("Used external blueprint.")
-            return False
 
         if any_bp_by_id(self.client, self.blueprint_id):
             ctx.logger.info("Blueprint {0} already exists."
