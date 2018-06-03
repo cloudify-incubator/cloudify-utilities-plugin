@@ -100,3 +100,9 @@ releases:
 
   v.1.7.1:
   - Fix bug introduced in 1.7.0 when blueprint archive is null.
+  - Changed the logic for external_resource in Blueprint and Deployment.
+    New Logic Is:
+    - external_resource is True and resource exists: finish
+    - external_resource is True and resource does not exist: fail
+    - external_resource is False and resource exists: warn
+    - external_resource is False and resource does not exist: create
