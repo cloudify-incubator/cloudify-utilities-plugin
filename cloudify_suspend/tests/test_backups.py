@@ -63,6 +63,7 @@ class TestBackups(unittest.TestCase):
         _instance.execute_operation = MagicMock(
             return_value='execute_operation')
 
+        _node.properties = {}
         _node.instances = [_instance]
 
         _workflow_ctx = MagicMock()

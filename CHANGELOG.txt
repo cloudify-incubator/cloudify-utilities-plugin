@@ -106,3 +106,4 @@ releases:
     - external_resource is True and resource does not exist: fail
     - external_resource is False and resource exists: warn
     - external_resource is False and resource does not exist: create
+  - Fix call sequence in backup workflow.
