@@ -133,6 +133,40 @@ class DeploymentProxyBase(object):
 
     def upload_blueprint(self):
 
+        if 'blueprint' not in ctx.instance.runtime_properties.keys():
+            ctx.instance.runtime_properties['blueprint'] = dict()
+
+        update_attributes('blueprint', 'id', self.blueprint_id)
+        update_attributes(
+            'blueprint', 'blueprint_archive', self.blueprint_archive)
+        update_attributes(
+            'blueprint', 'application_file_name', self.blueprint_file_name)
+
+        blueprint_is = any_bp_by_id(self.client, self.blueprint_id)
+
+        if self.blueprint.get(EXTERNAL_RESOURCE) and not blueprint_is:
+            raise NonRecoverableError(
+                'Blueprint ID {0} does not exist, '
+                'but {1} is {2}.'.format(
+                    self.blueprint_id,
+                    EXTERNAL_RESOURCE,
+                    self.blueprint.get(EXTERNAL_RESOURCE)))
+        elif self.blueprint.get(EXTERNAL_RESOURCE) and blueprint_is:
+            ctx.logger.info("Used external blueprint.")
+            return False
+        elif blueprint_is:
+            ctx.logger.warn(
+                'Blueprint ID {0} exists, '
+                'but {1} is {2}. Will use.'.format(
+                    self.blueprint_id,
+                    EXTERNAL_RESOURCE,
+                    self.blueprint.get(EXTERNAL_RESOURCE)))
+            return False
+        if not self.blueprint_archive:
+            raise NonRecoverableError(
+                'No blueprint_archive supplied, '
+                'but {0} is False'.format(EXTERNAL_RESOURCE))
+
         # Parse the blueprint_archive in order to get url parts
         parse_url = urlparse(self.blueprint_archive)
 
@@ -146,24 +180,6 @@ class DeploymentProxyBase(object):
             dict(blueprint_id=self.blueprint_id,
                  archive_location=self.blueprint_archive,
                  application_file_name=self.blueprint_file_name)
-
-        if 'blueprint' not in ctx.instance.runtime_properties.keys():
-            ctx.instance.runtime_properties['blueprint'] = dict()
-
-        update_attributes('blueprint', 'id', self.blueprint_id)
-        update_attributes(
-            'blueprint', 'blueprint_archive', self.blueprint_archive)
-        update_attributes(
-            'blueprint', 'application_file_name', self.blueprint_file_name)
-
-        if self.blueprint.get(EXTERNAL_RESOURCE):
-            ctx.logger.info("Used external blueprint.")
-            return False
-
-        if any_bp_by_id(self.client, self.blueprint_id):
-            ctx.logger.info("Blueprint {0} already exists."
-                            .format(self.blueprint_id))
-            return False
 
         return self.dp_get_client_response('blueprints',
                                            BP_UPLOAD,
@@ -181,15 +197,30 @@ class DeploymentProxyBase(object):
 
         update_attributes('deployment', 'id', self.deployment_id)
 
-        if any_dep_by_id(self.client, self.deployment_id):
-            ctx.logger.info("Deployment {0} already exists."
-                            .format(self.deployment_id))
+        deployment_is = any_dep_by_id(self.client, self.deployment_id)
+
+        if self.deployment.get(EXTERNAL_RESOURCE) and deployment_is:
+            ctx.logger.info("Used external deployment.")
+            return False
+        elif self.deployment.get(EXTERNAL_RESOURCE) and not deployment_is:
+            raise NonRecoverableError(
+                'Deployment ID {0} does not exist, '
+                'but {1} is {2}.'.format(
+                    self.deployment_id,
+                    EXTERNAL_RESOURCE,
+                    self.deployment.get(EXTERNAL_RESOURCE)))
+        elif deployment_is:
+            ctx.logger.warn(
+                'Deployment ID {0} exists, '
+                'but {1} is {2}. Will use.'.format(
+                    self.blueprint_id,
+                    EXTERNAL_RESOURCE,
+                    self.blueprint.get(EXTERNAL_RESOURCE)))
             return False
 
-        if not self.deployment.get(EXTERNAL_RESOURCE):
-            ctx.logger.info("Create deployment {0}."
-                            .format(self.deployment_id))
-            self.dp_get_client_response('deployments', DEP_CREATE, client_args)
+        ctx.logger.info("Create deployment {0}."
+                        .format(self.deployment_id))
+        self.dp_get_client_response('deployments', DEP_CREATE, client_args)
 
         # In order to set the ``self.execution_id`` need to get the
         # ``execution_id`` of current deployment ``self.deployment_id``

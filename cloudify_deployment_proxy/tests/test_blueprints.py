@@ -79,6 +79,7 @@ class TestBlueprint(DeploymentProxyTestBase):
             blueprint_params['blueprint'] = {}
             blueprint_params['blueprint']['blueprint_id'] = test_name
             blueprint_params['blueprint']['blueprint_archive'] = archive
+            blueprint_params['blueprint'][EXTERNAL_RESOURCE] = True
             self.resource_config['resource_config'] = blueprint_params
 
             def mock_return(*args, **kwargs):
@@ -123,7 +124,9 @@ class TestBlueprint(DeploymentProxyTestBase):
         current_ctx.set(_ctx)
 
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            mock_client.return_value = MockCloudifyRestClient()
+            cfy_mock_client = MockCloudifyRestClient()
+            list_response = cfy_mock_client.blueprints.list()
+            list_response[0]['id'] = test_name
 
             blueprint_params = {}
             blueprint_params['blueprint'] = {}
@@ -132,6 +135,12 @@ class TestBlueprint(DeploymentProxyTestBase):
             blueprint_params['blueprint'][EXTERNAL_RESOURCE] = True
             self.resource_config['resource_config'] = blueprint_params
 
+            def mock_return(*args, **kwargs):
+                del args, kwargs
+                return list_response
+
+            cfy_mock_client.blueprints.list = mock_return
+            mock_client.return_value = cfy_mock_client
             output = upload_blueprint(operation='upload_blueprint',
                                       **self.resource_config)
             self.assertFalse(output)
