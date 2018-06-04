@@ -290,17 +290,14 @@ class DeploymentProxyBase(object):
                 pollster_args=pollster_args,
                 expected_result=False)
 
+        if 'deployment' in ctx.instance.runtime_properties:
             del ctx.instance.runtime_properties['deployment']
 
         ctx.logger.info("Little wait internal cleanup services.")
-
         time.sleep(POLLING_INTERVAL)
-
         ctx.logger.info("Wait for stop all system workflows.")
-
         pollster_args = \
             dict(_client=self.client)
-
         poll_with_timeout(
             dep_system_workflows_finished,
             timeout=self.timeout,
