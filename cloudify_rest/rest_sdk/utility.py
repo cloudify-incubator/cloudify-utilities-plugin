@@ -38,20 +38,27 @@ def process(params, template, request_props):
     logger.debug('template : {}'.format(template))
     template_yaml = yaml.load(template)
     result_propeties = {}
+    calls = []
     for call in template_yaml['rest_calls']:
         call_with_request_props = request_props.copy()
         logger.debug('call \n {}'.format(call))
         # enrich params with items stored in runtime props by prev calls
         params.update(result_propeties)
-        template_engine = Template(str(call))
+        call = str(call)
+        # Remove quotation marks before and after jinja blocks
+        call = re.sub(r'\'\{\%', '{%', call)
+        call = re.sub(r'\%\}\'', '%}', call)
+        template_engine = Template(call)
         rendered_call = template_engine.render(params)
         call = ast.literal_eval(rendered_call)
+        calls.append(call)
         logger.debug('rendered call \n {}'.format(call))
         call_with_request_props.update(call)
         logger.info(
             'call_with_request_props \n {}'.format(call_with_request_props))
         response = _send_request(call_with_request_props)
         _process_response(response, call, result_propeties)
+    result_propeties = {'result_propeties':result_propeties,'calls':calls}
     return result_propeties
 
 
