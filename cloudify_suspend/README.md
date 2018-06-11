@@ -36,28 +36,33 @@ vSphere 2.7.0+   | Y                 | N (N/A)
 LibVirt 0.4+     | Y                 | N (N/A)
 
 
-### VM Backup/Snapshot support by plugins:
+### Backup/Snapshot support by plugins:
 
 Plugin           | VM Snapshot | VM Backup  | VM Snapshot Restore | VM Backup Restore | VM Snapshot Remove | VM Backup Remove
 ---------------- | ----------- | -----------| ------------------- | ----------------- |------------------- | ----------------------
 Openstack 2.9.0+ | Y           | Y          | Y                   | Y                 | Y                  | Y
 vSphere 2.7.0+   | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
-LibVirt 0.4+     | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
+LibVirt 0.4.1+   | Y           | Y          | Y                   | Y (By Compare)    | Y                  | Y
 
-### Volume Backup/Snapshot support by plugins:
+Plugin           | Network Snapshot | Network Backup | Network Snapshot Restore | Network Backup Restore | Network Snapshot Remove | Network Backup Remove
+---------------- | ---------------- | -------------- | ------------------------ | ---------------------- |------------------------ | ---------------------
+LibVirt 0.4.1+   | Y                | Y              | Y (By Compare)           | Y (By Compare)         | Y                       | Y
 
 Plugin           | Volume Snapshot | Volume Backup | Volume Snapshot Restore | Volume Backup Restore | Volume Snapshot Remove | Volume Backup Remove
 ---------------- | --------------- | ------------- | ----------------------- | --------------------- |----------------------- | --------------------
 Openstack 2.9.0+ | Y               | Y             | N (No API)              | Y                     | Y                      | Y
 vSphere 2.7.0+   | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
-LibVirt 0.4+     | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
+LibVirt 0.4.1+   | Y (By VM)       | Y (Bypassed)  | Y (By VM)               | N (No API)            | Y (By VM)              | Y (Bypassed)
 
 ### Notes:
 
 Abbreviations:
- * `N/A` - Not supported by plugin
- * `Y` - Supported by plugin
- * `N` - Unsupported by infrastructure API
+ * `N/A` - Not supported by plugin.
+ * `Y` - Supported by plugin.
+ * `Y (Bypassed)` - Can be bypassed by separate API.
+ * `Y (By VM)` - Created automatically by run action on connected VM.
+ * `Y (By Compare)` - Code show difference between states without reconfigure object.
+ * `N (No API)` - Unsupported by infrastructure API.
 
 All workflows have support for:
  * `include_instances` parameter for limit list of instances where we call operations.
@@ -84,6 +89,7 @@ VSphere:
 
 LibVirt:
  * Plugin will remove all binded snapshot before delete vm.
+ * Plugin create xml backups in current directory by default.
 
 ## Backup/Shapshot workflows:
 
