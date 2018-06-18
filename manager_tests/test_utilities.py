@@ -70,13 +70,13 @@ class TestUtilities(TestLocal):
         utils.upload_blueprint(
             SSH_KEY_BP_ZIP,
             blueprint_id,
-            self.blueprint_file_name)
+            'keys.yaml')
         utils.create_deployment(
             blueprint_id)
         utils.execute_install(blueprint_id)
         delete_dep_command = \
             'cfy deployments delete -f {0}'.format(blueprint_id)
-        utils.execute_command(delete_dep_command)
+        return utils.execute_command(delete_dep_command)
 
     def install_network(self, blueprint_id='azure-example-network'):
         resource_group_name = \
@@ -101,7 +101,7 @@ class TestUtilities(TestLocal):
         utils.create_deployment(
             blueprint_id,
             inputs=network_inputs)
-        utils.execute_install(blueprint_id)
+        return utils.execute_install(blueprint_id)
 
     def install_hello_world(self, blueprint_id):
         resource_group_name = \
@@ -122,22 +122,22 @@ class TestUtilities(TestLocal):
         utils.upload_blueprint(
             HELLO_WORLD_ZIP,
             blueprint_id,
-            'keys.yaml')
+            'azure.yaml')
         utils.create_deployment(
             blueprint_id,
             inputs=hello_world_inputs)
-        utils.execute_install(blueprint_id)
+        return utils.execute_install(blueprint_id)
 
     def install_blueprints(self):
         ssh_id = 'sshkey-{0}'.format(
             os.environ['CIRCLE_BUILD_NUM'])
         hw_id = 'hello-world-{0}'.format(
             os.environ['CIRCLE_BUILD_NUM'])
-        if not self.install_network() or \
-                not self.install_ssh_key(ssh_id) or \
-                not self.install_hello_world(hw_id) or \
-                not utils.execute_uninstall(hw_id) or \
-                not utils.execute_uninstall('azure-example-network'):
+        if self.install_network() or \
+                self.install_ssh_key(ssh_id) or \
+                self.install_hello_world(hw_id) or \
+                utils.execute_uninstall(hw_id) or \
+                utils.execute_uninstall('azure-example-network'):
             raise Exception('Failed to execute blueprint.')
 
     def test_blueprints(self):
