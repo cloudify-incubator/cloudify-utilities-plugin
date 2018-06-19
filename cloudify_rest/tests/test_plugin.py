@@ -200,7 +200,9 @@ class TestPlugin(unittest.TestCase):
         _ctx.get_resource = MagicMock(return_value=template)
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
-        custom_list = [ {'key1':'val1'}, {'key2':'val2'}, ['element1', 'element2'] ]
+        custom_list = [{'key1': 'val1'},
+                       {'key2': 'val2'},
+                       ['element1', 'element2']]
         params = {'custom_list': custom_list}
 
         with requests_mock.mock(
@@ -210,5 +212,6 @@ class TestPlugin(unittest.TestCase):
                    text="resp")
 
             tasks.execute(params, 'mock_param')
-            parsed_list = _ctx.instance.runtime_properties.get('calls')[0].get('payload').get('jinja_block')
-            self.assertListEqual( parsed_list, custom_list)
+            parsed_list = _ctx.instance.runtime_properties.get(
+                'calls')[0].get('payload').get('jinja_block')
+            self.assertListEqual(parsed_list, custom_list)
