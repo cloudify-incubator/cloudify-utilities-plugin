@@ -1,0 +1,14 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.2/types.yaml
+
+node_templates:
+
+  node_template:
+    type: cloudify.nodes.Root
+
+outputs:
+
+  output1:
+    value: output1

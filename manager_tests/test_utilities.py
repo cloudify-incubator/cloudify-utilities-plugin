@@ -41,7 +41,11 @@ class TestUtilities(TestLocal):
         utils.create_deployment(
             blueprint_id)
         utils.execute_install(blueprint_id)
-        utils.execute_command('cfy secrets list')
+        deployment_outputs = utils.get_deployment_outputs(
+            blueprint_id)
+        if not 'agent_key_private' in deployment_outputs or not \
+                'agent_key_public' in deployment_outputs:
+            return True
         delete_dep_command = \
             'cfy deployments delete -f {0}'.format(blueprint_id)
         return utils.execute_command(delete_dep_command)
@@ -53,29 +57,18 @@ class TestUtilities(TestLocal):
                 blueprint_id))
         utils.create_deployment(
             blueprint_id, inputs={'test_id': blueprint_id})
-        utils.execute_install(blueprint_id)
-        utils.execute_command(
-            'cfy deployments outputs {0}'.format(blueprint_id))
-        delete_dep_command = \
-            'cfy deployments delete -f {0}'.format(blueprint_id)
-        return utils.execute_command(delete_dep_command)
+        return utils.execute_install(blueprint_id)
 
     def install_deployment_proxy_external(self, blueprint_id):
         blueprint_id_existing = '{0}-existing'.format(blueprint_id)
         utils.execute_command(
             'cfy blueprints upload cloudify_deployment_proxy/'
-            'examples/test-blueprint.yaml -b {0}'.format(
+            'examples/test-blueprint-existing.yaml -b {0}'.format(
                 blueprint_id_existing))
         utils.create_deployment(
             blueprint_id_existing,
             inputs={'test_id': blueprint_id})
-        utils.execute_install(blueprint_id_existing)
-        utils.execute_command(
-            'cfy deployments outputs {0}'.format(blueprint_id))
-        delete_dep_command = \
-            'cfy deployments delete -f {0}'.format(
-                blueprint_id_existing)
-        return utils.execute_command(delete_dep_command)
+        return utils.execute_install(blueprint_id_existing)
 
     def install_blueprints(self):
         ssh_id = 'sshkey-{0}'.format(

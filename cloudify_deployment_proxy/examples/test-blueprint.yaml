@@ -7,7 +7,7 @@ imports:
 inputs:
 
   archive:
-    default: https://github.com/EarthmanT/the-not-blueprint/archive/master.zip
+    default: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/master.zip
 
   test_id:
     type: string
@@ -25,4 +25,4 @@ node_templates:
         deployment:
           id: { get_input: test_id }
           outputs:
-            deployment_proxy_output: deployment_proxy_output
+            output1: output1
