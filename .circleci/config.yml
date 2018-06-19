@@ -107,7 +107,7 @@ jobs:
           command: cfy profiles use localhost -u admin -p admin -t default_tenant
       - run:
           name: install test requirements
-          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/79e02d581975dcdc9c58143094c60b5939a02b1d.zip
+          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/dc0cce84506b0898ca11bab0c2bcbe28dfde6786.zip
       - run:
           name: execute test
           command: nosetests -s manager_tests/test_utilities.py
@@ -117,14 +117,14 @@ workflows:
   tests:
     jobs:
       - unittests
-      - wagon
-          # filters:
-          #   branches:
-          #     only: /([0-9\.]*\-build)/
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build)/
       - cloudify-manager:
           context: ecosystem
           requires:
             - wagon
-          # filters:
-          #   branches:
-          #     only: /([0-9\.]*\-build)/
+          filters:
+            branches:
+              only: /([0-9\.]*\-build)/
