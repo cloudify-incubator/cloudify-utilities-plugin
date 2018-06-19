@@ -7,7 +7,7 @@ imports:
 inputs:
 
   archive:
-    default: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/master.zip
+    default: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/64a0758b5991f629c1edee075c95a2a83babda8b.zip
 
   test_id:
     type: string
@@ -21,7 +21,7 @@ node_templates:
         blueprint:
           id: { get_input: test_id }
           blueprint_archive: { get_input: archive }
-          main_file_name: blueprint.yaml
+          main_file_name: cloudify_deployment_proxy/examples/blueprint.yaml
           external_resource: true
         deployment:
           id: { get_input: test_id }
