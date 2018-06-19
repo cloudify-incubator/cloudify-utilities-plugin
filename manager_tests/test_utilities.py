@@ -44,8 +44,8 @@ class TestUtilities(TestLocal):
         delete_dep_command = \
             'cfy deployments delete -f {0}'.format(blueprint_id)
         utils.execute_command(delete_dep_command)
-        return utils.get_secret('agent_key_private') or \
-            utils.get_secret('agent_key_public')
+        return utils.get_secrets('agent_key_private') or \
+            utils.get_secrets('agent_key_public')
 
     def install_deployment_proxy_new(self, blueprint_id):
         utils.execute_command(
@@ -84,8 +84,8 @@ class TestUtilities(TestLocal):
             os.environ['CIRCLE_BUILD_NUM'])
 
         result = self.install_ssh_key(ssh_id) or \
-                self.install_deployment_proxy_new(proxy_id) or \
-                self.install_deployment_proxy_external(proxy_id)
+            self.install_deployment_proxy_new(proxy_id) or \
+            self.install_deployment_proxy_external(proxy_id)
         if result:
             raise Exception('Failed to execute blueprint: {0}'.format(
                 result))

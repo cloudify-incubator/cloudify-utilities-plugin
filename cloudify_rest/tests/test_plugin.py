@@ -70,7 +70,7 @@ class TestPlugin(unittest.TestCase):
             tasks.execute(params, 'mock_param')
             # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
-                _ctx.instance.runtime_properties,
+                _ctx.instance.runtime_properties.get('result_propeties'),
                 {'nested_key0': u'nested_value1',
                  'nested_key1': u'nested_value2',
                  'id0': u'1',
@@ -182,6 +182,36 @@ class TestPlugin(unittest.TestCase):
             tasks.execute({}, 'mock_param')
             # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
-                _ctx.instance.runtime_properties,
+                _ctx.instance.runtime_properties.get('result_propeties'),
                 {'UUID': '111111111111111111111111111111',
                  'CPUID': 'ABS:FFF222777'})
+
+    def test_execute_jinja_block_parse(self):
+        _ctx = MockCloudifyContext('node_name',
+                                   properties={'hosts': ['test123.test'],
+                                               'port': -1,
+                                               'ssl': False,
+                                               'verify': False},
+                                   runtime_properties={})
+        __location__ = os.path.realpath(
+            os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        with open(os.path.join(__location__, 'template6.yaml'), 'r') as f:
+            template = f.read()
+        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.logger.setLevel(logging.DEBUG)
+        current_ctx.set(_ctx)
+        custom_list = [{'key1': 'val1'},
+                       {'key2': 'val2'},
+                       ['element1', 'element2']]
+        params = {'custom_list': custom_list}
+
+        with requests_mock.mock(
+                real_http=True) as m:
+
+            m.post('http://test123.test:80/v1/post_jinja_block',
+                   text="resp")
+
+            tasks.execute(params, 'mock_param')
+            parsed_list = _ctx.instance.runtime_properties.get(
+                'calls')[0].get('payload').get('jinja_block')
+            self.assertListEqual(parsed_list, custom_list)

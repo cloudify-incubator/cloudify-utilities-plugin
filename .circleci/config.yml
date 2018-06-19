@@ -107,7 +107,7 @@ jobs:
           command: cfy profiles use localhost -u admin -p admin -t default_tenant
       - run:
           name: install test requirements
-          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/3c64a28074cae5624603c11055693f4594a93b5a.zip
+          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/79e02d581975dcdc9c58143094c60b5939a02b1d.zip
       - run:
           name: execute test
           command: nosetests -s manager_tests/test_utilities.py
