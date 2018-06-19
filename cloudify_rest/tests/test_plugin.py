@@ -201,7 +201,6 @@ class TestPlugin(unittest.TestCase):
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         custom_list = [ {'key1':'val1'}, {'key2':'val2'}, ['element1', 'element2'] ]
-        print custom_list
         params = {'custom_list': custom_list}
 
         with requests_mock.mock(
