@@ -97,24 +97,6 @@ jobs:
           name: start docker container
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host docker-cfy-manager:latest
       - run:
-          name: Setup Update Manager Agent Certificate Script
-          command: |
-              sleep 10 # Give some time to the Manager.
-              docker exec -ti -e UPDATE_CERT_MD_SCRIPT=/tmp/update_cert_metadata.py cfy_manager sh -c 'curl -o $UPDATE_CERT_MD_SCRIPT https://raw.githubusercontent.com/Cloudify-PS/cloudify-labs-env-blueprints/4068a109545f9dfdf87e42b70583b831abfa3c63/components/CFYManager4x/scripts/update_cert_metadata.py'
-              docker exec -ti -e UPDATE_CERT_MD_SCRIPT=/tmp/update_cert_metadata.py cfy_manager sh -c 'sudo chmod +x $UPDATE_CERT_MD_SCRIPT'
-              docker exec -ti cfy_manager sh -c 'sudo cp /etc/cloudify/ssl/certificate_metadata /etc/cloudify/ssl/certificate_metadata.old'
-              docker exec -ti -e PUBLIC_IP=$(wget -qO- http://checkip.amazonaws.com) -e UPDATE_CERT_MD_SCRIPT=/tmp/update_cert_metadata.py cfy_manager sh -c 'sudo sh -c "cat /etc/cloudify/ssl/certificate_metadata.old | $UPDATE_CERT_MD_SCRIPT external $PUBLIC_IP  > /etc/cloudify/ssl/certificate_metadata"'
-      - run:
-          name: Run Update Manager Agent Certificate Script
-          command: |
-              sleep 10 # Give some time to the Manager.
-              docker exec -ti cfy_manager sh -c 'sudo /opt/manager/env/bin/python /opt/cloudify/manager-ip-setter/update-provider-context.py --networks /etc/cloudify/ssl/certificate_metadata localhost'
-              sleep 10 # Give some time to the Manager.
-              docker exec -ti cfy_manager sh -c 'sudo rm /opt/cloudify/manager-ip-setter/touched'
-              docker exec -ti cfy_manager sh -c 'sudo /opt/cloudify/manager-ip-setter/manager-ip-setter.sh'
-              docker exec -ti cfy_manager sh -c 'sudo systemctl restart nginx 2>&1 >/dev/null'
-              docker exec -ti cfy_manager sh -c 'sudo systemctl restart cloudify-rabbitmq 2>&1 >/dev/null'
-      - run:
           name: install cloudify
           command: pip install cloudify==4.3.2
       - run:
