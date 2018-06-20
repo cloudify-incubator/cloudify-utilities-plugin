@@ -7,6 +7,30 @@ from ecosystem_tests import TestLocal, utils
 
 SSH_KEY_BP_ZIP = 'https://github.com/cloudify-examples/' \
                  'helpful-blueprint/archive/master.zip'
+CLOUD_INIT_CONTENT = \
+    """  user:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    properties:
+      resource_config:
+        users:
+          - name: centos
+            primary-group: wheel
+            shell: /bin/bash
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              packages:
+                - [epel-release]
+                - [python-wheel]
+                - [python-pip]
+                - [python-setuptools]
+                - [gcc]
+                - [python-devel]
+                - [libffi-devel]
+                - [openssl-devel]"""
 
 
 class TestUtilities(TestLocal):
@@ -86,14 +110,33 @@ class TestUtilities(TestLocal):
             raise Exception(
                 'output1 not in {0}'.format(deployment_outputs))
 
+    def install_cloud_init(self, blueprint_id):
+        utils.execute_command(
+            'cfy blueprints upload cloudify_cloudinit/'
+            'examples/simple.yaml -b {0}'.format(
+                blueprint_id))
+        utils.create_deployment(blueprint_id)
+        utils.execute_install(blueprint_id)
+        rs = utils.get_deployment_resources_by_node_type_substring(
+            blueprint_id,
+            'cloudify.nodes.CloudInit.CloudConfig')
+        cloud_config = \
+            rs[0]['instances'][0]['runtime_properties']['cloud_config']
+        if CLOUD_INIT_CONTENT not in cloud_config['outputs']:
+            raise Exception(
+                '{0} not in {1}'.format(CLOUD_INIT_CONTENT, cloud_config))
+
     def install_blueprints(self):
         ssh_id = 'sshkey-{0}'.format(
             os.environ['CIRCLE_BUILD_NUM'])
         proxy_id = 'proxy-{0}'.format(
             os.environ['CIRCLE_BUILD_NUM'])
+        cloud_init_id = 'cloud-init-{0}'.format(
+            os.environ['CIRCLE_BUILD_NUM'])
         self.install_ssh_key(ssh_id)
         self.install_deployment_proxy_new(proxy_id)
         self.install_deployment_proxy_external(proxy_id)
+        self.install_cloud_init(cloud_init_id)
 
     def test_blueprints(self):
         utils.update_plugin_yaml(
