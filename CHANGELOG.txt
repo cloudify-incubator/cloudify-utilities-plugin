@@ -107,3 +107,8 @@ releases:
     - external_resource is False and resource exists: warn
     - external_resource is False and resource does not exist: create
   - Fix call sequence in backup workflow.
+
+  v1.7.2:
+  - Rest Plugin Improvements
+  - Update tests to use cirleci v2 and to use ecosystem test tools
+  - added integration tests for key, file, cloudinit, deployment proxy, and rest tools.

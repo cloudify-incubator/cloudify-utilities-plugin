@@ -7,30 +7,6 @@ from ecosystem_tests import TestLocal, utils
 
 SSH_KEY_BP_ZIP = 'https://github.com/cloudify-examples/' \
                  'helpful-blueprint/archive/master.zip'
-CLOUD_INIT_CONTENT = \
-    """  user:
-    type: cloudify.nodes.CloudInit.CloudConfig
-    properties:
-      resource_config:
-        users:
-          - name: centos
-            primary-group: wheel
-            shell: /bin/bash
-            sudo: ['ALL=(ALL) NOPASSWD:ALL']
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            resource_config:
-              packages:
-                - [epel-release]
-                - [python-wheel]
-                - [python-pip]
-                - [python-setuptools]
-                - [gcc]
-                - [python-devel]
-                - [libffi-devel]
-                - [openssl-devel]"""
 
 
 class TestUtilities(TestLocal):
@@ -122,9 +98,47 @@ class TestUtilities(TestLocal):
             'cloudify.nodes.CloudInit.CloudConfig')
         cloud_config = \
             rs[0]['instances'][0]['runtime_properties']['cloud_config']
-        if CLOUD_INIT_CONTENT not in cloud_config['outputs']:
+        if '#cloud-config' not in cloud_config:
             raise Exception(
-                '{0} not in {1}'.format(CLOUD_INIT_CONTENT, cloud_config))
+                '{0} not in {1}'.format('#cloud-config', cloud_config))
+        utils.execute_uninstall(blueprint_id)
+
+    def install_file(self, blueprint_id):
+        file_path = '/tmp/{0}'.format(blueprint_id)
+        utils.execute_command(
+            'cfy blueprints upload cloudify_files/'
+            'examples/simple.yaml -b {0}'.format(
+                blueprint_id))
+        utils.create_deployment(
+            blueprint_id, inputs={'file_path': file_path})
+        utils.execute_install(blueprint_id)
+        if utils.execute_command(
+                'docker exec cfy_manager stat {0}'.format(file_path)):
+            raise Exception(
+                '{0} not written.'.format(file_path))
+        utils.execute_uninstall(blueprint_id)
+        if not utils.execute_command(
+                'docker exec cfy_manager stat {0}'.format(file_path)):
+            raise Exception(
+                '{0} not deleted.'.format(file_path))
+
+    def install_rest(self, blueprint_id):
+        utils.execute_command(
+            'cfy blueprints upload cloudify_rest/'
+            'examples/example-4-blueprint.yaml -b {0}'.format(
+                blueprint_id))
+        utils.create_deployment(
+            blueprint_id, inputs={'commit': os.environ['CIRCLE_SHA1']})
+        utils.execute_install(blueprint_id)
+        rs = utils.get_deployment_resources_by_node_type_substring(
+            blueprint_id,
+            'cloudify.rest.Requests')
+        rest_instance = rs[0]['instances'][0]['runtime_properties']
+        if 'commit' not in rest_instance['result_propeties']:
+            raise Exception(
+                '{0} not in {1}'.format(
+                    'commit', rest_instance['result_propeties']))
+        utils.execute_uninstall(blueprint_id)
 
     def install_blueprints(self):
         ssh_id = 'sshkey-{0}'.format(
@@ -133,10 +147,19 @@ class TestUtilities(TestLocal):
             os.environ['CIRCLE_BUILD_NUM'])
         cloud_init_id = 'cloud-init-{0}'.format(
             os.environ['CIRCLE_BUILD_NUM'])
+        file_id = 'file-{0}'.format(
+            os.environ['CIRCLE_BUILD_NUM'])
+        rest_id = 'rest-{0}'.format(
+            os.environ['CIRCLE_BUILD_NUM'])
         self.install_ssh_key(ssh_id)
         self.install_deployment_proxy_new(proxy_id)
         self.install_deployment_proxy_external(proxy_id)
+        utils.execute_uninstall('{0}-parent'.format(proxy_id))
+        utils.execute_uninstall('{0}-existing'.format(proxy_id))
+        utils.execute_uninstall(proxy_id)
         self.install_cloud_init(cloud_init_id)
+        self.install_file(file_id)
+        self.install_rest(rest_id)
 
     def test_blueprints(self):
         utils.update_plugin_yaml(
