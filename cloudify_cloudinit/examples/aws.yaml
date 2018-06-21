@@ -1,136 +1,176 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.2/plugin.yaml
-  - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.11/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.3.2/types.yaml
+  - plugin:cloudify-awssdk-plugin
+  - plugin:cloudify-utilities-plugin
 
 inputs:
 
-  ami:
-    description: >
-      An AWS AMI. Tested with a Centos 7.0 image.
-    default: ami-ae7bfdb8
+  aws_access_key_id:
+    type: string
 
-  instance_type:
-    description: >
-      The AWS instance_type. Tested with m3.medium, although that is unnecessarily large.
-    default: t2.small
+  aws_secret_access_key:
+    type: string
 
-  agent_user:
-    default: centos
+  aws_region_name:
+    type: string
+
+  aws_availability_zone:
+    default: { concat: [ { get_input: aws_region_name }, 'b' ] }
+
+  public_key:
+    type: string
+
+  vpc_cidr:
+    default: 10.10.0.0/16
+
+  subnet_cidr:
+    default: 10.10.0.0/24
+
+  ami_image_filter_name:
+    default: 'ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-20170727'
+
+  ami_image_filter_owner:
+    default: '099720109477'
 
 dsl_definitions:
 
-    aws_config: &aws_config
-      aws_access_key_id: { get_secret: aws_access_key_id }
-      aws_secret_access_key: { get_secret: aws_secret_access_key }
-      ec2_region_name: { get_secret: ec2_region_name }
-      ec2_region_endpoint: { get_secret: ec2_region_endpoint }
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: aws_region_name }
 
 node_templates:
 
-  example:
+  host:
+    type: cloudify.nodes.aws.ec2.Instances
+    properties:
+      agent_config:
+        install_method: none
+        port: 22
+      resource_config:
+        ImageId: { get_attribute: [ ubuntu_trusty_ami, aws_resource_id ] }
+        InstanceType: t2.medium
+        kwargs:
+          BlockDeviceMappings:
+          - DeviceName: '/dev/sda1'
+            Ebs:
+              DeleteOnTermination: True
+          Placement:
+            AvailabilityZone: { get_input: aws_availability_zone }
+          UserData: { get_attribute: [ cloudinit, cloud_config ] }
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: nic
+    - type: cloudify.relationships.depends_on
+      target: ip
+    - type: cloudify.relationships.depends_on
+      target: ami
+    - type: cloudify.relationships.depends_on
+      target: cloudinit
+
+  ip:
+    type: cloudify.nodes.aws.ec2.ElasticIP
+    properties:
+      resource_config:
+        kwargs:
+          Domain: 'vpc'
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: nic
+
+  nic:
+    type: cloudify.nodes.aws.ec2.Interface
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: Utilities Plugin CloudInit Test Nic
+          SubnetId: { get_attribute: [ public_subnet, aws_resource_id] }
+          Groups:
+          - { get_attribute: [ security_group, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: public_subnet
+    - type: cloudify.relationships.depends_on
+      target: security_group
+    - type: cloudify.relationships.depends_on
+      target: security_group_rules
+
+  security_group_rules:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          IpPermissions:
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            IpRanges:
+            - CidrIp: 0.0.0.0/0
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: security_group
+
+  security_group:
+    type: cloudify.nodes.aws.ec2.SecurityGroup
+    properties:
+      resource_config:
+        kwargs:
+          GroupName: UtilsPluginTestGroup
+          Description: Utilities Plugin CloudInit Test Group
+          VpcId: { get_attribute: [ vpc, aws_resource_id] }
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+
+  public_subnet:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          CidrBlock: { get_input: subnet_cidr }
+          AvailabilityZone: { get_input: aws_availability_zone }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+
+  vpc:
+    type: cloudify.nodes.aws.ec2.Vpc
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          CidrBlock: { get_input: vpc_cidr }
+
+  ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - { get_input: ami_image_filter_name }
+          - Name: owner-id
+            Values:
+            - { get_input: ami_image_filter_owner }
+      client_config: *client_config
+
+  cloudinit:
     type: cloudify.nodes.CloudInit.CloudConfig
     properties:
       resource_config:
         users:
-          - name: { get_input: agent_user }
-            primary-group: { get_input: agent_user_primary_group }
-            shell: /bin/bash
-            sudo: ['ALL=(ALL) NOPASSWD:ALL']
-            ssh-authorized-keys:
-              - { get_secret: agent_key_public }
-        packages:
-          - [epel-release]
-          - [python-wheel]
-          - [python-pip]
-          - [python-setuptools]
-          - [gcc]
-          - [python-devel]
-          - [libffi-devel]
-          - [openssl-devel]
-
-  host:
-    type: cloudify.aws.nodes.Instance
-    properties:
-      agent_config:
-        install_method: none
-      aws_config: *aws_config
-      image_id: { get_input: ami }
-      instance_type: { get_input: instance_type }
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: aws.cloudify_aws.ec2.instance.create
-          inputs:
-            args:
-              placement: { get_secret: availability_zone }
-              user_data: { get_attribute: [ example, cloud_config ] }
-    relationships:
-      - type: cloudify.aws.relationships.instance_connected_to_eni
-        target: nic
-      - type: cloudify.relationships.depends_on
-        target: example
-
-  nic:
-    type: cloudify.aws.nodes.Interface
-    properties:
-      aws_config: *aws_config
-      use_external_resource: { get_input: use_existing_host }
-      resource_id: { get_input: nic_resource_id }
-    relationships:
-      - type: cloudify.aws.relationships.connected_to_subnet
-        target: public_subnet
-      - type: cloudify.aws.relationships.connected_to_elastic_ip
-        target: ip
-      - type: cloudify.aws.relationships.connected_to_security_group
-        target: securitygroup
-
-  securitygroup:
-    type: cloudify.aws.nodes.SecurityGroup
-    properties:
-      aws_config: *aws_config
-      use_external_resource: { get_input: use_existing_host }
-      resource_id: { get_input: group_resource_id }
-      description: SSH Group
-      rules:
-        - ip_protocol: tcp
-          from_port: 22
-          to_port: 22
-          cidr_ip: 0.0.0.0/0
-        - ip_protocol: tcp
-          from_port: { get_property: [ wagon, port ] }
-          to_port: { get_property: [ wagon, port ] }
-          cidr_ip: 0.0.0.0/0
-    relationships:
-      - type: cloudify.aws.relationships.security_group_contained_in_vpc
-        target: vpc
-
-  ip:
-    type: cloudify.aws.nodes.ElasticIP
-    properties:
-      aws_config: *aws_config
-      use_external_resource: { get_input: use_existing_host }
-      resource_id: { get_input: ip_resource_id }
-      domain: vpc
-
-  public_subnet:
-    type: cloudify.aws.nodes.Subnet
-    properties:
-      aws_config: *aws_config
-      use_external_resource: true
-      resource_id: { get_secret: public_subnet_id }
-      cidr_block: N/A
-      availability_zone: N/A
-    relationships:
-      - type: cloudify.aws.relationships.subnet_contained_in_vpc
-        target: vpc
-
-  vpc:
-    type: cloudify.aws.nodes.VPC
-    properties:
-      aws_config: *aws_config
-      use_external_resource: true
-      resource_id: { get_secret: vpc_id }
-      cidr_block: N/A
+        - name: ubuntu
+          primary-group: ubuntu
+          shell: /bin/bash
+          sudo: ['ALL=(ALL) NOPASSWD:ALL']
+          ssh-authorized-keys:
+          - { get_input: public_key }
