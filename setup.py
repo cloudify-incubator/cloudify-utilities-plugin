@@ -16,7 +16,7 @@ import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.7.2',
+    version='1.7.3',
     author='Gigaspaces.com',
     author_email='hello@getcloudify.org',
     description='Utilities for extending Cloudify',
@@ -32,10 +32,10 @@ setuptools.setup(
     license='LICENSE',
     install_requires=[
         'cloudify-plugins-common>=3.4.2',
-        'cloudify-rest-client>=4.0',
-        'paramiko',  # for ssh netconf connection
-        "Jinja2>=2.7.2",  # for template support
-        'pycrypto',
-        'pyyaml',
-        'xmltodict']
+        'cloudify-rest-client>=4.0',  # deployment_proxy
+        'paramiko',  # terminal
+        "Jinja2>=2.7.2",  # terminal
+        'pycrypto',  # ssh_key
+        'pyyaml',  # cloudinit and rest
+        'xmltodict']  # rest
 )

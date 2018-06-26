@@ -112,3 +112,6 @@ releases:
   - Rest Plugin Improvements
   - Update tests to use cirleci v2 and to use ecosystem test tools
   - added integration tests for key, file, cloudinit, deployment proxy, and rest tools.
+
+  v1.7.3:
+  - Examples for use terminal plugin in relationships
