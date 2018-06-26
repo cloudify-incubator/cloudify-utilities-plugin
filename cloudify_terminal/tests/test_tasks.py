@@ -40,6 +40,22 @@ class TestTasks(unittest.TestCase):
         current_ctx.set(_ctx)
         return _ctx
 
+    def _gen_relation_ctx(self):
+        _target_ctx = MockCloudifyContext(
+            'node_name',
+            properties={},
+            runtime_properties={}
+        )
+        _target_ctx.instance.host_ip = None
+
+        _ctx = MockCloudifyContext(
+            target=_target_ctx
+        )
+        _ctx._execution_id = "execution_id"
+
+        current_ctx.set(_ctx)
+        return _ctx
+
     def test_run_without_calls(self):
         self._gen_ctx()
         tasks.run()
@@ -51,6 +67,21 @@ class TestTasks(unittest.TestCase):
 
     def test_run_auth(self):
         self._gen_ctx()
+        ssh_mock = MagicMock()
+        ssh_mock.connect = MagicMock(side_effect=OSError("e"))
+        with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
+            with self.assertRaises(OperationRetry):
+                tasks.run(
+                    calls=[{'action': 'ls'}],
+                    terminal_auth={'ip': 'ip', 'user': 'user',
+                                   'password': 'password'}
+                )
+        ssh_mock.connect.assert_called_with(
+            'ip', allow_agent=False, look_for_keys=False, password='password',
+            port=22, timeout=5, username='user')
+
+    def test_run_auth_relationship(self):
+        self._gen_relation_ctx()
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):

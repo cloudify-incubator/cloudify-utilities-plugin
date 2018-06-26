@@ -30,15 +30,23 @@ def run(**kwargs):
         ctx.logger.info("No calls")
         return
 
+    try:
+        ctx_properties = ctx.node.properties
+        ctx_instance = ctx.instance
+    except cfy_exc.NonRecoverableError:
+        # Realationships context?
+        ctx_properties = ctx.target.node.properties
+        ctx_instance = ctx.target.instance
+
     # credentials
-    properties = ctx.node.properties
+    properties = ctx_properties
     terminal_auth = properties.get('terminal_auth', {})
     terminal_auth.update(kwargs.get('terminal_auth', {}))
     ip_list = terminal_auth.get('ip')
 
     # if node contained in some other node, try to overwrite ip
     if not ip_list:
-        ip_list = [ctx.instance.host_ip]
+        ip_list = [ctx_instance.host_ip]
         ctx.logger.info("Used host from container: %s" % str(ip_list))
 
     if isinstance(ip_list, basestring):
@@ -61,7 +69,7 @@ def run(**kwargs):
     log_file_name = None
     if terminal_auth.get('store_logs'):
         log_file_name = "/tmp/terminal-%s_%s_%s.log" % (
-            str(ctx.execution_id), str(ctx.instance.id), str(ctx.workflow_id)
+            str(ctx.execution_id), str(ctx_instance.id), str(ctx.workflow_id)
         )
         ctx.logger.info(
             "Communication logs will be saved to %s" % log_file_name
@@ -147,7 +155,7 @@ def run(**kwargs):
         save_to = call.get('save_to')
         if save_to:
             ctx.logger.info("For save: " + result.strip())
-            ctx.instance.runtime_properties[save_to] = result.strip()
+            ctx_instance.runtime_properties[save_to] = result.strip()
 
     while not connection.is_closed() and exit_command:
         ctx.logger.info("Execute close")
