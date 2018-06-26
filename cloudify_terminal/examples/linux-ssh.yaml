@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.4.2/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/scalelist/plugin.yaml
 
 inputs:
 
@@ -36,7 +36,27 @@ inputs:
        terminal server port, for cisco ssh by default 22
     default: 22
 
+relationships:
+  cloudify.terminal.raw:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs:
+            calls:
+              default:
+              - action: uptime
+                save_to: domain
+
+
 node_templates:
+
+  fake_node:
+    type: cloudify.nodes.Root
+    relationships:
+      - type: cloudify.terminal.raw
+        target: linux_impl
 
   linux_impl:
     type: cloudify.terminal.raw

@@ -13,8 +13,8 @@ Utilities for extending Cloudify features.
 - [Cloudify SSH Key](cloudify_ssh_key/README.md)
 - [Cloudify Configuration](cloudify_configuration/README.md)
 - [Cloudify Terminal](cloudify_terminal/README.md)
-- [Cloudify Suspend Workflow](cloudify_suspend/README.md)
-
+- [Cloudify Suspend/Backup Workflows](cloudify_suspend/README.md)
+- [Cloudify REST plugin](cloudify_rest/README.md)
 
 ## Versions:
 
@@ -66,3 +66,9 @@ Utilities for extending Cloudify features.
   - v1.6.1: Improve REST Plugin Failure with recoverable errors.
   - v1.7.0: Add support for local blueprint archive
   - v1.7.1: Fix call sequence in backup workflow.
+  - v1.7.2:
+    * Rest Plugin Improvements
+    * Update tests to use cirleci v2 and to use ecosystem test tools
+    * Added integration tests for key, file, cloudinit, deployment proxy, and rest tools.
+  - v1.7.3:
+    * Examples for use terminal plugin in relationships

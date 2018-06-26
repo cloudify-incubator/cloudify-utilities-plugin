@@ -10,16 +10,19 @@ Plugin have support:
 * communication by ssh connection
 * ssh connections with disabled agent on server side
 
-Codebase have support for overwrite connection from properties by inputs for workflow action,
-so we have support cases when we receive ip or other connection parameters only after creation of nodes.
-This functionality has supposed for use when we created some server from template in infrastructure
-and that reuse such node in other part of your blueprint. For implicit reuse ip you can use contained_in relationship.
+Codebase have support for overwrite connection from properties by inputs for
+workflow action, so we have support cases when we receive ip or other
+connection parameters only after creation of nodes. This functionality has
+supposed for use when we created some server from template in infrastructure
+and that reuse such node in other part of your blueprint. For implicit reuse
+ip you can use contained_in relationship.
 
 # Node templates:
 
 ## Case with list of commands in blueprint
 ### General template for simple list of commands
 
+Use as node type:
 ```
   node_impl:
     type: cloudify.terminal.raw
@@ -38,6 +41,51 @@ and that reuse such node in other part of your blueprint. For implicit reuse ip 
             calls:
               - action: <command for run>
                 save_to: <field name for save to runtime properties, optional>
+```
+
+Use as relationship:
+```
+relationships:
+  cloudify.terminal.raw:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs:
+            terminal_auth:
+              default:
+                user: <user for instance>
+                password: <optional, password for instance>
+                ip: <optional, ip for device or list of ip's if have failback ip's>
+                key_content: <optional, ssh key content for instance>
+                port: <optional, by default 22>
+                errors: <list strings that must raise error if contained in output>
+                store_logs: <True |default:False store logs in separete file>
+            calls:
+              default:
+              - action: <command for run>
+                save_to: <field name for save to runtime properties, optional>
+
+node_templates:
+
+  fake_node:
+    type: cloudify.nodes.Root
+    relationships:
+      - type: cloudify.terminal.raw
+        target: vm_host
+
+  vm_host:
+    type: cloudify.terminal.raw
+    properties:
+      terminal_auth:
+        user: <user for instance>
+        password: <optional, password for instance>
+        ip: <optional, ip for device or list of ip's if have failback ip's>
+        key_content: <optional, ssh key content for instance>
+        port: <optional, by default 22>
+        errors: <list strings that must raise error if contained in output>
+        store_logs: <True |default:False store logs in separete file>
 ```
 
 ### Example for cisco ios devices
@@ -163,5 +211,7 @@ and that reuse such node in other part of your blueprint. For implicit reuse ip 
 
 * [Cisco](examples/cisco.yaml) - show currently assigned ip's.
 * [Cisco](examples/cisco_flash_list.yaml) - list flash contents.
-* [Fortigate](examples/fortigate.yaml) - show assigned ip's with example for error settings.
-* [SSH to VM](examples/linux-ssh.yaml) - Simple ssh to linux vm with `run hostname`.
+* [Fortigate](examples/fortigate.yaml) - show assigned ip's with example for
+  error settings.
+* [SSH to VM](examples/linux-ssh.yaml) - Simple ssh to linux vm with
+  `run hostname` and by relationship call `run uptime`.
