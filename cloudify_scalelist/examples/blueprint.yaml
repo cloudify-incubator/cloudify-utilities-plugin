@@ -1,0 +1,102 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+  Scale List Workflows checks
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.8.0/plugin.yaml
+
+node_templates:
+
+  one:
+    type: cloudify.nodes.Root
+
+  two:
+    type: cloudify.nodes.Root
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: one
+
+  three:
+    type: cloudify.nodes.Compute
+    properties:
+      agent_config:
+        install_method: none
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: two
+
+  four:
+    type: cloudify.nodes.ApplicationServer
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: two
+      - type: cloudify.relationships.contained_in
+        target: three
+
+  six:
+    type: cloudify.nodes.ApplicationModule
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: four
+      - type: cloudify.relationships.depends_on
+        target: two
+
+  five:
+    type: cloudify.nodes.Root
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: four
+
+groups:
+
+  full_scale:
+    members:
+      - two
+      - four
+      - six
+      - five
+
+  two_scale:
+    members:
+      - two
+
+  four_scale:
+    members:
+      - three
+      - four
+      - six
+
+  five_scale:
+    members:
+      - five
+
+policies:
+
+  two_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  0
+    targets: [two_scale]
+
+  four_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  0
+    targets: [four_scale]
+
+  five_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  0
+    targets: [five_scale]
+
+  # Failed to validate blueprint Nodes and groups cannot be members in multiple
+  # groups, but member 'two' belongs to the following multiple groups:
+  # ['two_scale', 'full_scale']
+  # full_scale_scaling_policy:
+  #   type: cloudify.policies.scaling
+  #   properties:
+  #     default_instances:  0
+  #   targets: [full_scale]
