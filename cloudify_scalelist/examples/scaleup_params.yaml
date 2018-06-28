@@ -1,13 +1,12 @@
-scale_transaction_field: _transaction_id
 scalable_entity_properties:
   two:
-  - sub_name: two1
-  - sub_name: two2
+  - resource_name: two1
+  - resource_name: two2
   three:
   - {}
   - {}
   - {}
   four:
-  - sub_name: four1
-  - sub_name: four2
-  - sub_name: four3
+  - resource_name: four1
+  - resource_name: four2
+  - resource_name: four3

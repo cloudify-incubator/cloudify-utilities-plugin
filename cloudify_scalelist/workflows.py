@@ -16,15 +16,20 @@ from cloudify.plugins import lifecycle
 from cloudify.manager import get_rest_client
 
 
-def _update_runtime_properties(ctx, target_node, properties_updates):
-    ctx.logger.info("Updating node: {}".format(target_node.id))
+def _update_runtime_properties(ctx, instance_id, properties_updates):
     manager = get_rest_client()
-    runtime_properties = target_node._node_instance.runtime_properties or {}
+
+    resulted_state = manager.node_instances.get(instance_id)
+    ctx.logger.debug('State before update: {}'
+                     .format(repr(resulted_state)))
+    ctx.logger.info("Update node: {}".format(instance_id))
+    runtime_properties = resulted_state.runtime_properties or {}
     runtime_properties.update(properties_updates)
-    manager.node_instances.update(node_instance_id=target_node.id,
-                                  runtime_properties=runtime_properties)
-    resulted_state = manager.node_instances.get(target_node.id)
-    ctx.logger.debug('State after after update: {}'
+    manager.node_instances.update(node_instance_id=instance_id,
+                                  runtime_properties=runtime_properties,
+                                  version=resulted_state.version + 1)
+    resulted_state = manager.node_instances.get(instance_id)
+    ctx.logger.debug('State after update: {}'
                      .format(repr(resulted_state)))
 
 
@@ -33,7 +38,7 @@ def _cleanup_instances(ctx, instance_ids):
 
     for instance_id in instance_ids:
         resulted_state = manager.node_instances.get(instance_id)
-        ctx.logger.debug('State before after update: {}'
+        ctx.logger.debug('State before update: {}'
                          .format(repr(resulted_state)))
         ctx.logger.info("Cleanup node: {}".format(instance_id))
         manager.node_instances.update(node_instance_id=instance_id,
@@ -41,7 +46,7 @@ def _cleanup_instances(ctx, instance_ids):
                                       state='uninitialized',
                                       version=resulted_state.version + 1)
         resulted_state = manager.node_instances.get(instance_id)
-        ctx.logger.debug('State after after update: {}'
+        ctx.logger.debug('State after update: {}'
                          .format(repr(resulted_state)))
 
 
@@ -144,6 +149,34 @@ def _get_scale_list(ctx, scalable_entity_properties):
     return scalable_entity_dict
 
 
+def _uninstall_instances(ctx, graph, instance_ids, related_ids,
+                         ignore_failure):
+
+    # cleanup tasks
+    for task in graph.tasks_iter():
+        graph.remove_task(task)
+
+    # hacks for remove
+    removed = []
+    related = []
+    for node in ctx.nodes:
+        for instance in node.instances:
+            if instance.id in instance_ids:
+                removed.append(instance)
+            if instance.id in related_ids:
+                related.append(instance)
+
+    if removed:
+        lifecycle.uninstall_node_instances(
+            graph=graph,
+            node_instances=removed,
+            related_nodes=related,
+            ignore_failure=ignore_failure)
+
+    # clean up properties
+    _cleanup_instances(ctx, instance_ids)
+
+
 def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field=None,
                         scale_transaction_value=None,
@@ -171,6 +204,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                     # save properties updates
                     properties = {}
                     if properties_updates:
+                        # pop one dict for runtime properties
                         properties.update(properties_updates.pop())
                     # save transaction list
                     if scale_transaction_field:
@@ -191,9 +225,8 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                                 node_instance._node_instance.node_id,
                                 node_instance._node_instance.id,
                                 repr(properties)))
-                        # pop one dict runtime properties
-                        _update_runtime_properties(ctx, node_instance,
-                                                   properties)
+                        _update_runtime_properties(
+                            ctx, node_instance._node_instance.id, properties)
                 lifecycle.install_node_instances(
                     graph=graph,
                     node_instances=added,
@@ -201,13 +234,14 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
             except Exception as ex:
                 ctx.logger.error('Scale out failed, scaling back in. {}'
                                  .format(repr(ex)))
-                for task in graph.tasks_iter():
-                    graph.remove_task(task)
-                lifecycle.uninstall_node_instances(
-                    graph=graph,
-                    node_instances=added,
-                    ignore_failure=ignore_failure,
-                    related_nodes=related)
+                _uninstall_instances(
+                    ctx, graph, [
+                        node_instance._node_instance.id
+                        for node_instance in added
+                    ], [
+                        node_instance._node_instance.id
+                        for node_instance in related
+                    ], ignore_failure)
                 raise ex
 
         if len(set(modification.removed.node_instances)):
@@ -240,47 +274,13 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
         ctx.logger.warn('Rolling back deployment modification. '
                         '[modification_id={0}]: {1}'
                         .format(modification.id, repr(ex)))
-        try:
-            modification.rollback()
-        except Exception as ex:
-            ctx.logger.warn('Deployment modification rollback failed. The '
-                            'deployment model is most likely in some corrupted'
-                            ' state. [modification_id={0}]: {1}'
-                            .format(modification.id, repr(ex)))
-            raise ex
+        modification.rollback()
         raise ex
     else:
-        try:
-            modification.finish()
-        except Exception as ex:
-            ctx.logger.warn('Deployment modification finish failed. The '
-                            'deployment model is most likely in some corrupted'
-                            ' state.[modification_id={0}]: {}'
-                            .format(modification.id, repr(ex)))
-            raise ex
+        modification.finish()
 
 
-def _remove_by_workaround(ctx, instance_ids, ignore_failure):
-    # hacks for remove
-    graph = ctx.graph_mode()
-    removed = []
-    for node in ctx.nodes:
-        for instance in node.instances:
-            if instance.id in instance_ids:
-                removed.append(instance)
-
-    if removed:
-        lifecycle.uninstall_node_instances(
-            graph=graph,
-            node_instances=removed,
-            ignore_failure=ignore_failure,
-            related_nodes=None)
-
-    # clean up properties
-    _cleanup_instances(ctx, instance_ids)
-
-
-def _scale_group_to_settings(ctx, list_scale_groups, scale_compute):
+def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
     scale_settings = {}
     for scalable_entity_name in list_scale_groups:
         delta = list_scale_groups[scalable_entity_name]['count']
@@ -313,7 +313,8 @@ def _scale_group_to_settings(ctx, list_scale_groups, scale_compute):
 
         scale_settings[scale_id] = {
             'instances': planned_num_instances,
-            'removed_ids_include_hint': instances_remove,
+            # need to run sorted only for tests and have same sequence of id's
+            'removed_ids_include_hint': sorted(instances_remove),
         }
 
     ctx.logger.info('Scale settings: {}'.format(repr(scale_settings)))
@@ -347,31 +348,21 @@ def scaledownlist(ctx, scale_compute=False,
         ctx.logger.info("Empty list for instances for remove.")
         return
 
-    scale_settings = _scale_group_to_settings(
+    scale_settings = _scaledown_group_to_settings(
         ctx, _get_scale_list(ctx, instances), scale_compute)
 
     try:
         _run_scale_settings(ctx, scale_settings, {},
-                            instances_remove_ids=instance_ids)
+                            instances_remove_ids=instance_ids,
+                            ignore_failure=ignore_failure)
     except Exception as e:
         ctx.logger.info('Scale down based on transaction failed: {}'
                         .format(repr(e)))
-        _remove_by_workaround(ctx, instance_ids, ignore_failure)
+        _uninstall_instances(ctx, ctx.graph_mode(), instance_ids, [],
+                             ignore_failure)
 
 
-@workflow
-def scaleuplist(ctx, scalable_entity_properties,
-                scale_compute=False,
-                ignore_failure=False,
-                scale_transaction_field="",
-                scale_transaction_value="",
-                **kwargs):
-
-    if not scalable_entity_properties:
-        raise ValueError('Empty list of scale nodes')
-
-    scalable_entity_dict = _get_scale_list(ctx, scalable_entity_properties)
-
+def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):
     scale_settings = {}
     for scalable_entity_name in scalable_entity_dict:
         delta = scalable_entity_dict[scalable_entity_name]['count']
@@ -406,6 +397,23 @@ def scaleuplist(ctx, scalable_entity_properties,
         }
 
     ctx.logger.info('Scale settings: {}'.format(repr(scale_settings)))
+    return scale_settings
+
+
+@workflow
+def scaleuplist(ctx, scalable_entity_properties,
+                scale_compute=False,
+                ignore_failure=False,
+                scale_transaction_field="",
+                scale_transaction_value="",
+                **kwargs):
+
+    if not scalable_entity_properties:
+        raise ValueError('Empty list of scale nodes')
+
+    scale_settings = _scaleup_group_to_settings(
+        ctx, _get_scale_list(ctx, scalable_entity_properties), scale_compute)
+
     _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field, scale_transaction_value,
                         ignore_failure)

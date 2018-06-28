@@ -570,7 +570,7 @@ workflows:
         default: {}
       scale_compute:
         description: >
-            If a node name is passed as the `scalable_entity_name` parameter
+            If a node name is passed as the `scalable_entity_properties` parameter
             and that node is contained (transitively) within a compute node
             and this property is 'true', operate on the compute node instead
             of the specified node.
@@ -580,9 +580,9 @@ workflows:
         type: boolean
       scale_transaction_field:
         type: string
-        default: ""
+        default: _transaction_id
         description: >
-           Place to save instances id's created in same transaction.
+           Place to save transaction id created in same transaction.
       scale_transaction_value:
         type: string
         default: ""
@@ -594,7 +594,7 @@ workflows:
     parameters:
       scale_compute:
         description: >
-            If a node name is passed as the `scalable_entity_name` parameter
+            If a node name is passed as the `scale_node_name` parameter
             and that node is contained (transitively) within a compute node
             and this property is 'true', operate on the compute node instead
             of the specified node.
@@ -604,9 +604,9 @@ workflows:
         type: boolean
       scale_transaction_field:
         type: string
-        default: ""
+        default: _transaction_id
         description: >
-           Place to save instances id's created in same transaction.
+           Place to save transaction id created in same transaction.
       scale_node_name:
         type: string
         default: ""
