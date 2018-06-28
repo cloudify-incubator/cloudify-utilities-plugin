@@ -15,6 +15,8 @@ Utilities for extending Cloudify features.
 - [Cloudify Terminal](cloudify_terminal/README.md)
 - [Cloudify Suspend/Backup Workflows](cloudify_suspend/README.md)
 - [Cloudify REST plugin](cloudify_rest/README.md)
+- [Cloudify Scale List Workflow](cloudify_scalelist/README.md)
+
 
 ## Versions:
 
@@ -72,3 +74,5 @@ Utilities for extending Cloudify features.
     * Added integration tests for key, file, cloudinit, deployment proxy, and rest tools.
   - v1.7.3:
     * Examples for use terminal plugin in relationships
+  - v1.8.0:
+    * Add scale several scaling group in one transaction

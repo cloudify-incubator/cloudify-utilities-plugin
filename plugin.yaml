@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.7.3.zip
-    package_version: '1.7.3'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.8.0.zip
+    package_version: '1.8.0'
 
   cfy_files: *utilities_plugin
 
@@ -21,6 +21,8 @@ plugins:
   terminal: *utilities_plugin
 
   rest: *utilities_plugin
+
+  scalelist: *utilities_plugin
 
 data_types:
 
@@ -558,3 +560,65 @@ workflows:
           Create incremental snapshots or full backup.
           By default created snapshots.
         default: true
+
+  scaleuplist:
+    mapping: scalelist.cloudify_scalelist.workflows.scaleuplist
+    parameters:
+      scalable_entity_properties:
+        description: >
+          List properties for nodes
+        default: {}
+      scale_compute:
+        description: >
+            If a node name is passed as the `scalable_entity_properties` parameter
+            and that node is contained (transitively) within a compute node
+            and this property is 'true', operate on the compute node instead
+            of the specified node.
+        default: false
+      ignore_failure:
+        default: false
+        type: boolean
+      scale_transaction_field:
+        type: string
+        default: _transaction_id
+        description: >
+           Place to save transaction id created in same transaction.
+      scale_transaction_value:
+        type: string
+        default: ""
+        description: >
+           Optional, transaction value.
+
+  scaledownlist:
+    mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
+    parameters:
+      scale_compute:
+        description: >
+            If a node name is passed as the `scale_node_name` parameter
+            and that node is contained (transitively) within a compute node
+            and this property is 'true', operate on the compute node instead
+            of the specified node.
+        default: false
+      ignore_failure:
+        default: false
+        type: boolean
+      scale_transaction_field:
+        type: string
+        default: _transaction_id
+        description: >
+           Place to save transaction id created in same transaction.
+      scale_node_name:
+        type: string
+        default: ""
+        description: >
+           Node name where we need to search value
+      scale_node_field:
+        type: string
+        default: ""
+        description: >
+           Node runtime properties field name for search value
+      scale_node_field_value:
+        type: string
+        default: ""
+        description: >
+          Node runtime properties field value for search

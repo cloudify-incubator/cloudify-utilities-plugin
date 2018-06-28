@@ -1,0 +1,208 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+  Scale List Workflows checks
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.8.0/plugin.yaml
+
+node_types:
+
+  scale_example_node:
+    derived_from: cloudify.nodes.Root
+    properties:
+      predefined:
+        description: >
+          Value have used with install workflow
+        default: ""
+      resource_name:
+        description: >
+          Value have used with install workflow
+        default: ""
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/create.py
+          executor: central_deployment_agent
+          inputs:
+            defined_in_inputs:
+              description: >
+                Value have used in any of workflows
+              default: ""
+        delete:
+          implementation: scripts/delete.py
+          executor: central_deployment_agent
+          inputs:
+            defined_in_inputs:
+              description: >
+                Value have used in any of workflows
+              default: ""
+
+  scale_example_compute:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      predefined:
+        description: >
+          Value have used with install workflow
+        default: ""
+      agent_config:
+        default:
+          install_method: none
+      resource_name:
+        description: >
+          Value have used with install workflow
+        default: ""
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/create.py
+          executor: central_deployment_agent
+          inputs:
+            defined_in_inputs:
+              description: >
+                Value have used in any of workflows
+              default: ""
+        delete:
+          implementation: scripts/delete.py
+          executor: central_deployment_agent
+          inputs:
+            defined_in_inputs:
+              description: >
+                Value have used in any of workflows
+              default: ""
+
+node_templates:
+
+  one:
+    type: scale_example_node
+    properties:
+     resource_name: "one0"
+
+  two:
+    type: scale_example_node
+    properties:
+     resource_name: "two0"
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            defined_in_inputs: { get_attribute: [one,  resource_id]  }
+        delete:
+          inputs:
+            defined_in_inputs: { get_attribute: [one,  resource_id]  }
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: one
+
+  three:
+    type: scale_example_compute
+    properties:
+      resource_name: "three0"
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: two
+
+  four:
+    type: scale_example_node
+    properties:
+     resource_name: "four0"
+    interfaces:
+     cloudify.interfaces.lifecycle:
+       create:
+         inputs:
+           defined_in_inputs: { get_attribute: [three,  resource_id]  }
+       delete:
+         inputs:
+           defined_in_inputs: { get_attribute: [three,  resource_id]  }
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: two
+      - type: cloudify.relationships.contained_in
+        target: three
+
+  six:
+    type: scale_example_node
+    properties:
+     resource_name: "six0"
+    interfaces:
+     cloudify.interfaces.lifecycle:
+       create:
+         inputs:
+           defined_in_inputs: { get_attribute: [four,  resource_id]  }
+       delete:
+         inputs:
+           defined_in_inputs: { get_attribute: [four,  resource_id]  }
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: four
+      - type: cloudify.relationships.depends_on
+        target: two
+
+  five:
+    type: scale_example_node
+    properties:
+     resource_name: "five0"
+    interfaces:
+     cloudify.interfaces.lifecycle:
+       create:
+         inputs:
+           defined_in_inputs: { get_attribute: [four,  resource_id]  }
+       delete:
+         inputs:
+           defined_in_inputs: { get_attribute: [four,  resource_id]  }
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: four
+
+groups:
+
+  full_scale:
+    members:
+      - two
+      - four
+      - six
+      - five
+
+  two_scale:
+    members:
+      - two
+
+  four_scale:
+    members:
+      - three
+      - four
+      - six
+
+  five_scale:
+    members:
+      - five
+
+policies:
+
+  two_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  1
+    targets: [two_scale]
+
+  four_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  1
+    targets: [four_scale]
+
+  five_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  0
+    targets: [five_scale]
+
+  # Failed to validate blueprint Nodes and groups cannot be members in multiple
+  # groups, but member 'two' belongs to the following multiple groups:
+  # ['two_scale', 'full_scale']
+  # full_scale_scaling_policy:
+  #   type: cloudify.policies.scaling
+  #   properties:
+  #     default_instances:  0
+  #   targets: [full_scale]

@@ -1,0 +1,12 @@
+scalable_entity_properties:
+  two:
+  - resource_name: two1
+  - resource_name: two2
+  three:
+  - {}
+  - {}
+  - {}
+  four:
+  - resource_name: four1
+  - resource_name: four2
+  - resource_name: four3
