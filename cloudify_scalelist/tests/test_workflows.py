@@ -173,7 +173,7 @@ class TestScaleList(unittest.TestCase):
                 scale_node_field_value="value"
             )
             client.node_instances.list.assert_called_with(
-                _include=['runtime_properties'],
+                _include=['runtime_properties', 'node_id', 'id'],
                 deployment_id='deployment_id',
                 node_id='node')
 
@@ -760,7 +760,36 @@ class TestScaleList(unittest.TestCase):
                 ), ({}, [])
             )
             client.node_instances.list.assert_called_with(
-                _include=['runtime_properties'],
+                _include=['runtime_properties', 'node_id', 'id'],
+                deployment_id='deployment_id',
+                node_id='node')
+
+    def test_get_transaction_instances_notransaction(self):
+        _ctx = self._gen_ctx()
+        client = self._gen_rest_client()
+
+        instance_a = Mock()
+        instance_a.id = 'a_id'
+        instance_a.node_id = 'a_type'
+        instance_a.runtime_properties = {
+            'name': 'value'
+        }
+
+        client.node_instances.list = Mock(return_value=[instance_a])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            self.assertEqual(
+                workflows._get_transaction_instances(
+                    ctx=_ctx,
+                    scale_transaction_field='_transaction',
+                    scale_node_name="node", scale_node_field="name",
+                    scale_node_field_value="value"
+                ), ({'a_type': ['a_id']}, ['a_id'])
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
                 deployment_id='deployment_id',
                 node_id='node')
 

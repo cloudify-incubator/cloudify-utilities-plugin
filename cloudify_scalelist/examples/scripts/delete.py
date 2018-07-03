@@ -33,5 +33,7 @@ if __name__ == '__main__':
         ctx.logger.info("We have some resource {}, so we can delete such"
                         .format(repr(properties["resource_id"])))
         ctx.instance.runtime_properties["resource_id"] = None
+        ctx.instance.runtime_properties["resource_name"] = None
+        ctx.instance.runtime_properties["_transaction_id"] = None
     else:
         ctx.logger.info("Not fully created instances, skip it")

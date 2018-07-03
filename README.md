@@ -72,7 +72,6 @@ Utilities for extending Cloudify features.
     * Rest Plugin Improvements
     * Update tests to use cirleci v2 and to use ecosystem test tools
     * Added integration tests for key, file, cloudinit, deployment proxy, and rest tools.
-  - v1.7.3:
-    * Examples for use terminal plugin in relationships
-  - v1.8.0:
-    * Add scale several scaling group in one transaction
+  - v1.7.3: Examples for use terminal plugin in relationships
+  - v1.8.0: Add scale several scaling group in one transaction
+  - v1.8.1: Additional examples for remove instances created by install by scaledown workflow.
