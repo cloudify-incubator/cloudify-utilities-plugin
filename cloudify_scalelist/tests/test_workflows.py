@@ -543,6 +543,34 @@ class TestScaleList(unittest.TestCase):
         _ctx._get_modification.rollback.assert_not_called()
         _ctx._get_modification.finish.assert_called_with()
 
+    def test_scaledownlist_with_anytype_and_without_transaction(self):
+        _ctx = self._gen_ctx()
+
+        client = self._gen_rest_client()
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            # can downscale without errors
+            fake_run_scale = Mock(return_value=None)
+            with patch(
+                "cloudify_scalelist.workflows._run_scale_settings",
+                fake_run_scale
+            ):
+                workflows.scaledownlist(
+                    ctx=_ctx,
+                    scale_node_field="name",
+                    scale_node_field_value=["value"]
+                )
+            fake_run_scale.assert_called_with(
+                _ctx, {
+                    'alfa_types': {
+                        'instances': 54,
+                        'removed_ids_include_hint': ['a_id']
+                    }
+                }, {}, instances_remove_ids=['a_id'],
+                ignore_failure=False)
+
     def test_scaledownlist(self):
         _ctx = self._gen_ctx()
 
@@ -756,7 +784,7 @@ class TestScaleList(unittest.TestCase):
                     ctx=_ctx,
                     scale_transaction_field='_transaction',
                     scale_node_name="node", scale_node_field="name",
-                    scale_node_field_value="value"
+                    scale_node_field_values=["value"]
                 ), ({}, [])
             )
             client.node_instances.list.assert_called_with(
@@ -785,13 +813,42 @@ class TestScaleList(unittest.TestCase):
                     ctx=_ctx,
                     scale_transaction_field='_transaction',
                     scale_node_name="node", scale_node_field="name",
-                    scale_node_field_value="value"
+                    scale_node_field_values=["value"]
                 ), ({'a_type': ['a_id']}, ['a_id'])
             )
             client.node_instances.list.assert_called_with(
                 _include=['runtime_properties', 'node_id', 'id'],
                 deployment_id='deployment_id',
                 node_id='node')
+
+    def test_get_transaction_instances_notransaction_field(self):
+        _ctx = self._gen_ctx()
+        client = self._gen_rest_client()
+
+        instance_a = Mock()
+        instance_a.id = 'a_id'
+        instance_a.node_id = 'a_type'
+        instance_a.runtime_properties = {
+            'name': 'value'
+        }
+
+        client.node_instances.list = Mock(return_value=[instance_a])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            self.assertEqual(
+                workflows._get_transaction_instances(
+                    ctx=_ctx,
+                    scale_transaction_field=None,
+                    scale_node_name=None, scale_node_field="name",
+                    scale_node_field_values=["value"]
+                ), ({'a_type': ['a_id']}, ['a_id'])
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                deployment_id='deployment_id',
+                node_id=None)
 
     def test_get_transaction_instances(self):
         _ctx = self._gen_ctx()
@@ -806,7 +863,7 @@ class TestScaleList(unittest.TestCase):
                     ctx=_ctx,
                     scale_transaction_field='_transaction',
                     scale_node_name="a", scale_node_field="name",
-                    scale_node_field_value="value"
+                    scale_node_field_values=["value"]
                 ), ({
                     'a_type': ['a_id'],
                     'b_type': ['b_id'],
