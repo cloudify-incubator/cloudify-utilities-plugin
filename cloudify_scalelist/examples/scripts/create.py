@@ -36,5 +36,6 @@ if __name__ == '__main__':
         runtime_properties = ctx.instance.runtime_properties
         runtime_properties["resource_id"] = ctx.instance.id
         runtime_properties["resource_name"] = properties["resource_name"]
+        runtime_properties["_transaction_id"] = properties["_transaction_id"]
         ctx.logger.info("We will create: {}".format(
             ctx.instance.runtime_properties["resource_id"]))

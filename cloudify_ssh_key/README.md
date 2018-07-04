@@ -2,10 +2,9 @@
 
 This plugin enables a user to create a private and public key.
 
-
 ### Notes
 
-- Tested with Cloudify Manager 4.0.
+- Tested with Cloudify Manager 4.0+.
 - For Cloudify Manager 4.0 and above: Private key can be stored in secret store.
 
 ## Examples:

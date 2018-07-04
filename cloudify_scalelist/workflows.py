@@ -59,31 +59,53 @@ def _deployments_get_groups(ctx):
 
 def _get_transaction_instances(ctx, scale_transaction_field,
                                scale_node_name, scale_node_field,
-                               scale_node_field_value):
+                               scale_node_field_values):
     client = get_rest_client()
     # search transaction ids
     instances = client.node_instances.list(deployment_id=ctx.deployment.id,
                                            node_id=scale_node_name,
-                                           _include=['runtime_properties'])
+                                           _include=['runtime_properties',
+                                                     'node_id', 'id'])
     transaction_ids = []
+    node_instances = {}
+    instance_ids = []
 
     for instance in instances:
         runtime_properties = instance.runtime_properties
+
+        # check that we have such values in properties
+        value = runtime_properties.get(scale_node_field)
+        if value not in scale_node_field_values:
+            continue
+        # save instances to scale "settings", for case when instances created
+        # without transaction
+        if not node_instances.get(instance.node_id):
+            node_instances[instance.node_id] = []
+        # save node type (instances without transaction)
+        if instance.id not in node_instances[instance.node_id]:
+            node_instances[instance.node_id].append(instance.id)
+        # save exact instance id (instances without transaction)
+        if instance.id not in instance_ids:
+            instance_ids.append(instance.id)
+        # ignore transaction
+        if not scale_transaction_field:
+            continue
+        # check transactions
         if not runtime_properties.get(scale_transaction_field):
             continue
+        # save transaction to list
+        transaction_ids.append(
+            runtime_properties.get(scale_transaction_field))
 
-        if runtime_properties.get(scale_node_field) == scale_node_field_value:
-            transaction_ids.append(
-                runtime_properties.get(scale_transaction_field))
-
-    ctx.logger.debug("Transaction ids: {}".format(repr(instances)))
-
+    # list will be empty if no scale_transaction_field
     if not transaction_ids:
-        return {}, []
+        ctx.logger.debug("List nodes: {}".format(repr(node_instances)))
+        ctx.logger.debug("List instances: {}".format(repr(instance_ids)))
+        return node_instances, instance_ids
+
+    ctx.logger.debug("Transaction ids: {}".format(repr(transaction_ids)))
 
     # search instances for remove
-    node_instances = {}
-    instance_ids = []
     instances = client.node_instances.list(deployment_id=ctx.deployment.id,
                                            _include=['runtime_properties',
                                                      'id', 'node_id'])
@@ -91,14 +113,21 @@ def _get_transaction_instances(ctx, scale_transaction_field,
     for instance in instances:
         runtime_properties = instance.runtime_properties
         transaction_id = runtime_properties.get(scale_transaction_field)
+        # not our transaction, skip
         if transaction_id not in transaction_ids:
             continue
+        # no such group yet
         if not node_instances.get(instance.node_id):
             node_instances[instance.node_id] = []
-        node_instances[instance.node_id].append(instance.id)
-        instance_ids.append(instance.id)
+        # maybe we already have such type
+        if instance.id not in node_instances[instance.node_id]:
+            node_instances[instance.node_id].append(instance.id)
+        # maybe we already have such instance
+        if instance.id not in instance_ids:
+            instance_ids.append(instance.id)
 
-    ctx.logger.info("List instances: {}".format(repr(node_instances)))
+    ctx.logger.debug("List nodes: {}".format(repr(node_instances)))
+    ctx.logger.debug("List instances: {}".format(repr(instance_ids)))
     return node_instances, instance_ids
 
 
@@ -107,6 +136,8 @@ def _get_scale_list(ctx, scalable_entity_properties):
     scaling_groups = ctx.deployment.scaling_groups
     groups = _deployments_get_groups(ctx)
 
+    ctx.logger.debug("Scale entities: {}"
+                     .format(repr(scalable_entity_properties)))
     for node_name in scalable_entity_properties:
         # get node counts
         node_amount = len(scalable_entity_properties[node_name])
@@ -325,20 +356,25 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
 def scaledownlist(ctx, scale_compute=False,
                   ignore_failure=False,
                   scale_transaction_field="",
-                  scale_node_name="",
+                  scale_node_name=None,
                   scale_node_field="",
                   scale_node_field_value="",
                   **kwargs):
     if (
-        not scale_transaction_field or
-        not scale_node_name or
         not scale_node_field
     ):
-        raise ValueError('You should provide {} for correct downscale.'
-                         .format(repr(
-                            ["scale_transaction_field",
-                             "scale_node_name",
-                             "scale_node_field"])))
+        raise ValueError('You should provide `scale_node_field` for correct'
+                         'downscale.')
+
+    if isinstance(scale_node_field_value, basestring):
+        scale_node_field_value = [scale_node_field_value]
+
+    ctx.logger.debug("Filter by values list: {}."
+                     .format(repr(scale_node_field_value)))
+
+    if not scale_node_name:
+        scale_node_name = None
+        ctx.logger.debug("Will be searched by all instances.")
 
     instances, instance_ids = _get_transaction_instances(
         ctx, scale_transaction_field, scale_node_name, scale_node_field,

@@ -1,29 +1,27 @@
 # Cloudify Utilities: Terminal
 
-Terminal plugin provide support run command one by one and save result from
-executions each command to runtime properties.  Plugin is supposed to use with
-hardware devices with limited ssh support and IoT devices. For machines with
-full ssh implementation - consider to use fabric plugin.
+The terminal plugin provides support for running a sequence of commands and
+storing the results from to runtime properties.  The plugin is intended for use
+with hardware devices with limited shell support and IoT devices. For machines
+with a full ssh implementation - consider to use Fabric plugin.
 
+The plugin supports:
 
-Plugin have support:
-* communication by ssh connection
-* ssh connections with disabled agent on server side
+  * communication by ssh connection
+  * ssh connections with disabled agent on server side
 
-Codebase have support for overwrite connection from properties by inputs for
-workflow action, so we have support cases when we receive ip or other
-connection parameters only after creation of nodes. This functionality has
-supposed for use when we created some server from template in infrastructure
-and that reuse such node in other part of your blueprint. For implicit reuse
+The code base can support overwrite connection from properties by inputs for
+workflow execution. Therefore, we can support cases where we receive an IP,
+or some other connection parameters, after creation of nodes. This functionality
+is used when we create a server in the same blueprint. For implicit reuse
 ip you can use contained_in relationship.
 
-# Node templates:
 
-## Case with list of commands in blueprint
-### General template for simple list of commands
+### Examples:
 
-Use as node type:
-```
+**Example 1: General template for simple list of commands**
+
+```yaml
   node_impl:
     type: cloudify.terminal.raw
     interfaces:
@@ -43,8 +41,9 @@ Use as node type:
                 save_to: <field name for save to runtime properties, optional>
 ```
 
-Use as relationship:
-```
+**Example 2: General template for simple list of commands called by relationship**
+
+```yaml
 relationships:
   cloudify.terminal.raw:
     derived_from: cloudify.relationships.depends_on
@@ -88,9 +87,9 @@ node_templates:
         store_logs: <True |default:False store logs in separete file>
 ```
 
-### Example for cisco ios devices
+**Example 3: Cisco ios devices**
 
-```
+```yaml
   ios_impl:
     type: cloudify.terminal.raw
     interfaces:
@@ -111,10 +110,9 @@ node_templates:
                 save_to: domain # will be saved to ctx.instance.runtime_properties['domain']
 ```
 
-## Case with commands as separate file with placeholders
-### General template for commands as separate file
+**Example 4: General template for commands as separate file**
 
-```
+```yaml
   node_impl:
     type: cloudify.terminal.raw
     interfaces:
@@ -136,9 +134,9 @@ node_templates:
               - action: <command in same session>
 ```
 
-### Example for fortinet devices
+**Example 5: Fortinet devices**
 
-```
+```yaml
   forti_impl:
     type: cloudify.terminal.raw
     interfaces:
@@ -167,9 +165,9 @@ node_templates:
               - action: aaa # same as previous
 ```
 
-## Full format with all possible fields and properties
+**Example 6: Full format with all possible fields and properties**
 
-```
+```yaml
   node_impl:
     type: cloudify.terminal.raw
     properties:
@@ -205,7 +203,7 @@ node_templates:
                 errors: <optional, list strings that must raise error if contained in output, will overwrite values from terminal_auth>
                 promt_check: <optional, list of prompt's, will overwrite values from terminal_auth>
 
-````
+```
 
 # Examples
 

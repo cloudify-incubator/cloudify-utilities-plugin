@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.8.0.zip
-    package_version: '1.8.0'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.8.2.zip
+    package_version: '1.8.2'
 
   cfy_files: *utilities_plugin
 
@@ -607,11 +607,14 @@ workflows:
         default: _transaction_id
         description: >
            Place to save transaction id created in same transaction.
+           Optional, can be skiped if we need to remove instance without
+           relation to initial transaction.
       scale_node_name:
         type: string
         default: ""
         description: >
-           Node name where we need to search value
+           Node name where we need to search value. Optional, code will search
+           on all instances.
       scale_node_field:
         type: string
         default: ""
@@ -621,4 +624,5 @@ workflows:
         type: string
         default: ""
         description: >
-          Node runtime properties field value for search
+          Node runtime properties field value for search. Can be provided
+          as list of possible values.

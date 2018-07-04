@@ -2,7 +2,7 @@
 Additional suport for `suspend`, `resume`, `backup`, `restore`, `remove_backup`
 workflows.
 
-## Supported workflows
+## The plugin supports
 
 * `suspend`: Workflow call `cloudify.interfaces.freeze.suspend` for each node
   that has such operation. For backward compatibility also run deprecated

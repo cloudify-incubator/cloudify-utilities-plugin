@@ -5,11 +5,11 @@ Add support for scale several scalling group in one transaction.
 
 ## Supported workflows
 
-Supported scale up list of instances.
+The plugin supports:
 
 ### scaleuplist
 
-Create new instances defined in `scalable_entity_properties` list.
+Create new instances with properties defined in `scalable_entity_properties` list.
 
 Parameters:
 * `scalable_entity_properties`: List properties for nodes.
@@ -24,7 +24,7 @@ Parameters:
 
 ### scaledownlist
 
-Remove all instances from same transaction as node selected by `scale_node_name`.
+Remove all instances from same transaction/property as node selected by `scale_node_name`.
 
 Parameters:
 * `scale_compute`: If a node name is passed as the `scale_node_name` parameter
@@ -32,10 +32,14 @@ Parameters:
   property is `true`, operate on the compute node instead of the specified node.
   Default: false
 * `ignore_failure`: Default: `false`
-* `scale_transaction_field`: Place to save transaction id created in same transaction.
-* `scale_node_name`: Node name where we need to search value.
+* `scale_transaction_field`: Place to save transaction id created in same
+  transaction. Optional, can be skiped if we need to remove instance without
+  relation to initial transaction.
+* `scale_node_name`: Node name where we need to search value. Optional, code
+  will search on all instances.
 * `scale_node_field`: Node runtime properties field name for search value.
-* `scale_node_field_value`: Node runtime properties field value for search
+* `scale_node_field_value`: Node runtime properties field value for search.
+  Can be provided as list of possible values.
 
 ## Examples
 
@@ -44,7 +48,7 @@ within one transaction.
 
 ## Install with one "two" node
 
-We install blueprint with one "two" nodes.
+We install blueprint with one ["two" nodes](examples/blueprint.yaml).
 ```shell
 $ cfy install cloudify-utilities-plugin/cloudify_scalelist/examples/blueprint.yaml -b examples
 Uploading blueprint cloudify-utilities-plugin/cloudify_scalelist/examples/blueprint.yaml...
@@ -92,7 +96,7 @@ Instance runtime properties:
 
 ## Install two additional 'two' nodes
 
-Run scale list up
+Run scale [list up](examples/scaleup_params.yaml)
 ```shell
 $ cfy executions start scaleuplist -d examples -p cloudify-utilities-plugin/cloudify_scalelist/examples/scaleup_params.yaml
 Executing workflow scaleuplist on deployment examples [timeout=900 seconds]
@@ -144,7 +148,7 @@ Instance runtime properties:
 
 ## Remove instances created with resource_name=two2
 
-Run scale list down
+Run scale [list down](examples/scaledown_params.yaml)
 ```shell
 $ cfy executions start scaledownlist -d examples -p cloudify-utilities-plugin/cloudify_scalelist/examples/scaledown_params.yaml
 Executing workflow scaledownlist on deployment examples [timeout=900 seconds]
@@ -215,4 +219,119 @@ Executing workflow uninstall on deployment examples [timeout=900 seconds]
 2018-06-28 09:04:18.489  CFY <examples> [one_l1grdr.delete] Task succeeded 'script_runner.tasks.run'
 2018-06-28 09:04:19.491  CFY <examples> 'uninstall' workflow execution succeeded
 Finished executing workflow uninstall on deployment examples
+```
+
+## Remove instances created by install workflow
+
+State before [scale down](examples/scaledown_precreated.yaml):
+```shell
+$ cfy node-instances get two_05vh0m
+Retrieving node instance two_05vh0m
+
+Node-instance:
++------------+---------------+---------+---------+---------+------------+----------------+------------+
+|     id     | deployment_id | host_id | node_id |  state  | visibility |  tenant_name   | created_by |
++------------+---------------+---------+---------+---------+------------+----------------+------------+
+| two_05vh0m |    examples   |         |   two   | started |   tenant   | default_tenant |   admin    |
++------------+---------------+---------+---------+---------+------------+----------------+------------+
+
+Instance runtime properties:
+    resource_name: two0
+    _transaction_id: two_precreated
+    resource_id: two_05vh0m
+```
+
+Run scale down with instances with resource_name=two0 and same `transaction_id`.
+```shell
+$ cfy executions start scaledownlist -d examples -p cloudify-utilities-plugin/cloudify_scalelist/examples/scaledown_precreated.yaml
+Executing workflow scaledownlist on deployment examples [timeout=900 seconds]
+2018-07-02 11:03:41.396  CFY <examples> Starting 'scaledownlist' workflow execution
+...
+2018-07-02 11:03:51.730  CFY <examples> [two_05vh0m] Stopping node
+2018-07-02 11:03:52.739  CFY <examples> [two_05vh0m] Deleting node
+2018-07-02 11:03:52.739  CFY <examples> [two_05vh0m.delete] Sending task 'script_runner.tasks.run'
+2018-07-02 11:03:52.739  CFY <examples> [two_05vh0m.delete] Task started 'script_runner.tasks.run'
+2018-07-02 11:03:53.089  LOG <examples> [two_05vh0m.delete] INFO: Downloaded scripts/delete.py to /tmp/8IETC/tmp_fD831-delete.py
+2018-07-02 11:03:53.626  LOG <examples> [two_05vh0m.delete] INFO: Resulted properties: {u'predefined': u'', u'resource_name': u'two0', u'defined_in_inputs': u'one_asu6fe', u'resource_id': u'two_05vh0m', 'ctx': <cloudify.context.CloudifyContext object at 0x311e390>, u'_transaction_id': u'two_precreated', u'script_path': u'scripts/delete.py'}
+2018-07-02 11:03:53.626  LOG <examples> [two_05vh0m.delete] INFO: We have some resource u'two_05vh0m', so we can delete such
+2018-07-02 11:03:53.743  CFY <examples> [two_05vh0m.delete] Task succeeded 'script_runner.tasks.run'
+2018-07-02 11:03:53.626  LOG <examples> INFO: Cleanup node: three_viw9g9
+2018-07-02 11:03:53.626  LOG <examples> INFO: Cleanup node: four_v7m6nk
+Execution ended, waiting 3 seconds for additional log messages
+2018-07-02 11:03:54.632  LOG <examples> INFO: Cleanup node: two_05vh0m
+2018-07-02 11:03:54.632  LOG <examples> INFO: Cleanup node: six_qyg6ll
+2018-07-02 11:03:54.746  CFY <examples> 'scaledownlist' workflow execution succeeded
+Finished executing workflow scaledownlist on deployment examples
+* Run 'cfy events list -e dcf53181-19e2-439c-b052-42b01b62557a' to retrieve the execution's events/logs
+```
+
+State after:
+```shell
+$ cfy node-instances get two_05vh0m
+Retrieving node instance two_05vh0m
+
+Node-instance:
++------------+---------------+---------+---------+---------------+------------+----------------+------------+
+|     id     | deployment_id | host_id | node_id |     state     | visibility |  tenant_name   | created_by |
++------------+---------------+---------+---------+---------------+------------+----------------+------------+
+| two_05vh0m |    examples   |         |   two   | uninitialized |   tenant   | default_tenant |   admin    |
++------------+---------------+---------+---------+---------------+------------+----------------+------------+
+
+Instance runtime properties:
+```
+
+## Remove instances created by install workflow without transaction id
+
+Remove instances [without transaction id](examples/scaledown_without_transaction.yaml).
+```shell
+$ cfy executions start scaledownlist -d examples -p cloudify-utilities-plugin/cloudify_scalelist/examples/scaledown_without_transaction.yaml
+Executing workflow scaledownlist on deployment examples [timeout=900 seconds]
+2018-07-03 10:34:15.991  CFY <examples> Starting 'scaledownlist' workflow execution
+2018-07-03 10:34:16.682  LOG <examples> INFO: Scale rules: {u'one': {'count': 1, 'values': [u'one_eayebr']}}
+2018-07-03 10:34:16.682  LOG <examples> INFO: Scale down u'one' by delta: 1
+2018-07-03 10:34:16.682  LOG <examples> INFO: Scale settings: {u'one': {'instances': 0, 'removed_ids_include_hint': [u'one_eayebr']}}
+2018-07-03 10:34:16.682  LOG <examples> INFO: Deployment modification started. [modification_id=47d4bc5b-2704-41c8-9187-dd2c5e4d0411]
+2018-07-03 10:34:16.682  LOG <examples> INFO: Proposed: [u'one_eayebr']
+2018-07-03 10:34:16.682  LOG <examples> INFO: Removed: [u'one_eayebr']
+2018-07-03 10:34:16.670  CFY <examples> [one_eayebr] Stopping node
+2018-07-03 10:34:17.676  CFY <examples> [one_eayebr] Deleting node
+2018-07-03 10:34:17.676  CFY <examples> [one_eayebr.delete] Sending task 'script_runner.tasks.run'
+2018-07-03 10:34:17.676  CFY <examples> [one_eayebr.delete] Task started 'script_runner.tasks.run'
+2018-07-03 10:34:18.265  LOG <examples> [one_eayebr.delete] INFO: Downloaded scripts/delete.py to /tmp/PKZZQ/tmpQ7dTgb-delete.py
+2018-07-03 10:34:18.688  LOG <examples> [one_eayebr.delete] INFO: We have some resource u'one_eayebr', so we can delete such
+2018-07-03 10:34:18.688  LOG <examples> [one_eayebr.delete] INFO: Resulted properties: {u'predefined': u'', u'resource_name': u'one0', u'defined_in_inputs': u'', u'resource_id': u'one_eayebr', 'ctx': <cloudify.context.CloudifyContext object at 0x3536390>, u'_transaction_id': u'', u'script_path': u'scripts/delete.py'}
+2018-07-03 10:34:18.679  CFY <examples> [one_eayebr.delete] Task succeeded 'script_runner.tasks.run'
+2018-07-03 10:34:19.685  CFY <examples> 'scaledownlist' workflow execution succeeded
+Finished executing workflow scaledownlist on deployment examples
+* Run 'cfy events list -e 715e3f97-07d5-4052-8879-aefa4e536a2c' to retrieve the execution's events/logs
+```
+
+## Remove any instance by field value and ignore transaction
+
+Remove instances [without transaction and field value](examples/scaledown_byvalue.yaml).
+
+```shell
+$ cfy executions start scaledownlist -d examples -p cloudify-utilities-plugin/cloudify_scalelist/examples/scaledown_byvalue.yaml
+Executing workflow scaledownlist on deployment examples [timeout=900 seconds]
+2018-07-03 15:33:43.106  CFY <examples> Starting 'scaledownlist' workflow execution
+2018-07-03 15:33:43.686  LOG <examples> INFO: Scale rules: {u'two_scale': {'count': 1, 'values': [u'two_d8hmqx']}}
+2018-07-03 15:33:43.686  LOG <examples> INFO: Scale down u'two_scale' by delta: 1
+2018-07-03 15:33:43.686  LOG <examples> INFO: Scale settings: {u'two_scale': {'instances': 2, 'removed_ids_include_hint': [u'two_d8hmqx']}}
+2018-07-03 15:33:43.686  LOG <examples> INFO: Deployment modification started. [modification_id=6f7020a1-7e6b-402f-912d-124dc7a4fcfd]
+2018-07-03 15:33:43.686  LOG <examples> INFO: Removed: [u'two_ln2tgh']
+2018-07-03 15:33:43.686  LOG <examples> WARNING: Rolling back deployment modification. [modification_id=6f7020a1-7e6b-402f-912d-124dc7a4fcfd]: Exception("Instance u'two_ln2tgh' not in proposed list [u'two_d8hmqx'].",)
+2018-07-03 15:33:43.686  LOG <examples> INFO: Proposed: [u'two_d8hmqx']
+2018-07-03 15:33:44.696  LOG <examples> INFO: Scale down based on transaction failed: Exception("Instance u'two_ln2tgh' not in proposed list [u'two_d8hmqx'].",)
+2018-07-03 15:33:44.214  CFY <examples> [two_d8hmqx] Stopping node
+2018-07-03 15:33:45.237  CFY <examples> [two_d8hmqx] Deleting node
+2018-07-03 15:33:45.237  CFY <examples> [two_d8hmqx.delete] Sending task 'script_runner.tasks.run'
+2018-07-03 15:33:45.237  CFY <examples> [two_d8hmqx.delete] Task started 'script_runner.tasks.run'
+2018-07-03 15:33:46.032  LOG <examples> [two_d8hmqx.delete] INFO: Downloaded scripts/delete.py to /tmp/O5YRB/tmpI_9Fux-delete.py
+2018-07-03 15:33:46.701  LOG <examples> [two_d8hmqx.delete] INFO: Resulted properties: {u'predefined': u'', u'resource_name': u'two1', u'defined_in_inputs': u'one_saqz5k', u'resource_id': u'two_d8hmqx', 'ctx': <cloudify.context.CloudifyContext object at 0x25ba390>, u'_transaction_id': u'e919969a-af7a-494f-8b9b-f0712833c133', u'script_path': u'scripts/delete.py'}
+2018-07-03 15:33:46.701  LOG <examples> [two_d8hmqx.delete] INFO: We have some resource u'two_d8hmqx', so we can delete such
+2018-07-03 15:33:46.255  CFY <examples> [two_d8hmqx.delete] Task succeeded 'script_runner.tasks.run'
+2018-07-03 15:33:46.701  LOG <examples> INFO: Cleanup node: two_d8hmqx
+2018-07-03 15:33:46.689  CFY <examples> 'scaledownlist' workflow execution succeeded
+Finished executing workflow scaledownlist on deployment examples
+* Run 'cfy events list -e 93c72e69-2ce7-411f-9121-9d0c2ba53852' to retrieve the execution's events/logs
 ```

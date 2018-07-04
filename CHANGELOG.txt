@@ -74,7 +74,8 @@ releases:
   - Add REST Plugin for generic interaction with REST APIs.
 
   v1.5.0.1:
-  - Deployment proxy bug fix. Ensure that correct execution ID is polled for deployment, when workflow ID is identical.
+  - Deployment proxy bug fix. Ensure that correct execution ID is polled for deployment,
+    when workflow ID is identical.
 
   v.1.5.1:
   - Support user configuration of failure success on certain responses in REST plugin.
@@ -111,10 +112,19 @@ releases:
   v1.7.2:
   - Rest Plugin Improvements
   - Update tests to use cirleci v2 and to use ecosystem test tools
-  - added integration tests for key, file, cloudinit, deployment proxy, and rest tools.
+  - added integration tests for key, file, cloudinit, deployment proxy,
+    and rest tools.
 
   v1.7.3:
   - Examples for use terminal plugin in relationships
 
   v1.8.0:
   - Add scale several scaling group in one transaction
+
+  v1.8.1:
+  - Scalelist Down: Additional examples for remove instances created by install
+    workflow.
+
+  v1.8.2:
+  - Scalelist Down: Additional examples for remove instances by property value
+    without transaction id.
