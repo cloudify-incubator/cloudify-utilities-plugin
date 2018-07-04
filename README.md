@@ -76,3 +76,5 @@ Utilities for extending Cloudify features.
   - v1.8.0: Add scale several scaling group in one transaction
   - v1.8.1: Scalelist Down: Additional examples for remove instances created
             by install workflow.
+  - v1.8.2: Scalelist Down: Additional examples for remove instances by property value
+            without transaction id.

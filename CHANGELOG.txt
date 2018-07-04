@@ -124,3 +124,7 @@ releases:
   v1.8.1:
   - Scalelist Down: Additional examples for remove instances created by install
     workflow.
+
+  v1.8.2:
+  - Scalelist Down: Additional examples for remove instances by property value
+    without transaction id.
