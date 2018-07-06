@@ -675,12 +675,12 @@ workflows:
           A list of node instance ids. The operation will be executed only on
           the node instances specified. An empty list means no filtering will
           take place and all node instances are valid (Default: []).
-     node_field:
+      node_field:
         type: string
         default: ""
         description: >
           Node runtime properties field name for search value
-     node_field_value:
+      node_field_value:
         type: string
         default: ""
         description: >
