@@ -453,3 +453,113 @@ def scaleuplist(ctx, scalable_entity_properties,
     _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field, scale_transaction_value,
                         ignore_failure)
+
+
+def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
+                           operation, node_field, node_field_value):
+    filtered_node_instances = []
+    for node in ctx.nodes:
+        # no such action skip it
+        if operation not in node.operations:
+            continue
+        # no such node_id, skip it
+        if node_ids and node.id not in node_ids:
+            continue
+        # no such node type, skip it
+        if type_names and not next((type_name for type_name in type_names if
+                                    type_name in node.type_hierarchy), None):
+            continue
+
+        # look more deeply, what about instance id's and properties
+        for instance in node.instances:
+            # sorry no such id in list
+            if node_instance_ids and instance.id not in node_instance_ids:
+                continue
+            # look to field value
+            if node_field:
+                # check that we have such values in properties
+                runtime_properties = instance.runtime_properties
+                value = runtime_properties.get(node_field)
+                if value not in node_field_value:
+                    continue
+            # looks as good instance
+            filtered_node_instances.append(instance)
+    return filtered_node_instances
+
+
+@workflow
+def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
+                      run_by_dependency_order, type_names, node_ids,
+                      node_instance_ids, node_field, node_field_value,
+                      **kwargs):
+    """ A generic workflow for executing arbitrary operations on nodes """
+
+    if isinstance(node_field_value, basestring):
+        node_field_value = [node_field_value]
+
+    ctx.logger.debug("Filter by values list: {}."
+                     .format(repr(node_field_value)))
+
+    graph = ctx.graph_mode()
+    subgraphs = {}
+
+    # filtering node instances
+    filtered_node_instances = _filter_node_instances(
+        ctx=ctx,
+        node_ids=node_ids,
+        node_instance_ids=node_instance_ids,
+        type_names=type_names,
+        operation=operation,
+        node_field=node_field,
+        node_field_value=node_field_value)
+
+    if run_by_dependency_order:
+        # if run by dependency order is set, then create stub subgraphs for the
+        # rest of the instances. This is done to support indirect
+        # dependencies, i.e. when instance A is dependent on instance B
+        # which is dependent on instance C, where A and C are to be executed
+        # with the operation on (i.e. they're in filtered_node_instances)
+        # yet B isn't.
+        # We add stub subgraphs rather than creating dependencies between A
+        # and C themselves since even though it may sometimes increase the
+        # number of dependency relationships in the execution graph, it also
+        # ensures their number is linear to the number of relationships in
+        # the deployment (e.g. consider if A and C are one out of N instances
+        # of their respective nodes yet there's a single instance of B -
+        # using subgraphs we'll have 2N relationships instead of N^2).
+        filtered_node_instances_ids = set(inst.id for inst in
+                                          filtered_node_instances)
+        for instance in ctx.node_instances:
+            if instance.id not in filtered_node_instances_ids:
+                subgraphs[instance.id] = graph.subgraph(instance.id)
+
+    # preparing the parameters to the execute_operation call
+    exec_op_params = {
+        'kwargs': operation_kwargs,
+        'operation': operation
+    }
+    if allow_kwargs_override is not None:
+        exec_op_params['allow_kwargs_override'] = allow_kwargs_override
+
+    # registering actual tasks to sequences
+    for instance in filtered_node_instances:
+        start_event_message = 'Starting operation {0}'.format(operation)
+        if operation_kwargs:
+            start_event_message += ' (Operation parameters: {0})'.format(
+                repr(operation_kwargs))
+        subgraph = graph.subgraph(instance.id)
+        sequence = subgraph.sequence()
+        sequence.add(
+            instance.send_event(start_event_message),
+            instance.execute_operation(**exec_op_params),
+            instance.send_event('Finished operation {0}'.format(operation)))
+        subgraphs[instance.id] = subgraph
+
+    # adding tasks dependencies if required
+    if run_by_dependency_order:
+        for instance in ctx.node_instances:
+            for rel in instance.relationships:
+                graph.add_dependency(subgraphs[instance.id],
+                                     subgraphs[rel.target_id])
+
+    graph.execute()

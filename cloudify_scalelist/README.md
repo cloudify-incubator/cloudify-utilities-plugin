@@ -335,3 +335,10 @@ Executing workflow scaledownlist on deployment examples [timeout=900 seconds]
 Finished executing workflow scaledownlist on deployment examples
 * Run 'cfy events list -e 93c72e69-2ce7-411f-9121-9d0c2ba53852' to retrieve the execution's events/logs
 ```
+
+## Run update on instances by field name/field value/node name.
+
+
+```shell
+$ cfy executions start update_operation_filtered -d examples -p cloudify-utilities-plugin/cloudify_scalelist/examples/update_params.yaml
+```
