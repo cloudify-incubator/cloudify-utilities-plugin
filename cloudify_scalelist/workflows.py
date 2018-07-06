@@ -478,7 +478,7 @@ def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
             # look to field value
             if node_field:
                 # check that we have such values in properties
-                runtime_properties = instance.runtime_properties
+                runtime_properties = instance._node_instance.runtime_properties
                 value = runtime_properties.get(node_field)
                 if value not in node_field_value:
                     continue
