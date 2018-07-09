@@ -78,3 +78,4 @@ Utilities for extending Cloudify features.
             by install workflow.
   - v1.8.2: Scalelist Down: Additional examples for remove instances by property value
             without transaction id.
+  - v1.8.3: Scalelist Down: Additional example for update workflow.
