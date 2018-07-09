@@ -336,9 +336,22 @@ Finished executing workflow scaledownlist on deployment examples
 * Run 'cfy events list -e 93c72e69-2ce7-411f-9121-9d0c2ba53852' to retrieve the execution's events/logs
 ```
 
-## Run update on instances by field name/field value/node name.
+## Run update on instances by field name, field value and node name.
 
+Run [update action](examples/update_params.yaml) for specific by property value on node 'two'.
 
 ```shell
 $ cfy executions start update_operation_filtered -d examples -p cloudify-utilities-plugin/cloudify_scalelist/examples/update_params.yaml
+Executing workflow update_operation_filtered on deployment examples [timeout=900 seconds]
+2018-07-06 14:37:31.066  CFY <examples> Starting 'update_operation_filtered' workflow execution
+2018-07-06 14:37:32.000  CFY <examples> [two_4r9k30] Starting operation cloudify.interfaces.lifecycle.update (Operation parameters: {u'check': True})
+2018-07-06 14:37:32.000  CFY <examples> [two_4r9k30.update] Sending task 'script_runner.tasks.run'
+2018-07-06 14:37:32.000  CFY <examples> [two_4r9k30.update] Task started 'script_runner.tasks.run'
+2018-07-06 14:37:32.461  LOG <examples> [two_4r9k30.update] INFO: Downloaded scripts/update.py to /tmp/NILXD/update.py
+2018-07-06 14:37:32.461  LOG <examples> [two_4r9k30.update] INFO: Resulted properties: {u'predefined': u'', u'resource_name': u'two0', u'_transaction_id': u'two_precreated', u'resource_id': u'two_4r9k30', u'script_path': u'scripts/update.py', 'ctx': <cloudify.context.CloudifyContext object at 0x7f4f86b72150>, u'check': True}
+2018-07-06 14:37:33.003  CFY <examples> [two_4r9k30.update] Task succeeded 'script_runner.tasks.run'
+2018-07-06 14:37:34.006  CFY <examples> [two_4r9k30] Finished operation cloudify.interfaces.lifecycle.update
+2018-07-06 14:37:34.006  CFY <examples> 'update_operation_filtered' workflow execution succeeded
+Finished executing workflow update_operation_filtered on deployment examples
+* Run 'cfy events list -e 7f5231e7-e440-4378-ada1-9088fa405532' to retrieve the execution's events/logs
 ```
