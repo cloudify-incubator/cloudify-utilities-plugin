@@ -85,15 +85,26 @@ class TestScaleList(unittest.TestCase):
         return client
 
     def _gen_ctx(self):
+
         _ctx = MockCloudifyContext(
             deployment_id="deployment_id"
         )
+        _ctx._subgraph = []
+
+        def _subgraph(instance_id):
+            _subgraph = Mock()
+            _subgraph.instance_id = "subgraph" + instance_id
+            _ctx._subgraph.append(_subgraph)
+            return _subgraph
+
         _graph = Mock()
         _graph.id = 'i_am_graph'
         _graph.tasks_iter = Mock(return_value=['task1'])
         _graph.remove_task = Mock(return_value=None)
-
+        _graph.subgraph = _subgraph
+        _ctx.nodes = []
         _ctx.graph_mode = Mock(return_value=_graph)
+        _ctx._graph = _graph
         _ctx.deployment.scaling_groups = {
             'one_scale': {
                 'members': ['one'],
@@ -174,8 +185,7 @@ class TestScaleList(unittest.TestCase):
             )
             client.node_instances.list.assert_called_with(
                 _include=['runtime_properties', 'node_id', 'id'],
-                deployment_id='deployment_id',
-                node_id='node')
+                deployment_id='deployment_id')
 
     def test_scaleup_group_to_settings(self):
         # scale groups names
@@ -588,7 +598,7 @@ class TestScaleList(unittest.TestCase):
                 workflows.scaledownlist(
                     ctx=_ctx,
                     scale_transaction_field='_transaction',
-                    scale_node_name="a", scale_node_field="name",
+                    scale_node_name="a_type", scale_node_field="name",
                     scale_node_field_value="value"
                 )
             fake_run_scale.assert_called_with(
@@ -614,7 +624,7 @@ class TestScaleList(unittest.TestCase):
                     workflows.scaledownlist(
                         ctx=_ctx,
                         scale_transaction_field='_transaction',
-                        scale_node_name="a", scale_node_field="name",
+                        scale_node_name="a_type", scale_node_field="name",
                         scale_node_field_value="value"
                     )
                 fake_uninstall_instances.assert_called_with(_ctx,
@@ -783,14 +793,14 @@ class TestScaleList(unittest.TestCase):
                 workflows._get_transaction_instances(
                     ctx=_ctx,
                     scale_transaction_field='_transaction',
-                    scale_node_name="node", scale_node_field="name",
+                    scale_node_names="a_type",
+                    scale_node_field_path=["name"],
                     scale_node_field_values=["value"]
                 ), ({}, [])
             )
             client.node_instances.list.assert_called_with(
                 _include=['runtime_properties', 'node_id', 'id'],
-                deployment_id='deployment_id',
-                node_id='node')
+                deployment_id='deployment_id')
 
     def test_get_transaction_instances_notransaction(self):
         _ctx = self._gen_ctx()
@@ -812,14 +822,13 @@ class TestScaleList(unittest.TestCase):
                 workflows._get_transaction_instances(
                     ctx=_ctx,
                     scale_transaction_field='_transaction',
-                    scale_node_name="node", scale_node_field="name",
+                    scale_node_names="a_type", scale_node_field_path=["name"],
                     scale_node_field_values=["value"]
                 ), ({'a_type': ['a_id']}, ['a_id'])
             )
             client.node_instances.list.assert_called_with(
                 _include=['runtime_properties', 'node_id', 'id'],
-                deployment_id='deployment_id',
-                node_id='node')
+                deployment_id='deployment_id')
 
     def test_get_transaction_instances_notransaction_field(self):
         _ctx = self._gen_ctx()
@@ -841,14 +850,13 @@ class TestScaleList(unittest.TestCase):
                 workflows._get_transaction_instances(
                     ctx=_ctx,
                     scale_transaction_field=None,
-                    scale_node_name=None, scale_node_field="name",
+                    scale_node_names=None, scale_node_field_path=["name"],
                     scale_node_field_values=["value"]
                 ), ({'a_type': ['a_id']}, ['a_id'])
             )
             client.node_instances.list.assert_called_with(
                 _include=['runtime_properties', 'node_id', 'id'],
-                deployment_id='deployment_id',
-                node_id=None)
+                deployment_id='deployment_id')
 
     def test_get_transaction_instances(self):
         _ctx = self._gen_ctx()
@@ -862,7 +870,8 @@ class TestScaleList(unittest.TestCase):
                 workflows._get_transaction_instances(
                     ctx=_ctx,
                     scale_transaction_field='_transaction',
-                    scale_node_name="a", scale_node_field="name",
+                    scale_node_names=["a_type"],
+                    scale_node_field_path=["name"],
                     scale_node_field_values=["value"]
                 ), ({
                     'a_type': ['a_id'],
@@ -902,6 +911,197 @@ class TestScaleList(unittest.TestCase):
             related_nodes=[c_instance]
         )
         _ctx.graph_mode().remove_task.assert_called_with('task1')
+
+    def test_get_field_value_recursive(self):
+        _ctx = self._gen_ctx()
+        # check list
+        self.assertEqual(
+            'a',
+            workflows._get_field_value_recursive(
+                _ctx, ['a'], ['0'])
+        )
+        # not in list
+        self.assertEqual(
+            None,
+            workflows._get_field_value_recursive(
+                _ctx, ['a'], ['1'])
+        )
+        # check dict
+        self.assertEqual(
+            'a',
+            workflows._get_field_value_recursive(
+                _ctx, {'0': 'a'}, ['0'])
+        )
+        # not in dict
+        self.assertEqual(
+            None,
+            workflows._get_field_value_recursive(
+                _ctx, {'0': 'a'}, ['1'])
+        )
+        # check dict in list
+        self.assertEqual(
+            'b',
+            workflows._get_field_value_recursive(
+                _ctx, [{'a': 'b'}], ['0', 'a'])
+        )
+        # check dict in list
+        self.assertEqual(
+            None,
+            workflows._get_field_value_recursive(
+                _ctx, 'a', ['1', 'a'])
+        )
+
+    def test_filter_node_instances(self):
+        # everything empty
+        _ctx = self._gen_ctx()
+        self.assertEqual(
+            workflows._filter_node_instances(
+                ctx=_ctx,
+                node_ids=[],
+                node_instance_ids=[],
+                type_names=[],
+                operation='a.b.c',
+                node_field_path=['a'],
+                node_field_value=['b']
+            ),
+            []
+        )
+        # no such operation
+        node = Mock()
+        node.type_hierarchy = ['a_type']
+        node.operations = ["c.b.a"]
+        node.id = 'a'
+        instance = Mock()
+        instance.id = 'a'
+        instance._node_instance.runtime_properties = {}
+        node.instances = [instance]
+        _ctx.nodes = [node]
+        self.assertEqual(
+            workflows._filter_node_instances(
+                ctx=_ctx,
+                node_ids=[],
+                node_instance_ids=[],
+                type_names=[],
+                operation='a.b.c',
+                node_field_path=['a'],
+                node_field_value=['b']
+            ),
+            []
+        )
+        # no such field
+        node.operations = ['c.b.a', 'a.b.c']
+        self.assertEqual(
+            workflows._filter_node_instances(
+                ctx=_ctx,
+                node_ids=[],
+                node_instance_ids=[],
+                type_names=[],
+                operation='a.b.c',
+                node_field_path=['a'],
+                node_field_value=['b']
+            ),
+            []
+        )
+        # we have such value
+        instance._node_instance.runtime_properties = {'a': 'b'}
+        self.assertEqual(
+            workflows._filter_node_instances(
+                ctx=_ctx,
+                node_ids=[],
+                node_instance_ids=[],
+                type_names=[],
+                operation='a.b.c',
+                node_field_path=['a'],
+                node_field_value=['b']
+            ),
+            [instance]
+        )
+        # we have such value, but wrong instance_id
+        instance.id = 'c'
+        self.assertEqual(
+            workflows._filter_node_instances(
+                ctx=_ctx,
+                node_ids=[],
+                node_instance_ids=['a'],
+                type_names=[],
+                operation='a.b.c',
+                node_field_path=['a'],
+                node_field_value=['b']
+            ),
+            []
+        )
+        # we have such value, but wrong node_id
+        node.id = 'c'
+        self.assertEqual(
+            workflows._filter_node_instances(
+                ctx=_ctx,
+                node_ids=['a'],
+                node_instance_ids=[],
+                type_names=[],
+                operation='a.b.c',
+                node_field_path=['a'],
+                node_field_value=['b']
+            ),
+            []
+        )
+        # we have such value, but wrong type
+        node.type_hierarchy = ['c_type']
+        self.assertEqual(
+            workflows._filter_node_instances(
+                ctx=_ctx,
+                node_ids=[],
+                node_instance_ids=[],
+                type_names=['a_type'],
+                operation='a.b.c',
+                node_field_path=['a'],
+                node_field_value=['b']
+            ),
+            []
+        )
+
+    def test_execute_operation(self):
+        _ctx = self._gen_ctx()
+        # fake instance
+        node_a = Mock()
+        node_a.type_hierarchy = ['a_type']
+        node_a.operations = ["a.b.c"]
+        node_a.id = 'a'
+        node_b = Mock()
+        node_b.type_hierarchy = ['b_type']
+        node_b.operations = ["a.b.c"]
+        node_b.id = 'b'
+        # fake nodes
+        instance_a = Mock()
+        instance_a.id = 'a'
+        instance_a._node_instance.runtime_properties = {'c': 'd'}
+        instance_a.relationships = []
+        node_a.instances = [instance_a]
+        instance_b = Mock()
+        instance_b.id = 'b'
+        instance_b._node_instance.runtime_properties = {'a': 'b'}
+        relation_b_a = Mock()
+        relation_b_a.target_id = 'a'
+        relation_b_a.source_id = 'b'
+        instance_b.relationships = [relation_b_a]
+        node_b.instances = [instance_b]
+        # context lists
+        _ctx.node_instances = [instance_a, instance_b]
+        _ctx.nodes = [node_a, node_b]
+        # run executions
+        workflows.execute_operation(
+            ctx=_ctx,
+            operation='a.b.c',
+            operation_kwargs={'c': 'f'},
+            allow_kwargs_override=True,
+            run_by_dependency_order=True,
+            type_names=[],
+            node_ids=[],
+            node_instance_ids=[],
+            node_field='a',
+            node_field_value='b'
+        )
+        _ctx._graph.add_dependency.assert_called_with(_ctx._subgraph[1],
+                                                      _ctx._subgraph[0])
 
 
 if __name__ == '__main__':

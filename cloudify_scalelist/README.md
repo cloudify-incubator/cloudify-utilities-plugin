@@ -24,7 +24,8 @@ Parameters:
 
 ### scaledownlist
 
-Remove all instances from same transaction/property as node selected by `scale_node_name`.
+Remove all instances from same transaction/property as node selected by
+`scale_node_name`.
 
 Parameters:
 * `scale_compute`: If a node name is passed as the `scale_node_name` parameter
@@ -35,11 +36,48 @@ Parameters:
 * `scale_transaction_field`: Place to save transaction id created in same
   transaction. Optional, can be skiped if we need to remove instance without
   relation to initial transaction.
-* `scale_node_name`: Node name where we need to search value. Optional, code
-  will search on all instances.
-* `scale_node_field`: Node runtime properties field name for search value.
+* `scale_node_name`: A list of node ids. The operation will be executed only on
+  node instances which are instances of these nodes. An empty list means no
+  filtering will take place and all nodes are valid (Default: "").
+* `scale_node_field`: Node runtime properties field name for search value,
+  supported search by ```['a', 'b']``` on ```{'a': {'b': 'c'}}``` return
+  ```c```.
 * `scale_node_field_value`: Node runtime properties field value for search.
   Can be provided as list of possible values.
+
+### update_operation_filtered
+
+Execute action on selected nodes.
+
+Parameters:
+* `operation`: The name of the operation to execute.
+  (Default: cloudify.interfaces.lifecycle.update).
+* `operation_kwargs`: A dictionary of keyword arguments that will be passed to
+  the operation invocation (Default: ```{}```).
+* `allow_kwargs_override`: A boolean describing whether overriding operations
+  inputs defined in the blueprint by using inputs of the same name in the
+  operation_kwargs parameter is allowed or not (Default: ```null```, means that
+  the default behavior, as defined by the workflows infrastructure, will be
+  used).
+* `run_by_dependency_order`: A boolean describing whether the operation should
+  execute on the relevant nodes according to the order of their relationships
+  dependencies or rather execute on all relevant nodes in parallel.
+  (Default: false).
+* `type_names`: A list of type names. The operation will be executed only on
+  node instances which are of these types or of types which (recursively)
+  derive from them. An empty list means no filtering will take place and all
+  type names are valid (Default: ```[]```).
+* `node_ids`: A list of node ids. The operation will be executed only on node
+  instances which are instances of these nodes. An empty list means no
+  filtering will take place and all nodes are valid (Default: ```[]```).
+* `node_instance_ids`: A list of node instance ids. The operation will be
+  executed only on the node instances specified. An empty list means no
+  filtering will take place and all node instances are valid.
+  (Default: ```[]```).
+* `node_field`: Node runtime properties field name for search value, supported
+  search by ```['a', 'b']``` on ```{'a': {'b': 'c'}}``` return ```c```.
+* `node_field_value`: Node runtime properties field value for search. Can be
+  provided as list of possible values.
 
 ## Examples
 
