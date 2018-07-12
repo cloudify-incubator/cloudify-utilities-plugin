@@ -51,6 +51,10 @@ In runtime properties will be provided outputs from deployment.
     * `password`: Cloudify User password.
     * `token`: Cloudify User token.
     * `tenant`: Cloudify Tenant name.
+* `plugins`: Optional, list of plugins for upload.
+    * `wagon_path`: Url for plugin wagon file.
+    * `plugin_yaml_path`: Url for plugin yaml file.
+* `secrets`: Optional, dictionary of secrets for set before run deployments.
 
 **Workflow inputs**
 

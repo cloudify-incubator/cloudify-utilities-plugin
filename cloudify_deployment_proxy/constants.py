@@ -24,6 +24,10 @@ EXECUTIONS_TIMEOUT = 900
 POLLING_INTERVAL = 10
 EXTERNAL_RESOURCE = 'external_resource'
 
+PLUGIN_UPLOAD = 'upload'
+PLUGIN_DELETE = 'delete'
+SECRETS_CREATE = 'create'
+SECRETS_DELETE = 'delete'
 BP_UPLOAD = '_upload'
 BP_DELETE = 'delete'
 DEP_CREATE = 'create'
