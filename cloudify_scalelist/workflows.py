@@ -57,13 +57,40 @@ def _deployments_get_groups(ctx):
     return deployment['groups']
 
 
+def _get_field_value_recursive(ctx, properties, path):
+    if not path:
+        return properties
+    key = path[0]
+    if isinstance(properties, list):
+        try:
+            return _get_field_value_recursive(
+                ctx,
+                properties[int(key)],
+                path[1:]
+            )
+        except Exception as e:
+            ctx.logger.debug('Can filter by {}'.format(repr(e)))
+            return None
+    elif isinstance(properties, dict):
+        try:
+            return _get_field_value_recursive(
+                ctx,
+                properties[key],
+                path[1:]
+            )
+        except Exception as e:
+            ctx.logger.debug('Can filter by {}'.format(repr(e)))
+            return None
+    else:
+        return None
+
+
 def _get_transaction_instances(ctx, scale_transaction_field,
-                               scale_node_name, scale_node_field,
+                               scale_node_names, scale_node_field_path,
                                scale_node_field_values):
     client = get_rest_client()
     # search transaction ids
     instances = client.node_instances.list(deployment_id=ctx.deployment.id,
-                                           node_id=scale_node_name,
                                            _include=['runtime_properties',
                                                      'node_id', 'id'])
     transaction_ids = []
@@ -72,9 +99,13 @@ def _get_transaction_instances(ctx, scale_transaction_field,
 
     for instance in instances:
         runtime_properties = instance.runtime_properties
-
+        # check that we have correct node name
+        if scale_node_names and instance.node_id not in scale_node_names:
+            continue
         # check that we have such values in properties
-        value = runtime_properties.get(scale_node_field)
+        value = _get_field_value_recursive(ctx,
+                                           runtime_properties,
+                                           scale_node_field_path)
         if value not in scale_node_field_values:
             continue
         # save instances to scale "settings", for case when instances created
@@ -376,9 +407,18 @@ def scaledownlist(ctx, scale_compute=False,
         scale_node_name = None
         ctx.logger.debug("Will be searched by all instances.")
 
+    if isinstance(scale_node_name, basestring):
+        scale_node_name = [scale_node_name]
+
+    if isinstance(scale_node_field, basestring):
+        scale_node_field = [scale_node_field]
+
     instances, instance_ids = _get_transaction_instances(
-        ctx, scale_transaction_field, scale_node_name, scale_node_field,
-        scale_node_field_value)
+        ctx=ctx,
+        scale_transaction_field=scale_transaction_field,
+        scale_node_names=scale_node_name,
+        scale_node_field_path=scale_node_field,
+        scale_node_field_values=scale_node_field_value)
 
     if not instance_ids:
         ctx.logger.info("Empty list for instances for remove.")
@@ -453,3 +493,118 @@ def scaleuplist(ctx, scalable_entity_properties,
     _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field, scale_transaction_value,
                         ignore_failure)
+
+
+def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
+                           operation, node_field_path, node_field_value):
+    filtered_node_instances = []
+    for node in ctx.nodes:
+        # no such action skip it
+        if operation not in node.operations:
+            continue
+        # no such node_id, skip it
+        if node_ids and node.id not in node_ids:
+            continue
+        # no such node type, skip it
+        if type_names and not next((type_name for type_name in type_names if
+                                    type_name in node.type_hierarchy), None):
+            continue
+
+        # look more deeply, what about instance id's and properties
+        for instance in node.instances:
+            # sorry no such id in list
+            if node_instance_ids and instance.id not in node_instance_ids:
+                continue
+            # look to field value
+            if node_field_path:
+                # check that we have such values in properties
+                runtime_properties = instance._node_instance.runtime_properties
+                value = _get_field_value_recursive(ctx,
+                                                   runtime_properties,
+                                                   node_field_path)
+                if value not in node_field_value:
+                    continue
+            # looks as good instance
+            filtered_node_instances.append(instance)
+    return filtered_node_instances
+
+
+@workflow
+def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
+                      run_by_dependency_order, type_names, node_ids,
+                      node_instance_ids, node_field, node_field_value,
+                      **kwargs):
+    """ A generic workflow for executing arbitrary operations on nodes """
+
+    if isinstance(node_field_value, basestring):
+        node_field_value = [node_field_value]
+
+    ctx.logger.debug("Filter by values list: {}."
+                     .format(repr(node_field_value)))
+
+    graph = ctx.graph_mode()
+    subgraphs = {}
+
+    if isinstance(node_field, basestring):
+        node_field = [node_field]
+
+    # filtering node instances
+    filtered_node_instances = _filter_node_instances(
+        ctx=ctx,
+        node_ids=node_ids,
+        node_instance_ids=node_instance_ids,
+        type_names=type_names,
+        operation=operation,
+        node_field_path=node_field,
+        node_field_value=node_field_value)
+
+    if run_by_dependency_order:
+        # if run by dependency order is set, then create stub subgraphs for the
+        # rest of the instances. This is done to support indirect
+        # dependencies, i.e. when instance A is dependent on instance B
+        # which is dependent on instance C, where A and C are to be executed
+        # with the operation on (i.e. they're in filtered_node_instances)
+        # yet B isn't.
+        # We add stub subgraphs rather than creating dependencies between A
+        # and C themselves since even though it may sometimes increase the
+        # number of dependency relationships in the execution graph, it also
+        # ensures their number is linear to the number of relationships in
+        # the deployment (e.g. consider if A and C are one out of N instances
+        # of their respective nodes yet there's a single instance of B -
+        # using subgraphs we'll have 2N relationships instead of N^2).
+        filtered_node_instances_ids = set(inst.id for inst in
+                                          filtered_node_instances)
+        for instance in ctx.node_instances:
+            if instance.id not in filtered_node_instances_ids:
+                subgraphs[instance.id] = graph.subgraph(instance.id)
+
+    # preparing the parameters to the execute_operation call
+    exec_op_params = {
+        'kwargs': operation_kwargs,
+        'operation': operation
+    }
+    if allow_kwargs_override is not None:
+        exec_op_params['allow_kwargs_override'] = allow_kwargs_override
+
+    # registering actual tasks to sequences
+    for instance in filtered_node_instances:
+        start_event_message = 'Starting operation {0}'.format(operation)
+        if operation_kwargs:
+            start_event_message += ' (Operation parameters: {0})'.format(
+                repr(operation_kwargs))
+        subgraph = graph.subgraph(instance.id)
+        sequence = subgraph.sequence()
+        sequence.add(
+            instance.send_event(start_event_message),
+            instance.execute_operation(**exec_op_params),
+            instance.send_event('Finished operation {0}'.format(operation)))
+        subgraphs[instance.id] = subgraph
+
+    # adding tasks dependencies if required
+    if run_by_dependency_order:
+        for instance in ctx.node_instances:
+            for rel in instance.relationships:
+                graph.add_dependency(subgraphs[instance.id],
+                                     subgraphs[rel.target_id])
+
+    graph.execute()

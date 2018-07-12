@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from jinja2 import Template
+import time
 
 from cloudify import ctx
 from cloudify import exceptions as cfy_exc
@@ -160,6 +161,7 @@ def run(**kwargs):
     while not connection.is_closed() and exit_command:
         ctx.logger.info("Execute close")
         result = connection.run(exit_command, promt_check, error_examples)
-        ctx.logger.info("Result of close: " + result)
+        ctx.logger.info("Result of close: " + repr(result))
+        time.sleep(1)
 
     connection.close()

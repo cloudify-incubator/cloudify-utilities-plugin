@@ -1,6 +1,8 @@
 scalable_entity_properties:
   two:
   - resource_name: two1
+    deep:
+      search: check
   - resource_name: two2
   three:
   - {}

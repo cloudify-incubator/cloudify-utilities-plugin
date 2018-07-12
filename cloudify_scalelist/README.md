@@ -24,7 +24,8 @@ Parameters:
 
 ### scaledownlist
 
-Remove all instances from same transaction/property as node selected by `scale_node_name`.
+Remove all instances from same transaction/property as node selected by
+`scale_node_name`.
 
 Parameters:
 * `scale_compute`: If a node name is passed as the `scale_node_name` parameter
@@ -35,11 +36,48 @@ Parameters:
 * `scale_transaction_field`: Place to save transaction id created in same
   transaction. Optional, can be skiped if we need to remove instance without
   relation to initial transaction.
-* `scale_node_name`: Node name where we need to search value. Optional, code
-  will search on all instances.
-* `scale_node_field`: Node runtime properties field name for search value.
+* `scale_node_name`: A list of node ids. The operation will be executed only on
+  node instances which are instances of these nodes. An empty list means no
+  filtering will take place and all nodes are valid (Default: "").
+* `scale_node_field`: Node runtime properties field name for search value,
+  supported search by ```['a', 'b']``` on ```{'a': {'b': 'c'}}``` return
+  ```c```.
 * `scale_node_field_value`: Node runtime properties field value for search.
   Can be provided as list of possible values.
+
+### update_operation_filtered
+
+Execute action on selected nodes.
+
+Parameters:
+* `operation`: The name of the operation to execute.
+  (Default: cloudify.interfaces.lifecycle.update).
+* `operation_kwargs`: A dictionary of keyword arguments that will be passed to
+  the operation invocation (Default: ```{}```).
+* `allow_kwargs_override`: A boolean describing whether overriding operations
+  inputs defined in the blueprint by using inputs of the same name in the
+  operation_kwargs parameter is allowed or not (Default: ```null```, means that
+  the default behavior, as defined by the workflows infrastructure, will be
+  used).
+* `run_by_dependency_order`: A boolean describing whether the operation should
+  execute on the relevant nodes according to the order of their relationships
+  dependencies or rather execute on all relevant nodes in parallel.
+  (Default: false).
+* `type_names`: A list of type names. The operation will be executed only on
+  node instances which are of these types or of types which (recursively)
+  derive from them. An empty list means no filtering will take place and all
+  type names are valid (Default: ```[]```).
+* `node_ids`: A list of node ids. The operation will be executed only on node
+  instances which are instances of these nodes. An empty list means no
+  filtering will take place and all nodes are valid (Default: ```[]```).
+* `node_instance_ids`: A list of node instance ids. The operation will be
+  executed only on the node instances specified. An empty list means no
+  filtering will take place and all node instances are valid.
+  (Default: ```[]```).
+* `node_field`: Node runtime properties field name for search value, supported
+  search by ```['a', 'b']``` on ```{'a': {'b': 'c'}}``` return ```c```.
+* `node_field_value`: Node runtime properties field value for search. Can be
+  provided as list of possible values.
 
 ## Examples
 
@@ -334,4 +372,24 @@ Executing workflow scaledownlist on deployment examples [timeout=900 seconds]
 2018-07-03 15:33:46.689  CFY <examples> 'scaledownlist' workflow execution succeeded
 Finished executing workflow scaledownlist on deployment examples
 * Run 'cfy events list -e 93c72e69-2ce7-411f-9121-9d0c2ba53852' to retrieve the execution's events/logs
+```
+
+## Run update on instances by field name, field value and node name.
+
+Run [update action](examples/update_params.yaml) for specific by property value on node 'two'.
+
+```shell
+$ cfy executions start update_operation_filtered -d examples -p cloudify-utilities-plugin/cloudify_scalelist/examples/update_params.yaml
+Executing workflow update_operation_filtered on deployment examples [timeout=900 seconds]
+2018-07-06 14:37:31.066  CFY <examples> Starting 'update_operation_filtered' workflow execution
+2018-07-06 14:37:32.000  CFY <examples> [two_4r9k30] Starting operation cloudify.interfaces.lifecycle.update (Operation parameters: {u'check': True})
+2018-07-06 14:37:32.000  CFY <examples> [two_4r9k30.update] Sending task 'script_runner.tasks.run'
+2018-07-06 14:37:32.000  CFY <examples> [two_4r9k30.update] Task started 'script_runner.tasks.run'
+2018-07-06 14:37:32.461  LOG <examples> [two_4r9k30.update] INFO: Downloaded scripts/update.py to /tmp/NILXD/update.py
+2018-07-06 14:37:32.461  LOG <examples> [two_4r9k30.update] INFO: Resulted properties: {u'predefined': u'', u'resource_name': u'two0', u'_transaction_id': u'two_precreated', u'resource_id': u'two_4r9k30', u'script_path': u'scripts/update.py', 'ctx': <cloudify.context.CloudifyContext object at 0x7f4f86b72150>, u'check': True}
+2018-07-06 14:37:33.003  CFY <examples> [two_4r9k30.update] Task succeeded 'script_runner.tasks.run'
+2018-07-06 14:37:34.006  CFY <examples> [two_4r9k30] Finished operation cloudify.interfaces.lifecycle.update
+2018-07-06 14:37:34.006  CFY <examples> 'update_operation_filtered' workflow execution succeeded
+Finished executing workflow update_operation_filtered on deployment examples
+* Run 'cfy events list -e 7f5231e7-e440-4378-ada1-9088fa405532' to retrieve the execution's events/logs
 ```

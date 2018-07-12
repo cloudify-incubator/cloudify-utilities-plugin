@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.8.2.zip
-    package_version: '1.8.2'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.0.zip
+    package_version: '1.9.0'
 
   cfy_files: *utilities_plugin
 
@@ -259,6 +259,16 @@ node_types:
             password: Cloudify User password.
             token: Cloudify User token.
             tenant: Cloudify Tenant name.
+        default: {}
+      plugins:
+        description: >
+          Optional, list of plugins for upload.
+            wagon_path: Url for plugin wagon file.
+            plugin_yaml_path: Url for plugin yaml file.
+        default: []
+      secrets:
+        description: >
+          Optional, dictionary of secrets for set before run deployments.
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -613,16 +623,75 @@ workflows:
         type: string
         default: ""
         description: >
-           Node name where we need to search value. Optional, code will search
-           on all instances.
+          A list of node ids. The operation will be executed only on node
+          instances which are instances of these nodes. An empty list means
+          no filtering will take place and all nodes are valid (Default: "").
       scale_node_field:
-        type: string
         default: ""
         description: >
-           Node runtime properties field name for search value
+          Node runtime properties field name for search value, supported search
+          by ['a', 'b'] on {'a': {'b': 'c'}} return 'c'
       scale_node_field_value:
-        type: string
         default: ""
         description: >
           Node runtime properties field value for search. Can be provided
           as list of possible values.
+
+  update_operation_filtered:
+    mapping: scalelist.cloudify_scalelist.workflows.execute_operation
+    parameters:
+      operation:
+        type: string
+        default: cloudify.interfaces.lifecycle.update
+        description: >
+          The name of the operation to execute
+          (Default: cloudify.interfaces.lifecycle.update).
+      operation_kwargs:
+        default: {}
+        description: >
+          A dictionary of keyword arguments that will be passed to the
+          operation invocation (Default: {}).
+      allow_kwargs_override:
+        default: null
+        description: >
+          A boolean describing whether overriding operations inputs defined in
+          the blueprint by using inputs of the same name in the
+          operation_kwargs parameter is allowed or not (Default: null [means
+          that the default behavior, as defined by the workflows
+          infrastructure, will be used]).
+      run_by_dependency_order:
+        default: false
+        description: >
+          A boolean describing whether the operation should execute on the
+          relevant nodes according to the order of their relationships
+          dependencies or rather execute on all relevant nodes in parallel
+          (Default: false).
+      type_names:
+        default: []
+        description: >
+          A list of type names. The operation will be executed only on node
+          instances which are of these types or of types which (recursively)
+          derive from them. An empty list means no filtering will take place
+          and all type names are valid (Default: []).
+      node_ids:
+        default: []
+        description: >
+          A list of node ids. The operation will be executed only on node
+          instances which are instances of these nodes. An empty list means
+          no filtering will take place and all nodes are valid (Default: []).
+      node_instance_ids:
+        default: []
+        description: >
+          A list of node instance ids. The operation will be executed only on
+          the node instances specified. An empty list means no filtering will
+          take place and all node instances are valid (Default: []).
+      node_field:
+        default: ""
+        description: >
+          Node runtime properties field name for search value, supported search
+          by ['a', 'b'] on {'a': {'b': 'c'}} return 'c'
+      node_field_value:
+        default: ""
+        description: >
+         Node runtime properties field value for search. Can be provided as
+         list of possible values.

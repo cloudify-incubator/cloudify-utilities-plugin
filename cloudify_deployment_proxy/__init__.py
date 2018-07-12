@@ -13,6 +13,7 @@
 #    * limitations under the License.
 
 import time
+import os
 from urlparse import urlparse
 
 from cloudify import ctx
@@ -26,6 +27,10 @@ from .constants import (
     EXECUTIONS_TIMEOUT,
     POLLING_INTERVAL,
     EXTERNAL_RESOURCE,
+    SECRETS_CREATE,
+    SECRETS_DELETE,
+    PLUGIN_UPLOAD,
+    PLUGIN_DELETE,
     BP_UPLOAD,
     BP_DELETE,
     DEP_CREATE,
@@ -43,7 +48,12 @@ from .polling import (
     poll_workflow_after_execute,
     dep_system_workflows_finished
 )
-from .utils import get_desired_value, update_attributes
+from .utils import (
+    get_desired_value,
+    update_attributes,
+    get_local_path,
+    zip_files
+)
 
 
 class DeploymentProxyBase(object):
@@ -58,6 +68,7 @@ class DeploymentProxyBase(object):
         full_operation_name = ctx.operation.name
         self.operation_name = full_operation_name.split('.').pop()
 
+        # cloudify client
         self.client_config = get_desired_value(
             'client', operation_inputs,
             ctx.instance.runtime_properties,
@@ -69,6 +80,21 @@ class DeploymentProxyBase(object):
         else:
             self.client = manager.get_rest_client()
 
+        # plugins
+        self.plugins = get_desired_value(
+            'plugins', operation_inputs,
+            ctx.instance.runtime_properties,
+            ctx.node.properties
+        )
+
+        # secrets
+        self.secrets = get_desired_value(
+            'secrets', operation_inputs,
+            ctx.instance.runtime_properties,
+            ctx.node.properties
+        )
+
+        # resource_config
         self.config = get_desired_value(
             'resource_config', operation_inputs,
             ctx.instance.runtime_properties,
@@ -185,7 +211,45 @@ class DeploymentProxyBase(object):
                                            BP_UPLOAD,
                                            client_args)
 
+    def _upload_plugins(self):
+        # plugins
+        if self.plugins:
+            if 'plugins' not in ctx.instance.runtime_properties.keys():
+                ctx.instance.runtime_properties['plugins'] = []
+
+            for plugin in self.plugins:
+                ctx.logger.info('Creating plugin zip archive..')
+                try:
+                    wagon_path = get_local_path(plugin['wagon_path'],
+                                                create_temp=True)
+                    yaml_path = get_local_path(plugin['plugin_yaml_path'],
+                                               create_temp=True)
+                    zip_path = zip_files([wagon_path, yaml_path])
+                    # upload plugin
+                    plugin = self.dp_get_client_response(
+                        'plugins', PLUGIN_UPLOAD, {'plugin_path': zip_path})
+                    ctx.instance.runtime_properties['plugins'].append(
+                        plugin.id)
+                    ctx.logger.info('Uploaded {}'.format(repr(plugin.id)))
+                finally:
+                    os.remove(wagon_path)
+                    os.remove(yaml_path)
+                    os.remove(zip_path)
+
+    def _set_secrets(self):
+        # secrets set
+        if self.secrets:
+            for secret_name in self.secrets:
+                self.dp_get_client_response('secrets', SECRETS_CREATE, {
+                    'key': secret_name,
+                    'value': self.secrets[secret_name],
+                })
+                ctx.logger.info('Created secret {}'.format(repr(secret_name)))
+
     def create_deployment(self):
+
+        self._set_secrets()
+        self._upload_plugins()
 
         client_args = \
             dict(blueprint_id=self.blueprint_id,
@@ -255,6 +319,31 @@ class DeploymentProxyBase(object):
 
         return self.verify_execution_successful()
 
+    def _delete_plugins(self):
+        # remove uploaded plugins
+        plugins = ctx.instance.runtime_properties.get('plugins', [])
+        for plugin_id in plugins:
+            self.dp_get_client_response('plugins', PLUGIN_DELETE, {
+                'plugin_id': plugin_id
+            })
+            ctx.logger.info('Removed plugin {}'.format(repr(plugin_id)))
+
+    def _delete_secrets(self):
+        # secrets delete
+        if self.secrets:
+            for secret_name in self.secrets:
+                self.dp_get_client_response('secrets', SECRETS_DELETE, {
+                    'key': secret_name,
+                })
+                ctx.logger.info('Removed secret {}'.format(repr(secret_name)))
+
+    def _delete_properties(self):
+        # remove properties
+        for property_name in ['deployment', 'executions', 'blueprint',
+                              'plugins']:
+            if property_name in ctx.instance.runtime_properties:
+                del ctx.instance.runtime_properties[property_name]
+
     def delete_deployment(self):
 
         client_args = dict(deployment_id=self.deployment_id)
@@ -290,9 +379,6 @@ class DeploymentProxyBase(object):
                 pollster_args=pollster_args,
                 expected_result=False)
 
-        if 'deployment' in ctx.instance.runtime_properties:
-            del ctx.instance.runtime_properties['deployment']
-
         ctx.logger.info("Little wait internal cleanup services.")
         time.sleep(POLLING_INTERVAL)
         ctx.logger.info("Wait for stop all system workflows.")
@@ -309,6 +395,10 @@ class DeploymentProxyBase(object):
                             .format(self.blueprint_id))
             client_args = dict(blueprint_id=self.blueprint_id)
             self.dp_get_client_response('blueprints', BP_DELETE, client_args)
+
+        self._delete_plugins()
+        self._delete_secrets()
+        self._delete_properties()
 
         return poll_result
 

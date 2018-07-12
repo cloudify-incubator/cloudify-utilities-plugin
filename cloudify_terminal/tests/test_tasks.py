@@ -12,7 +12,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import unittest
-from mock import MagicMock, patch, call
+from mock import Mock, patch, call
 
 from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
@@ -56,20 +56,23 @@ class TestTasks(unittest.TestCase):
         current_ctx.set(_ctx)
         return _ctx
 
+    @patch('time.sleep', Mock())
     def test_run_without_calls(self):
         self._gen_ctx()
         tasks.run()
 
+    @patch('time.sleep', Mock())
     def test_run_without_auth(self):
         self._gen_ctx()
         with self.assertRaises(NonRecoverableError):
             tasks.run(calls=[{'action': 'ls'}])
 
+    @patch('time.sleep', Mock())
     def test_run_auth(self):
         self._gen_ctx()
-        ssh_mock = MagicMock()
-        ssh_mock.connect = MagicMock(side_effect=OSError("e"))
-        with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
+        ssh_mock = Mock()
+        ssh_mock.connect = Mock(side_effect=OSError("e"))
+        with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
                     calls=[{'action': 'ls'}],
@@ -80,11 +83,12 @@ class TestTasks(unittest.TestCase):
             'ip', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user')
 
+    @patch('time.sleep', Mock())
     def test_run_auth_relationship(self):
         self._gen_relation_ctx()
-        ssh_mock = MagicMock()
-        ssh_mock.connect = MagicMock(side_effect=OSError("e"))
-        with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
+        ssh_mock = Mock()
+        ssh_mock.connect = Mock(side_effect=OSError("e"))
+        with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
                     calls=[{'action': 'ls'}],
@@ -95,11 +99,12 @@ class TestTasks(unittest.TestCase):
             'ip', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user')
 
+    @patch('time.sleep', Mock())
     def test_run_auth_with_host_ip(self):
         _ctx = self._gen_ctx()
-        ssh_mock = MagicMock()
-        ssh_mock.connect = MagicMock(side_effect=OSError("e"))
-        with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
+        ssh_mock = Mock()
+        ssh_mock.connect = Mock(side_effect=OSError("e"))
+        with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
                 _ctx.instance.host_ip = 'ip'
                 tasks.run(
@@ -111,11 +116,12 @@ class TestTasks(unittest.TestCase):
             'ip', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user')
 
+    @patch('time.sleep', Mock())
     def test_run_auth_several_ips(self):
         self._gen_ctx()
-        ssh_mock = MagicMock()
-        ssh_mock.connect = MagicMock(side_effect=OSError("e"))
-        with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
+        ssh_mock = Mock()
+        ssh_mock.connect = Mock(side_effect=OSError("e"))
+        with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
                     calls=[{'action': 'ls'}],
@@ -128,12 +134,13 @@ class TestTasks(unittest.TestCase):
             'ip2', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user')])
 
+    @patch('time.sleep', Mock())
     def test_run_auth_enabled_logs(self):
         _ctx = self._gen_ctx()
-        connection_mock = MagicMock()
-        connection_mock.connect = MagicMock(side_effect=OSError("e"))
+        connection_mock = Mock()
+        connection_mock.connect = Mock(side_effect=OSError("e"))
         with patch("cloudify_terminal.terminal_connection.connection",
-                   MagicMock(return_value=connection_mock)):
+                   Mock(return_value=connection_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
                     calls=[{'action': 'ls'}],
@@ -145,14 +152,15 @@ class TestTasks(unittest.TestCase):
             log_file_name='/tmp/terminal-execution_id_node_name_None.log',
             logger=_ctx.logger)
 
+    @patch('time.sleep', Mock())
     def test_run_without_any_real_calls(self):
         self._gen_ctx()
-        connection_mock = MagicMock()
-        connection_mock.connect = MagicMock(return_value="")
-        connection_mock.run = MagicMock(return_value="")
+        connection_mock = Mock()
+        connection_mock.connect = Mock(return_value="")
+        connection_mock.run = Mock(return_value="")
 
         with patch("cloudify_terminal.terminal_connection.connection",
-                   MagicMock(return_value=connection_mock)):
+                   Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
@@ -161,14 +169,15 @@ class TestTasks(unittest.TestCase):
 
         connection_mock.run.assert_not_called()
 
+    @patch('time.sleep', Mock())
     def test_run_run_without_save(self):
         _ctx = self._gen_ctx()
-        connection_mock = MagicMock()
-        connection_mock.connect = MagicMock(return_value="")
-        connection_mock.run = MagicMock(return_value="localhost")
+        connection_mock = Mock()
+        connection_mock.connect = Mock(return_value="")
+        connection_mock.run = Mock(return_value="localhost")
 
         with patch("cloudify_terminal.terminal_connection.connection",
-                   MagicMock(return_value=connection_mock)):
+                   Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'action': 'hostname'}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
@@ -180,15 +189,16 @@ class TestTasks(unittest.TestCase):
         self.assertIsNone(
             _ctx.instance.runtime_properties.get('place_for_save'))
 
+    @patch('time.sleep', Mock())
     def test_run_run_with_template(self):
         _ctx = self._gen_ctx()
-        connection_mock = MagicMock()
-        connection_mock.connect = MagicMock(return_value="")
-        connection_mock.run = MagicMock(return_value="localhost")
-        _ctx.get_resource = MagicMock(side_effect=[False, "bb", "{{ aa }}"])
+        connection_mock = Mock()
+        connection_mock.connect = Mock(return_value="")
+        connection_mock.run = Mock(return_value="localhost")
+        _ctx.get_resource = Mock(side_effect=[False, "bb", "{{ aa }}"])
 
         with patch("cloudify_terminal.terminal_connection.connection",
-                   MagicMock(return_value=connection_mock)):
+                   Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'template': '1.txt'},
                        {'template': '2.txt'},
@@ -203,14 +213,15 @@ class TestTasks(unittest.TestCase):
         self.assertIsNone(
             _ctx.instance.runtime_properties.get('place_for_save'))
 
+    @patch('time.sleep', Mock())
     def test_run_run_with_text_template(self):
         _ctx = self._gen_ctx()
-        connection_mock = MagicMock()
-        connection_mock.connect = MagicMock(return_value="")
-        connection_mock.run = MagicMock(return_value="localhost")
+        connection_mock = Mock()
+        connection_mock.connect = Mock(return_value="")
+        connection_mock.run = Mock(return_value="localhost")
 
         with patch("cloudify_terminal.terminal_connection.connection",
-                   MagicMock(return_value=connection_mock)):
+                   Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'template_text': ""},
                        {'template_text': "bb"},
@@ -225,14 +236,15 @@ class TestTasks(unittest.TestCase):
         self.assertIsNone(
             _ctx.instance.runtime_properties.get('place_for_save'))
 
+    @patch('time.sleep', Mock())
     def test_run_with_save(self):
         _ctx = self._gen_ctx()
-        connection_mock = MagicMock()
-        connection_mock.connect = MagicMock(return_value="")
-        connection_mock.run = MagicMock(return_value="localhost")
+        connection_mock = Mock()
+        connection_mock.connect = Mock(return_value="")
+        connection_mock.run = Mock(return_value="localhost")
 
         with patch("cloudify_terminal.terminal_connection.connection",
-                   MagicMock(return_value=connection_mock)):
+                   Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'action': 'hostname\n \nls',
                         'save_to': 'place_for_save'}],
@@ -247,14 +259,15 @@ class TestTasks(unittest.TestCase):
             _ctx.instance.runtime_properties.get('place_for_save'),
             'localhost\nlocalhost')
 
+    @patch('time.sleep', Mock())
     def test_run_with_save_responses(self):
         _ctx = self._gen_ctx()
-        connection_mock = MagicMock()
-        connection_mock.connect = MagicMock(return_value="")
-        connection_mock.run = MagicMock(return_value="localhost")
+        connection_mock = Mock()
+        connection_mock.connect = Mock(return_value="")
+        connection_mock.run = Mock(return_value="localhost")
 
         with patch("cloudify_terminal.terminal_connection.connection",
-                   MagicMock(return_value=connection_mock)):
+                   Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'action': 'hostname', 'save_to': 'place_for_save',
                         'responses': [{'question': 'yes?', 'answer': 'no'}],
@@ -271,15 +284,16 @@ class TestTasks(unittest.TestCase):
             _ctx.instance.runtime_properties.get('place_for_save'),
             'localhost')
 
+    @patch('time.sleep', Mock())
     def test_run_run_with_close(self):
         _ctx = self._gen_ctx()
-        connection_mock = MagicMock()
-        connection_mock.connect = MagicMock(return_value="")
-        connection_mock.run = MagicMock(return_value="localhost")
-        connection_mock.is_closed = MagicMock(side_effect=[False, True])
+        connection_mock = Mock()
+        connection_mock.connect = Mock(return_value="")
+        connection_mock.run = Mock(return_value="localhost")
+        connection_mock.is_closed = Mock(side_effect=[False, True])
 
         with patch("cloudify_terminal.terminal_connection.connection",
-                   MagicMock(return_value=connection_mock)):
+                   Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
