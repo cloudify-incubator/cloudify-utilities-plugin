@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/scale_executer.zip
-    package_version: '1.8.3'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.0.zip
+    package_version: '1.9.0'
 
   cfy_files: *utilities_plugin
 
@@ -259,6 +259,16 @@ node_types:
             password: Cloudify User password.
             token: Cloudify User token.
             tenant: Cloudify Tenant name.
+        default: {}
+      plugins:
+        description: >
+          Optional, list of plugins for upload.
+            wagon_path: Url for plugin wagon file.
+            plugin_yaml_path: Url for plugin yaml file.
+        default: []
+      secrets:
+        description: >
+          Optional, dictionary of secrets for set before run deployments.
         default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -613,15 +623,15 @@ workflows:
         type: string
         default: ""
         description: >
-           Node name where we need to search value. Optional, code will search
-           on all instances.
+          A list of node ids. The operation will be executed only on node
+          instances which are instances of these nodes. An empty list means
+          no filtering will take place and all nodes are valid (Default: "").
       scale_node_field:
-        type: string
         default: ""
         description: >
-           Node runtime properties field name for search value
+          Node runtime properties field name for search value, supported search
+          by ['a', 'b'] on {'a': {'b': 'c'}} return 'c'
       scale_node_field_value:
-        type: string
         default: ""
         description: >
           Node runtime properties field value for search. Can be provided
@@ -676,12 +686,11 @@ workflows:
           the node instances specified. An empty list means no filtering will
           take place and all node instances are valid (Default: []).
       node_field:
-        type: string
         default: ""
         description: >
-          Node runtime properties field name for search value
+          Node runtime properties field name for search value, supported search
+          by ['a', 'b'] on {'a': {'b': 'c'}} return 'c'
       node_field_value:
-        type: string
         default: ""
         description: >
          Node runtime properties field value for search. Can be provided as
