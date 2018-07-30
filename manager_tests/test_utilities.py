@@ -16,8 +16,12 @@ class TestUtilities(EcosystemTestBase):
         if 'ECOSYSTEM_SESSION_MANAGER_IP' not in os.environ:
             self.manager_ip = 'localhost'
             self.upload_plugins('cfy_util')
-        os.environ['ECOSYSTEM_SESSION_MANAGER_IP'] = self.manager_ip
+        os.environ['ECOSYSTEM_SESSION_MANAGER_IP'] = 'localhost'
         super(TestUtilities, self).setUp()
+
+    @property
+    def manager_ip(self):
+        return 'localhost'
 
     @property
     def node_type_prefix(self):
@@ -52,6 +56,9 @@ class TestUtilities(EcosystemTestBase):
             return {}
         except KeyError:
             raise
+
+    def install_manager(self, _):
+        pass
 
     @staticmethod
     def uninstall_manager(cfy_local):
