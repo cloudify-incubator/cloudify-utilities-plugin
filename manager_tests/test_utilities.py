@@ -1,8 +1,9 @@
 # Built-in Imports
 import os
+import sys
 
 # Cloudify Imports
-from ecosystem_tests import EcosystemTestBase, utils
+from ecosystem_tests import EcosystemTestBase, utils, PasswordFilter
 
 
 SSH_KEY_BP_ZIP = 'https://github.com/cloudify-examples/' \
@@ -11,13 +12,29 @@ SSH_KEY_BP_ZIP = 'https://github.com/cloudify-examples/' \
 
 class TestUtilities(EcosystemTestBase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         os.environ['ECOSYSTEM_SESSION_PASSWORD'] = 'admin'
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            del os.environ['ECOSYSTEM_SESSION_MANAGER_IP']
+            del os.environ['ECOSYSTEM_SESSION_LOADED']
+            del os.environ['ECOSYSTEM_SESSION_PASSWORD']
+            del os.environ['CLOUDIFY_STORAGE_DIR']
+            del os.environ['ECOSYSTEM_SESSION_BLUEPRINT_DIR']
+        except KeyError:
+            pass
+
+    def setUp(self):
+        if self.password not in self.sensitive_data:
+            self.sensitive_data.append(self.password)
+        sys.stdout = PasswordFilter(self.sensitive_data, sys.stdout)
+        sys.stderr = PasswordFilter(self.sensitive_data, sys.stderr)
         if 'ECOSYSTEM_SESSION_MANAGER_IP' not in os.environ:
-            self.manager_ip = 'localhost'
             self.upload_plugins('cfy_util')
         os.environ['ECOSYSTEM_SESSION_MANAGER_IP'] = 'localhost'
-        super(TestUtilities, self).setUp()
 
     @property
     def manager_ip(self):
@@ -64,7 +81,7 @@ class TestUtilities(EcosystemTestBase):
     def uninstall_manager(cfy_local):
         pass
 
-    def test_install_ssh_key(self, blueprint_id):
+    def test_install_ssh_key(self):
         blueprint_id = 'sshkey-{0}'.format(self.application_prefix)
         utils.upload_blueprint(
             SSH_KEY_BP_ZIP,
@@ -81,9 +98,9 @@ class TestUtilities(EcosystemTestBase):
             raise Exception(
                 'agent_key_private or agent_key_public not in secrets')
 
-    def test_install_deployment_proxy_new(self, blueprint_id):
+    def test_install_deployment_proxy_A_new(self):
         blueprint_id = 'dp-{0}'.format(self.application_prefix)
-        parent_id = '{0}-parent'.format(blueprint_id)
+        parent_id = 'dp-{0}-parent'.format(self.application_prefix)
         utils.execute_command(
             'cfy blueprints upload cloudify_deployment_proxy/'
             'examples/test-blueprint.yaml -b {0}'.format(
@@ -100,8 +117,8 @@ class TestUtilities(EcosystemTestBase):
             raise Exception(
                 'output1 not in {0}'.format(deployment_outputs))
 
-    def test_install_deployment_proxy_external(self, blueprint_id):
-        blueprint_id = 'dp-{0}'.format(self.application_prefix)
+    def test_install_deployment_proxy_B_external(self):
+        blueprint_id = 'dp-{0}-parent'.format(self.application_prefix)
         parent_id = '{0}-existing'.format(blueprint_id)
         utils.execute_command(
             'cfy blueprints upload cloudify_deployment_proxy/'
@@ -120,7 +137,7 @@ class TestUtilities(EcosystemTestBase):
             raise Exception(
                 'output1 not in {0}'.format(deployment_outputs))
 
-    def test_install_cloud_init(self, blueprint_id):
+    def test_install_cloud_init(self):
         blueprint_id = 'cfyinit-{0}'.format(self.application_prefix)
         utils.execute_command(
             'cfy blueprints upload cloudify_cloudinit/'
@@ -138,7 +155,7 @@ class TestUtilities(EcosystemTestBase):
                 '{0} not in {1}'.format('#cloud-config', cloud_config))
         utils.execute_uninstall(blueprint_id)
 
-    def test_install_file(self, blueprint_id):
+    def test_install_file(self):
         blueprint_id = 'file-{0}'.format(self.application_prefix)
         file_path = '/tmp/{0}'.format(blueprint_id)
         utils.execute_command(
