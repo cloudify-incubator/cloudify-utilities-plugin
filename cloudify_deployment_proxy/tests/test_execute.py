@@ -61,6 +61,7 @@ class TestExecute(DeploymentProxyTestBase):
                                       workflow_id='install')
             self.assertIn('action start failed',
                           error.message)
+        del _ctx, mock_client
 
     def test_execute_start_timeout(self):
         # Tests that execute start fails on timeout
@@ -84,6 +85,7 @@ class TestExecute(DeploymentProxyTestBase):
                 self.assertIn(
                     'Execution timeout',
                     error.message)
+        del _ctx, mock_client
 
     def test_execute_start_succeeds(self):
         # Tests that execute start succeeds
@@ -103,7 +105,8 @@ class TestExecute(DeploymentProxyTestBase):
                                        deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
-                self.assertTrue(output)
+                self.assertFalse(output)
+        del _ctx, mock_client
 
     def test_execute_deployment_not_ready(self):
         # Tests that execute start succeeds
@@ -141,6 +144,7 @@ class TestExecute(DeploymentProxyTestBase):
                                    workflow_id='install',
                                    timeout=.001)
             self.assertIsNone(output)
+        del _ctx, mock_client
 
     def test_execute_start_succeeds_not_finished(self):
         # Tests that execute start succeeds
@@ -161,15 +165,16 @@ class TestExecute(DeploymentProxyTestBase):
                                        deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
-                self.assertTrue(output)
+                self.assertFalse(output)
+        del _ctx, mock_client
 
     def test_execute_start_succeeds_node_instance_proxy(self):
         # Tests that execute start succeeds
 
         test_name = 'test_execute_start_succeeds_node_instance_proxy'
-        _ctx = self.get_mock_ctx(test_name)
+        _ctx = self.get_mock_ctx(test_name, node_type=NIP_TYPE)
         current_ctx.set(_ctx)
-        _ctx.node.type = NIP_TYPE
+        # _ctx.node.type = NIP_TYPE
         ni = {}
         _ctx.node.properties['resource_config']['node_instance'] = ni
         _ctx.instance.runtime_properties['deployment'] = {}
@@ -184,15 +189,16 @@ class TestExecute(DeploymentProxyTestBase):
                                        deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
-                self.assertTrue(output)
+                self.assertFalse(output)
+        del _ctx, mock_client
 
     def test_execute_start_succeeds_weird_node_type(self):
         # Tests that execute start succeeds
 
         test_name = 'test_execute_start_succeeds_weird_node_type'
-        _ctx = self.get_mock_ctx(test_name)
+        _ctx = self.get_mock_ctx(test_name, node_type=NIP_TYPE)
         current_ctx.set(_ctx)
-        _ctx.node.type = 'cloudify.nodes.WeirdNodeType'
+        # _ctx.node.type = 'cloudify.nodes.WeirdNodeType'
         _ctx.instance.runtime_properties['deployment'] = {}
 
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
@@ -206,13 +212,14 @@ class TestExecute(DeploymentProxyTestBase):
                                        workflow_id='install',
                                        timeout=.001)
                 self.assertFalse(output)
+        del _ctx, mock_client
 
     def test_post_execute_client_error(self):
         # Tests that execute client error ignored
 
         test_name = 'test_post_execute_client_error'
-        _ctx = self.get_mock_ctx(test_name)
-        _ctx.node.type = DEP_TYPE
+        _ctx = self.get_mock_ctx(test_name, node_type=DEP_TYPE)
+        # _ctx.node.type = DEP_TYPE
         current_ctx.set(_ctx)
         _ctx.instance.runtime_properties['deployment'] = dict()
 
@@ -241,15 +248,16 @@ class TestExecute(DeploymentProxyTestBase):
                                            workflow_id='install',
                                            client={'host': 'localhost'},
                                            timeout=.001)
-                self.assertTrue(output)
+                self.assertFalse(output)
+        del _ctx, mock_client
 
     def test_execute_start_succeeds_node_instance_proxy_matches(self):
         # Tests that execute start succeeds
 
         test_name = 'test_execute_start_succeeds_node_instance_proxy'
-        _ctx = self.get_mock_ctx(test_name)
+        _ctx = self.get_mock_ctx(test_name, node_type=NIP_TYPE)
         current_ctx.set(_ctx)
-        _ctx.node.type = NIP_TYPE
+        # _ctx.node.type = NIP_TYPE
         ni = {'id': test_name}
         _ctx.node.properties['resource_config']['node_instance'] = ni
         _ctx.instance.runtime_properties['deployment'] = {}
@@ -264,4 +272,5 @@ class TestExecute(DeploymentProxyTestBase):
                                        deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
-                self.assertTrue(output)
+                self.assertFalse(output)
+        del _ctx, mock_client

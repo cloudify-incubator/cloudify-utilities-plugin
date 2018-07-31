@@ -1,39 +1,88 @@
 # Built-in Imports
 import os
+import sys
 
 # Cloudify Imports
-from ecosystem_tests import TestLocal, utils
+from ecosystem_tests import EcosystemTestBase, utils, PasswordFilter
 
 
 SSH_KEY_BP_ZIP = 'https://github.com/cloudify-examples/' \
                  'helpful-blueprint/archive/master.zip'
 
 
-class TestUtilities(TestLocal):
+class TestUtilities(EcosystemTestBase):
 
-    def setup_cfy_local(self):
-        return
+    @classmethod
+    def setUpClass(cls):
+        os.environ['ECOSYSTEM_SESSION_PASSWORD'] = 'admin'
 
-    def install_manager(self):
-        return
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            del os.environ['ECOSYSTEM_SESSION_MANAGER_IP']
+            del os.environ['ECOSYSTEM_SESSION_LOADED']
+            del os.environ['ECOSYSTEM_SESSION_PASSWORD']
+            del os.environ['CLOUDIFY_STORAGE_DIR']
+            del os.environ['ECOSYSTEM_SESSION_BLUEPRINT_DIR']
+        except KeyError:
+            pass
 
-    def uninstall_manager(self):
-        return
+    def setUp(self):
+        if self.password not in self.sensitive_data:
+            self.sensitive_data.append(self.password)
+        sys.stdout = PasswordFilter(self.sensitive_data, sys.stdout)
+        sys.stderr = PasswordFilter(self.sensitive_data, sys.stderr)
+        if 'ECOSYSTEM_SESSION_MANAGER_IP' not in os.environ:
+            self.upload_plugins('cfy_util')
+        os.environ['ECOSYSTEM_SESSION_MANAGER_IP'] = 'localhost'
 
+    @property
+    def manager_ip(self):
+        return 'localhost'
+
+    @property
+    def node_type_prefix(self):
+        return 'cloudify.nodes.aws'
+
+    @property
+    def plugin_mapping(self):
+        return 'awssdk'
+
+    @property
+    def blueprint_file_name(self):
+        return 'aws.yaml'
+
+    @property
+    def external_id_key(self):
+        return 'aws_resource_id'
+
+    @property
+    def server_ip_property(self):
+        return 'ip'
+
+    @property
+    def sensitive_data(self):
+        return [
+            os.environ['AWS_SECRET_ACCESS_KEY'],
+            os.environ['AWS_ACCESS_KEY_ID']
+        ]
+
+    @property
     def inputs(self):
         try:
             return {}
         except KeyError:
             raise
 
-    def setUp(self):
-        os.environ['ECOSYSTEM_SESSION_PASSWORD'] = 'admin'
-        super(TestUtilities, self).setUp('azure.yaml')
-        if 'ECOSYSTEM_SESSION_MANAGER_IP' not in os.environ:
-            self.manager_ip = 'localhost'
-        os.environ['ECOSYSTEM_SESSION_MANAGER_IP'] = self.manager_ip
+    def install_manager(self, _):
+        pass
 
-    def install_ssh_key(self, blueprint_id):
+    @staticmethod
+    def uninstall_manager(cfy_local):
+        pass
+
+    def test_install_ssh_key(self):
+        blueprint_id = 'sshkey-{0}'.format(self.application_prefix)
         utils.upload_blueprint(
             SSH_KEY_BP_ZIP,
             blueprint_id,
@@ -49,8 +98,14 @@ class TestUtilities(TestLocal):
             raise Exception(
                 'agent_key_private or agent_key_public not in secrets')
 
-    def install_deployment_proxy_new(self, blueprint_id):
-        parent_id = '{0}-parent'.format(blueprint_id)
+    # There are two Deployment Proxy Tests and should be executed in order.
+    # test_install_deployment_proxy_A_new
+    # test_install_deployment_proxy_B_external
+    # Nose executes according to alphabetical order.
+    # The second test uses a deployment created in the first test.
+    def test_install_deployment_proxy_A_new(self):
+        blueprint_id = 'dp-{0}'.format(self.application_prefix)
+        parent_id = 'dp-{0}-parent'.format(self.application_prefix)
         utils.execute_command(
             'cfy blueprints upload cloudify_deployment_proxy/'
             'examples/test-blueprint.yaml -b {0}'.format(
@@ -67,7 +122,8 @@ class TestUtilities(TestLocal):
             raise Exception(
                 'output1 not in {0}'.format(deployment_outputs))
 
-    def install_deployment_proxy_external(self, blueprint_id):
+    def test_install_deployment_proxy_B_external(self):
+        blueprint_id = 'dp-{0}-parent'.format(self.application_prefix)
         parent_id = '{0}-existing'.format(blueprint_id)
         utils.execute_command(
             'cfy blueprints upload cloudify_deployment_proxy/'
@@ -86,7 +142,8 @@ class TestUtilities(TestLocal):
             raise Exception(
                 'output1 not in {0}'.format(deployment_outputs))
 
-    def install_cloud_init(self, blueprint_id):
+    def test_install_cloud_init(self):
+        blueprint_id = 'cfyinit-{0}'.format(self.application_prefix)
         utils.execute_command(
             'cfy blueprints upload cloudify_cloudinit/'
             'examples/simple.yaml -b {0}'.format(
@@ -103,7 +160,8 @@ class TestUtilities(TestLocal):
                 '{0} not in {1}'.format('#cloud-config', cloud_config))
         utils.execute_uninstall(blueprint_id)
 
-    def install_file(self, blueprint_id):
+    def test_install_file(self):
+        blueprint_id = 'file-{0}'.format(self.application_prefix)
         file_path = '/tmp/{0}'.format(blueprint_id)
         utils.execute_command(
             'cfy blueprints upload cloudify_files/'
@@ -122,7 +180,8 @@ class TestUtilities(TestLocal):
             raise Exception(
                 '{0} not deleted.'.format(file_path))
 
-    def install_rest(self, blueprint_id):
+    def test_install_rest(self):
+        blueprint_id = 'rest-{0}'.format(self.application_prefix)
         utils.execute_command(
             'cfy blueprints upload cloudify_rest/'
             'examples/example-4-blueprint.yaml -b {0}'.format(
@@ -139,36 +198,3 @@ class TestUtilities(TestLocal):
                 '{0} not in {1}'.format(
                     'commit', rest_instance['result_propeties']))
         utils.execute_uninstall(blueprint_id)
-
-    def install_blueprints(self):
-        ssh_id = 'sshkey-{0}'.format(
-            os.environ['CIRCLE_BUILD_NUM'])
-        proxy_id = 'proxy-{0}'.format(
-            os.environ['CIRCLE_BUILD_NUM'])
-        cloud_init_id = 'cloud-init-{0}'.format(
-            os.environ['CIRCLE_BUILD_NUM'])
-        file_id = 'file-{0}'.format(
-            os.environ['CIRCLE_BUILD_NUM'])
-        rest_id = 'rest-{0}'.format(
-            os.environ['CIRCLE_BUILD_NUM'])
-        self.install_ssh_key(ssh_id)
-        self.install_deployment_proxy_new(proxy_id)
-        self.install_deployment_proxy_external(proxy_id)
-        utils.execute_uninstall('{0}-parent'.format(proxy_id))
-        utils.execute_uninstall('{0}-existing'.format(proxy_id))
-        utils.execute_uninstall(proxy_id)
-        self.install_cloud_init(cloud_init_id)
-        self.install_file(file_id)
-        self.install_rest(rest_id)
-
-    def test_blueprints(self):
-        utils.update_plugin_yaml(
-            os.environ['CIRCLE_SHA1'], 'cfy_util')
-        workspace_path = os.path.join(
-            os.path.abspath('workspace'),
-            'build')
-        utils.upload_plugin(
-            utils.get_wagon_path(workspace_path))
-        for plugin in self.plugins_to_upload:
-            utils.upload_plugin(plugin[0], plugin[1])
-        self.install_blueprints()

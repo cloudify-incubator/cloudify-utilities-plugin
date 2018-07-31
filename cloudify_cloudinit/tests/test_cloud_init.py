@@ -53,8 +53,10 @@ class CloudifyCloudInitTestBase(testtools.TestCase):
 
         ctx.operation._operation_context = {'name': 'some.test'}
         ctx.node.type_hierarchy = ['cloudify.nodes.Root', node_type]
-        ctx.node.type = node_type
-
+        try:
+            ctx.node.type = node_type
+        except AttributeError:
+            ctx.logger.error('Failed to set node type attribute.')
         return ctx
 
     def test_operation_update(self):

@@ -367,6 +367,9 @@ class TestPolling(DeploymentProxyTestBase):
 
     # test that success=False raises exception
     def test_poll_workflow_after_execute_failed(self):
+        _ctx = self.get_mock_ctx('test_poll_workflow_after_execute_failed')
+        _ctx.logger.log = mock.MagicMock(return_value=None)
+        current_ctx.set(_ctx)
         with mock.patch(
                 'cloudify_deployment_proxy.polling.poll_with_timeout') \
                 as mocked_fn:
@@ -380,6 +383,9 @@ class TestPolling(DeploymentProxyTestBase):
 
     # test that success=True returns True
     def test_poll_workflow_after_execute_success(self):
+        _ctx = self.get_mock_ctx('test_poll_workflow_after_execute_success')
+        _ctx.logger.log = mock.MagicMock(return_value=None)
+        current_ctx.set(_ctx)
         with mock.patch(
                 'cloudify_deployment_proxy.polling.poll_with_timeout') \
                 as mocked_fn:
@@ -419,7 +425,7 @@ class TestPolling(DeploymentProxyTestBase):
             '2017-03-22T11:41:59.169Z [vm_ke9e2d.create] Successfully '
             'configured cfy-agent')
 
-    def test_dep_logs_redirect_unknow_level(self):
+    def test_dep_logs_redirect_unknown_level(self):
         test_name = "dep_logs_redirect_predefined_level"
         _ctx = self.get_mock_ctx(test_name)
         _ctx.logger.log = mock.MagicMock(return_value=None)
