@@ -2,8 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-#  - plugins/cloudify-rest-plugin/plugin.yaml
-  - https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.5.0/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.0/plugin.yaml
 
 inputs:
 
