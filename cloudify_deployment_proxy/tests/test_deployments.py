@@ -69,11 +69,17 @@ class TestDeployment(DeploymentProxyTestBase):
         _ctx = self.get_mock_ctx(test_name)
         current_ctx.set(_ctx)
 
-        current_ctx.set(_ctx)
         _ctx.instance.runtime_properties['deployment'] = {}
         _ctx.instance.runtime_properties['deployment']['id'] = test_name
+        _ctx.instance.runtime_properties['secrets'] = {'a': 'b'}
+        _ctx.instance.runtime_properties['plugins'] = ['plugin_id']
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            mock_client.return_value = MockCloudifyRestClient()
+            cfy_mock_client = MockCloudifyRestClient()
+            cfy_mock_client.secrets.delete = mock.Mock()
+            cfy_mock_client.plugins.delete = mock.Mock()
+            mock_client.return_value = cfy_mock_client
+
             poll_with_timeout_test = \
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
@@ -84,6 +90,10 @@ class TestDeployment(DeploymentProxyTestBase):
                     timeout=.001)
                 self.assertTrue(output)
 
+            cfy_mock_client.secrets.delete.assert_called_with(key='a')
+            cfy_mock_client.plugins.delete.assert_called_with(
+                plugin_id='plugin_id')
+
     def test_delete_deployment_any_dep_by_id(self):
         # Tests that deployments runs any_dep_by_id
 
@@ -91,7 +101,6 @@ class TestDeployment(DeploymentProxyTestBase):
         _ctx = self.get_mock_ctx(test_name)
         current_ctx.set(_ctx)
 
-        current_ctx.set(_ctx)
         _ctx.instance.runtime_properties['deployment'] = {}
         _ctx.instance.runtime_properties['deployment']['id'] = test_name
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
@@ -168,6 +177,8 @@ class TestDeployment(DeploymentProxyTestBase):
         test_name = 'test_create_deployment_success'
         _ctx = self.get_mock_ctx(test_name)
         current_ctx.set(_ctx)
+
+        _ctx.node.properties['secrets'] = {'a': 'b'}
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             list_response = cfy_mock_client.executions.list()
@@ -184,13 +195,18 @@ class TestDeployment(DeploymentProxyTestBase):
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
 
             cfy_mock_client.executions.list = mock_return
+            cfy_mock_client.secrets.create = mock.Mock()
             mock_client.return_value = cfy_mock_client
 
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
+
                 output = create_deployment(operation='create_deployment',
                                            timeout=.01)
                 self.assertTrue(output)
+
+            cfy_mock_client.secrets.create.assert_called_with(key='a',
+                                                              value='b')
 
     def test_create_deployment_exists(self):
         # Tests that create deployment exists
