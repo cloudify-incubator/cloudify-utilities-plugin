@@ -8,14 +8,15 @@ Utilities for extending Cloudify features.
 ## Contents:
 
 - [Cloudify Cloud-Init](cloudify_cloudinit/README.md)
-- [Cloudify Deployment Proxy](cloudify_deployment_proxy/README.md)
-- [Cloudify File](cloudify_files/README.md)
-- [Cloudify SSH Key](cloudify_ssh_key/README.md)
 - [Cloudify Configuration](cloudify_configuration/README.md)
-- [Cloudify Terminal](cloudify_terminal/README.md)
-- [Cloudify Suspend/Backup Workflows](cloudify_suspend/README.md)
+- [Cloudify Custom Workflow](cloudify_custom_workflow/README.md)
+- [Cloudify Deployment Proxy](cloudify_deployment_proxy/README.md)
+- [Cloudify Files](cloudify_files/README.md)
 - [Cloudify REST plugin](cloudify_rest/README.md)
 - [Cloudify Scale List Workflow](cloudify_scalelist/README.md)
+- [Cloudify SSH Key](cloudify_ssh_key/README.md)
+- [Cloudify Suspend/Backup Workflows](cloudify_suspend/README.md)
+- [Cloudify Terminal](cloudify_terminal/README.md)
 
 
 ## Versions:
@@ -79,5 +80,6 @@ Utilities for extending Cloudify features.
   - v1.8.2: Scalelist Down: Additional examples for remove instances by property value
             without transaction id.
   - v1.8.3: Scalelist Down: Additional example for update workflow.
-  - v1.9.0: Scalelist Down: Support deep check property value
-            Deployment Proxy: Install plugins and set secrets with create deployment.
+  - v1.9.0:
+    * Scalelist Down: Support deep check property value
+    * Deployment Proxy: Install plugins and set secrets with create deployment.
