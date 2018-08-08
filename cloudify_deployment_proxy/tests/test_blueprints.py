@@ -61,8 +61,8 @@ class TestBlueprint(DeploymentProxyTestBase):
 
             self.assertIn('_upload failed', error.message)
 
-        # Test that if the blueprint ID exists
     def test_upload_blueprint_exists(self):
+        # Test that if the blueprint ID exists
 
         test_name = 'test_upload_blueprint_exists'
         archive = 'sample_file.zip'

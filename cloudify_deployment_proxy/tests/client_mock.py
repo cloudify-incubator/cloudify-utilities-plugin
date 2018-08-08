@@ -119,3 +119,5 @@ class MockCloudifyRestClient(object):
         self.executions = MockExecutionsClient()
         self.node_instances = MockNodeInstancesClient()
         self.events = MockEventsClient()
+        self.secrets = MagicMock()
+        self.plugins = MagicMock()

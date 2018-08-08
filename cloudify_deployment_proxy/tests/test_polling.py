@@ -51,6 +51,9 @@ class TestPolling(DeploymentProxyTestBase):
     # test that any bp by id returns false if there are no matching
     def test_any_bp_by_id_no_blueprint(self):
         test_name = 'test_any_bp_by_id_no_blueprint'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             mock_client.return_value = cfy_mock_client
@@ -60,6 +63,9 @@ class TestPolling(DeploymentProxyTestBase):
     # test that any bp by id returns True if there are matching
     def test_any_bp_by_id_with_blueprint(self):
         test_name = 'test_any_bp_by_id_with_blueprint'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             list_response = cfy_mock_client.blueprints.list()
@@ -77,6 +83,9 @@ class TestPolling(DeploymentProxyTestBase):
     # test that any dep by id returns false if there are no matching
     def test_any_dep_by_id_no_deployment(self):
         test_name = 'test_any_dep_by_id_no_deployment'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             mock_client.return_value = cfy_mock_client
@@ -86,6 +95,9 @@ class TestPolling(DeploymentProxyTestBase):
     # test that any dep by id returns True if there are matching
     def test_any_dep_by_id_with_deployment(self):
         test_name = 'test_any_dep_by_id_with_deployment'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             list_response = cfy_mock_client.deployments.list()
@@ -103,6 +115,9 @@ class TestPolling(DeploymentProxyTestBase):
     # test that all dep by id returns False if there are not
     def test_all_deps_by_id_no_deployment(self):
         test_name = 'test_any_dep_by_id_no_deployment'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             mock_client.return_value = cfy_mock_client
@@ -112,6 +127,9 @@ class TestPolling(DeploymentProxyTestBase):
     # test that all dep by id returns True if there are matching
     def test_all_deps_by_id_with_deployment(self):
         test_name = 'test_any_dep_by_id_with_deployment'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             list_response = cfy_mock_client.deployments.list()
@@ -129,6 +147,8 @@ class TestPolling(DeploymentProxyTestBase):
     # test that resource_by_id raises when it catches an exception
     def test_resource_by_id_client_error(self):
         test_name = 'test_resource_by_id_client_error'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
 
         def mock_return(*args, **kwargs):
             del args, kwargs
@@ -189,6 +209,9 @@ class TestPolling(DeploymentProxyTestBase):
     # Test that no matching executions returns False
     def test_dep_system_workflows_finished_no_executions(self):
         test_name = 'test_dep_system_workflows_finished_no_executions'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             list_response = cfy_mock_client.deployments.list()
@@ -210,6 +233,9 @@ class TestPolling(DeploymentProxyTestBase):
     # Test that matching executions returns True
     def test_dep_system_workflows_finished_matching_executions(self):
         test_name = 'test_dep_system_workflows_finished_matching_executions'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             list_response = cfy_mock_client.blueprints.list()
@@ -231,6 +257,9 @@ class TestPolling(DeploymentProxyTestBase):
     # test that raises Exception is handled.
     def test_dep_system_workflows_finished_raises(self):
         test_name = 'test_dep_system_workflows_finished_raises'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             list_response = cfy_mock_client.blueprints.list()
@@ -252,6 +281,9 @@ class TestPolling(DeploymentProxyTestBase):
     # Test that no matching executions returns False
     def test_dep_workflow_in_state_pollster_no_executions(self):
         test_name = 'test_dep_workflow_in_state_pollster_no_executions'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             list_response = cfy_mock_client.deployments.list()
@@ -269,6 +301,9 @@ class TestPolling(DeploymentProxyTestBase):
     # Test that matching executions returns True
     def test_dep_workflow_in_state_pollster_matching_executions(self):
         test_name = 'test_dep_workflow_in_state_pollster_matching_executions'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             response = cfy_mock_client.executions.get()
@@ -293,6 +328,9 @@ class TestPolling(DeploymentProxyTestBase):
     # Test that matching executions returns True with get empty logs
     def test_dep_workflow_in_state_pollster_matching_executions_logs(self):
         test_name = 'test_dep_workflow_in_state_pollster_matching_executions'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             response = cfy_mock_client.executions.get()
@@ -320,6 +358,9 @@ class TestPolling(DeploymentProxyTestBase):
     # Test that matching executions returns True
     def test_dep_workflow_in_state_pollster_matching_state(self):
         test_name = 'test_dep_workflow_in_state_pollster_matching_executions'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             response = cfy_mock_client.executions.get()
@@ -344,6 +385,9 @@ class TestPolling(DeploymentProxyTestBase):
     # test that raises Exception is handled.
     def test_dep_workflow_in_state_pollster_raises(self):
         test_name = 'test_dep_workflow_in_state_pollster_raises'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             cfy_mock_client = MockCloudifyRestClient()
             response = cfy_mock_client.executions.get()
@@ -370,6 +414,7 @@ class TestPolling(DeploymentProxyTestBase):
         _ctx = self.get_mock_ctx('test_poll_workflow_after_execute_failed')
         _ctx.logger.log = mock.MagicMock(return_value=None)
         current_ctx.set(_ctx)
+
         with mock.patch(
                 'cloudify_deployment_proxy.polling.poll_with_timeout') \
                 as mocked_fn:
@@ -386,6 +431,7 @@ class TestPolling(DeploymentProxyTestBase):
         _ctx = self.get_mock_ctx('test_poll_workflow_after_execute_success')
         _ctx.logger.log = mock.MagicMock(return_value=None)
         current_ctx.set(_ctx)
+
         with mock.patch(
                 'cloudify_deployment_proxy.polling.poll_with_timeout') \
                 as mocked_fn:

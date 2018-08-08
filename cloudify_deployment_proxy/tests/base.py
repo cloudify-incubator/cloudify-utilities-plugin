@@ -15,6 +15,7 @@
 import mock
 import testtools
 
+from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -42,6 +43,10 @@ DEPLOYMENT_PROXY_TYPE = 'cloudify.nodes.DeploymentProxy'
 
 
 class DeploymentProxyTestBase(testtools.TestCase):
+
+    def tearDown(self):
+        current_ctx.clear()
+        super(DeploymentProxyTestBase, self).tearDown()
 
     def get_mock_ctx(self,
                      test_name,
