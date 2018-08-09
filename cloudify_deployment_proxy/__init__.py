@@ -12,6 +12,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+import sys
 import time
 import os
 from urlparse import urlparse
@@ -21,6 +22,7 @@ from cloudify import manager
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify.utils import exception_to_error_cause
 
 from .constants import (
     UNINSTALL_ARGS,
@@ -448,12 +450,15 @@ class DeploymentProxyBase(object):
 
             ctx.logger.debug('Polling execution succeeded')
 
-        if NIP_TYPE == ctx.node.type:
-            ctx.logger.debug('Start post execute node proxy')
+        type_hierarchy = ctx.node.type_hierarchy
+        if NIP_TYPE in type_hierarchy:
+            ctx.logger.info('Start post execute node proxy')
             return self.post_execute_node_instance_proxy()
-        elif DEP_TYPE == ctx.node.type:
-            ctx.logger.debug('Start post execute deployment proxy')
+
+        elif DEP_TYPE in type_hierarchy:
+            ctx.logger.info('Start post execute deployment proxy')
             return self.post_execute_deployment_proxy()
+
         return False
 
     def post_execute_node_instance_proxy(self):
@@ -489,15 +494,16 @@ class DeploymentProxyBase(object):
 
         try:
             ctx.logger.debug('Deployment Id is {0}'.format(self.deployment_id))
-
             response = self.client.deployments.outputs.get(self.deployment_id)
-
             ctx.logger.debug(
                 'Deployment outputs response {0}'.format(response))
 
         except CloudifyClientError as ex:
-            ctx.logger.error(
-                'Failed to query deployment outputs: {0}'.format(str(ex)))
+            _, _, tb = sys.exc_info()
+            raise NonRecoverableError(
+                'Failed to query deployment outputs: {0}'
+                ''.format(self.deployment_id),
+                causes=[exception_to_error_cause(ex, tb)])
         else:
             dep_outputs = response.get('outputs')
             ctx.logger.debug('Deployment outputs: {0}'.format(dep_outputs))
