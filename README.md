@@ -83,3 +83,5 @@ Utilities for extending Cloudify features.
   - v1.9.0:
     * Scalelist Down: Support deep check property value
     * Deployment Proxy: Install plugins and set secrets with create deployment.
+  - v1.9.1:
+    * Fix issue with deployment outputs when adding nodes derived from deployment proxy node

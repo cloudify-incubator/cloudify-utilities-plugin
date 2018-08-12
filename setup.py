@@ -16,7 +16,7 @@ import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.9.0',
+    version='1.9.1',
     author='Gigaspaces.com',
     author_email='hello@getcloudify.org',
     description='Utilities for extending Cloudify',

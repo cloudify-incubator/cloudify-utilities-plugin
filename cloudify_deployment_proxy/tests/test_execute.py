@@ -105,7 +105,7 @@ class TestExecute(DeploymentProxyTestBase):
                                        deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
-                self.assertFalse(output)
+                self.assertTrue(output)
         del _ctx, mock_client
 
     def test_execute_deployment_not_ready(self):
@@ -165,7 +165,7 @@ class TestExecute(DeploymentProxyTestBase):
                                        deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
-                self.assertFalse(output)
+                self.assertTrue(output)
         del _ctx, mock_client
 
     def test_execute_start_succeeds_node_instance_proxy(self):
@@ -189,14 +189,14 @@ class TestExecute(DeploymentProxyTestBase):
                                        deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
-                self.assertFalse(output)
+                self.assertTrue(output)
         del _ctx, mock_client
 
     def test_execute_start_succeeds_weird_node_type(self):
         # Tests that execute start succeeds
 
         test_name = 'test_execute_start_succeeds_weird_node_type'
-        _ctx = self.get_mock_ctx(test_name, node_type=NIP_TYPE)
+        _ctx = self.get_mock_ctx(test_name, node_type='node.weird')
         current_ctx.set(_ctx)
         # _ctx.node.type = 'cloudify.nodes.WeirdNodeType'
         _ctx.instance.runtime_properties['deployment'] = {}
@@ -207,11 +207,13 @@ class TestExecute(DeploymentProxyTestBase):
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
-                output = execute_start(operation='execute_workflow',
-                                       deployment_id=test_name,
-                                       workflow_id='install',
-                                       timeout=.001)
-                self.assertFalse(output)
+
+                self.assertRaises(NonRecoverableError,
+                                  execute_start,
+                                  operation='execute_workflow',
+                                  deployment_id=test_name,
+                                  workflow_id='install',
+                                  timeout=.001)
         del _ctx, mock_client
 
     def test_post_execute_client_error(self):
@@ -219,37 +221,33 @@ class TestExecute(DeploymentProxyTestBase):
 
         test_name = 'test_post_execute_client_error'
         _ctx = self.get_mock_ctx(test_name, node_type=DEP_TYPE)
-        # _ctx.node.type = DEP_TYPE
         current_ctx.set(_ctx)
         _ctx.instance.runtime_properties['deployment'] = dict()
 
-        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
-            mock_client.return_value = None
+        cfy_mock_client = MockCloudifyRestClient()
 
-            cfy_mock_client = MockCloudifyRestClient()
+        cfy_mock_client.deployments.outputs.get = \
+            mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
 
-            def mock_return(*args, **kwargs):
-                raise CloudifyClientError('Mistake')
+        poll_with_timeout_test = \
+            'cloudify_deployment_proxy.DeploymentProxyBase.' \
+            'verify_execution_successful'
 
-            cfy_mock_client.deployments.outputs.get = mock_return
-            poll_with_timeout_test = \
-                'cloudify_deployment_proxy.DeploymentProxyBase.' \
-                'verify_execution_successful'
+        with mock.patch(
+            'cloudify_deployment_proxy.CloudifyClient'
+        ) as mock_local_client:
+            mock_local_client.return_value = cfy_mock_client
 
-            with mock.patch(
-                'cloudify_deployment_proxy.CloudifyClient'
-            ) as mock_local_client:
-                mock_local_client.return_value = cfy_mock_client
-
-                with mock.patch(poll_with_timeout_test) as poll:
-                    poll.return_value = False
-                    output = execute_start(operation='execute_workflow',
-                                           deployment_id=test_name,
-                                           workflow_id='install',
-                                           client={'host': 'localhost'},
-                                           timeout=.001)
-                self.assertFalse(output)
-        del _ctx, mock_client
+            with mock.patch(poll_with_timeout_test) as poll:
+                poll.return_value = False
+                self.assertRaises(NonRecoverableError,
+                                  execute_start,
+                                  operation='execute_workflow',
+                                  deployment_id=test_name,
+                                  workflow_id='install',
+                                  client={'host': 'localhost'},
+                                  timeout=.001)
+        del _ctx
 
     def test_execute_start_succeeds_node_instance_proxy_matches(self):
         # Tests that execute start succeeds
@@ -272,5 +270,5 @@ class TestExecute(DeploymentProxyTestBase):
                                        deployment_id=test_name,
                                        workflow_id='install',
                                        timeout=.001)
-                self.assertFalse(output)
+                self.assertTrue(output)
         del _ctx, mock_client
