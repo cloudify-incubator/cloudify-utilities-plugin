@@ -7,7 +7,7 @@ imports:
 inputs:
 
   archive:
-    default: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.0.zip
+    default: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.1.zip
 
   test_id:
     type: string
