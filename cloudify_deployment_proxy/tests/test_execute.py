@@ -207,11 +207,13 @@ class TestExecute(DeploymentProxyTestBase):
                 'cloudify_deployment_proxy.polling.poll_with_timeout'
             with mock.patch(poll_with_timeout_test) as poll:
                 poll.return_value = True
-                output = execute_start(operation='execute_workflow',
-                                       deployment_id=test_name,
-                                       workflow_id='install',
-                                       timeout=.001)
-                self.assertFalse(output)
+
+                self.assertRaises(NonRecoverableError,
+                                  execute_start,
+                                  operation='execute_workflow',
+                                  deployment_id=test_name,
+                                  workflow_id='install',
+                                  timeout=.001)
         del _ctx, mock_client
 
     def test_post_execute_client_error(self):

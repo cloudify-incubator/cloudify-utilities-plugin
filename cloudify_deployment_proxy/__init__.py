@@ -459,7 +459,8 @@ class DeploymentProxyBase(object):
             ctx.logger.info('Start post execute deployment proxy')
             return self.post_execute_deployment_proxy()
 
-        return False
+        raise NonRecoverableError(
+            'Unsupported node type provided {0}'.format(ctx.node.type))
 
     def post_execute_node_instance_proxy(self):
 
