@@ -35,6 +35,9 @@ class connection(object):
 
     def _write_to_log(self, text, output=True):
         # write to log communication dump
+        if output:
+            # we really want to see what server do before finish
+            self.logger.debug(repr(text))
         if not self.log_file_name:
             return
         log_file_name = self.log_file_name + ('' if output else ".in")
