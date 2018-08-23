@@ -211,22 +211,11 @@ def _get_scale_list(ctx, scalable_entity_properties):
     return scalable_entity_dict
 
 
-def _uninstall_instances(ctx, graph, instance_ids, related_ids,
-                         ignore_failure):
+def _uninstall_instances(ctx, graph, removed, related, ignore_failure):
 
     # cleanup tasks
     for task in graph.tasks_iter():
         graph.remove_task(task)
-
-    # hacks for remove
-    removed = []
-    related = []
-    for node in ctx.nodes:
-        for instance in node.instances:
-            if instance.id in instance_ids:
-                removed.append(instance)
-            if instance.id in related_ids:
-                related.append(instance)
 
     if removed:
         lifecycle.uninstall_node_instances(
@@ -235,8 +224,10 @@ def _uninstall_instances(ctx, graph, instance_ids, related_ids,
             related_nodes=related,
             ignore_failure=ignore_failure)
 
-    # clean up properties
-    _cleanup_instances(ctx, instance_ids)
+        # clean up properties
+        instance_ids = [node_instance._node_instance.id
+                        for node_instance in removed]
+        _cleanup_instances(ctx, instance_ids)
 
 
 def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
@@ -296,14 +287,8 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
             except Exception as ex:
                 ctx.logger.error('Scale out failed, scaling back in. {}'
                                  .format(repr(ex)))
-                _uninstall_instances(
-                    ctx, graph, [
-                        node_instance._node_instance.id
-                        for node_instance in added
-                    ], [
-                        node_instance._node_instance.id
-                        for node_instance in related
-                    ], ignore_failure)
+                _uninstall_instances(ctx, graph, added, related,
+                                     ignore_failure)
                 raise ex
 
         if len(set(modification.removed.node_instances)):
@@ -434,7 +419,13 @@ def scaledownlist(ctx, scale_compute=False,
     except Exception as e:
         ctx.logger.info('Scale down based on transaction failed: {}'
                         .format(repr(e)))
-        _uninstall_instances(ctx, ctx.graph_mode(), instance_ids, [],
+        # check list for forced remove
+        removed = []
+        for node in ctx.nodes:
+            for instance in node.instances:
+                if instance.id in instance_ids:
+                    removed.append(instance)
+        _uninstall_instances(ctx, ctx.graph_mode(), removed, [],
                              ignore_failure)
 
 

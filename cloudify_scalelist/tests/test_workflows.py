@@ -424,10 +424,10 @@ class TestScaleList(unittest.TestCase):
                     ):
                         workflows._run_scale_settings(_ctx, scale_settings,
                                                       {})
-                fake_uninstall_instances.assert_called_with(_ctx,
-                                                            _ctx.graph_mode(),
-                                                            ['a'], ['f'],
-                                                            False)
+                fake_uninstall_instances.assert_called_with(
+                    _ctx, _ctx.graph_mode(),
+                    set([added_instance]), set([related_instance]),
+                    False)
             fake_install_node_instances.assert_called_with(
                 graph=_ctx.graph_mode(),
                 node_instances=set([added_instance]),
@@ -612,6 +612,18 @@ class TestScaleList(unittest.TestCase):
 
             # we have downscale issues
             fake_run_scale = Mock(side_effect=ValueError("No Down Scale!"))
+            a_instance = Mock()
+            a_instance.id = "a_id"
+            c_instance = Mock()
+            c_instance.id = "c_id"
+            a_node = Mock()
+            a_node.instances = [a_instance, c_instance]
+            b_instance = Mock()
+            b_instance.id = "b_id"
+            b_node = Mock()
+            b_node.instances = [b_instance]
+            _ctx.nodes = [a_node, b_node]
+
             with patch(
                 "cloudify_scalelist.workflows._run_scale_settings",
                 fake_run_scale
@@ -627,11 +639,10 @@ class TestScaleList(unittest.TestCase):
                         scale_node_name="a_type", scale_node_field="name",
                         scale_node_field_value="value"
                     )
-                fake_uninstall_instances.assert_called_with(_ctx,
-                                                            _ctx.graph_mode(),
-                                                            ['a_id', 'b_id'],
-                                                            [],
-                                                            False)
+                fake_uninstall_instances.assert_called_with(
+                    _ctx, _ctx.graph_mode(),
+                    [a_instance, b_instance], [],
+                    False)
             fake_run_scale.assert_called_with(
                 _ctx, {
                     'alfa_types': {
@@ -882,15 +893,19 @@ class TestScaleList(unittest.TestCase):
     def test_uninstall_instances(self):
         _ctx = self._gen_ctx()
         a_instance = Mock()
-        a_instance.id = "a_id"
-        a_node = Mock()
+        a_instance._node_instance.id = "a_id"
         c_instance = Mock()
-        c_instance.id = "c_id"
+        c_instance._node_instance.id = "c_id"
         a_node = Mock()
         a_node.instances = [a_instance, c_instance]
-        _ctx.nodes = [a_node]
+        b_instance = Mock()
+        b_instance._node_instance.id = "b_id"
+        b_node = Mock()
+        b_node.instances = [b_instance]
+        _ctx.nodes = [a_node, b_node]
 
         fake_uninstall_node_instances = Mock()
+
         with patch(
             "cloudify_scalelist.workflows.lifecycle.uninstall_node_instances",
             fake_uninstall_node_instances
@@ -901,12 +916,13 @@ class TestScaleList(unittest.TestCase):
                 fake_cleanup_instances
             ):
                 workflows._uninstall_instances(_ctx, _ctx.graph_mode(),
-                                               ["a_id", "b_id"], ["c_id"],
+                                               [a_instance, b_instance],
+                                               [c_instance],
                                                True)
             fake_cleanup_instances.assert_called_with(_ctx, ["a_id", "b_id"])
         fake_uninstall_node_instances.assert_called_with(
             graph=_ctx.graph_mode(),
-            node_instances=[a_instance],
+            node_instances=[a_instance, b_instance],
             ignore_failure=True,
             related_nodes=[c_instance]
         )

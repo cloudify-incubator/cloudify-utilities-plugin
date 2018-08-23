@@ -85,3 +85,6 @@ Utilities for extending Cloudify features.
     * Deployment Proxy: Install plugins and set secrets with create deployment.
   - v1.9.1:
     * Fix issue with deployment outputs when adding nodes derived from deployment proxy node
+  - v1.9.2:
+    * Scalelist Up: Fix issue with scaledown on rollback
+    * Terminal Plugin: Show current messages as debug logs.

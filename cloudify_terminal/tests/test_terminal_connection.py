@@ -192,8 +192,11 @@ class TestTasks(unittest.TestCase):
     def test_write_to_log_no_logfile(self):
         conn = terminal_connection.connection()
         conn.log_file_name = None
+        conn.logger = MagicMock()
 
         conn._write_to_log("Some_text")
+
+        conn.logger.debug.assert_called_with("'Some_text'")
 
     def test_write_to_log_write_file(self):
         conn = terminal_connection.connection()
