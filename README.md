@@ -88,3 +88,5 @@ Utilities for extending Cloudify features.
   - v1.9.2:
     * Scalelist Up: Fix issue with scaledown on rollback
     * Terminal Plugin: Show current messages as debug logs.
+  - v1.9.3:
+    * CloudInit plugin: Add 'external_content' property

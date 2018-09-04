@@ -35,6 +35,18 @@ class CloudInit(object):
             ctx.instance.runtime_properties.get('resource_config', {}))
         config.update(inputs.get('resource_config', {}))
 
+        external_content = ctx.node.properties.get('external_content')
+        if external_content:
+            try:
+                for file in config['write_files']:
+                    content = ctx.get_resource(file['content'])
+                    if content:
+                        file['content'] = content
+            except KeyError as err:
+                ctx.logger.error("'external_content' can be used only with \
+                    resource_config['write_files']['content']")
+                raise
+
         return config
 
     @property
