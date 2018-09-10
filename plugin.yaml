@@ -314,6 +314,8 @@ node_types:
         default: false
       external_content:
         default: false
+      params:
+        default: {}
       resource_config:
         default: {}
     interfaces:

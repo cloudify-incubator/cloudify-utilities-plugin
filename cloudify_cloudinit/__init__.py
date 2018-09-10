@@ -14,6 +14,7 @@
 
 import yaml
 import base64
+import copy
 from cloudify import ctx
 
 
@@ -35,11 +36,19 @@ class CloudInit(object):
             ctx.instance.runtime_properties.get('resource_config', {}))
         config.update(inputs.get('resource_config', {}))
 
+        params = ctx.node.properties.get('params', {})
+
         external_content = ctx.node.properties.get('external_content')
         if external_content:
             try:
                 for file in config['write_files']:
-                    content = ctx.get_resource(file['content'])
+                    ctx.logger.debug("Content before render: {}".format(
+                        file['content']))
+                    ctx.logger.debug("Render params: {}".format(params.copy()))
+                    content = \
+                        ctx.get_resource_and_render(file['content'], params.copy())
+                    ctx.logger.debug("Content after render: {}".format(
+                        content))
                     if content:
                         file['content'] = content
             except KeyError as err:

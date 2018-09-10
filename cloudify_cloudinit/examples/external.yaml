@@ -1,0 +1,67 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.2/types.yaml
+  - plugin:cloudify-utilities-plugin?version=1.9.3
+
+inputs:
+
+  user:
+    default: centos
+
+  group:
+    default: wheel
+
+  shell:
+    default: /bin/bash
+
+  sudo:
+    default: ['ALL=(ALL) NOPASSWD:ALL']
+
+  hostname:
+    default: test
+
+node_templates:
+
+  user1:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    properties:
+      external_content: true
+      params:
+        hostname: { get_input: hostname }
+      resource_config:
+        users:
+          - name: { get_input: user }
+            primary-group: { get_input: group }
+            shell: { get_input: shell }
+            sudo: { get_input: sudo }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              packages:
+                - [epel-release]
+                - [python-wheel]
+                - [python-pip]
+                - [python-setuptools]
+                - [gcc]
+                - [python-devel]
+                - [libffi-devel]
+                - [openssl-devel]
+              write_files:
+                - path: /config/adjust_aging_data_for_admin.sh
+                  permissions: 0755
+                  owner: root:root
+                  content: resources/adjust_aging_data_for_admin.sh
+                - path: /config/set_hostname.sh
+                  permissions: 0755
+                  owner: root:root
+                  content: resources/set_hostname.sh
+              runcmd:
+                - nohup sh -c '/config/adjust_aging_data_for_admin.sh'
+                - nohup sh -c '/config/set_hostname.sh'
+        configure: {}
+        start: {}
+        stop: {}
+        delete: {}
