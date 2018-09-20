@@ -196,6 +196,9 @@ def dep_workflow_in_state_pollster(_client,
             ' {0} is {1}'.format(_execution_id, _state))
 
         return True
+    elif _exec.get('status') == 'failed':
+        raise NonRecoverableError(
+            'Execution {0} failed.'.format(str(_exec)))
 
     return False
 
