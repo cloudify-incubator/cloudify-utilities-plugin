@@ -134,7 +134,7 @@ class DeploymentProxyBase(object):
         # Polling-related properties
         self.interval = operation_inputs.get('interval', POLLING_INTERVAL)
         self.state = operation_inputs.get('state', 'terminated')
-        self.timeout = operation_inputs.get('timeout', EXECUTIONS_TIMEOUT)
+        self.timeout = operation_inputs.get('timeout', EXECUTIONS_TIMEOUT * 2)
 
         # This ``execution_id`` will be set once execute workflow done
         # successfully
