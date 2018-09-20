@@ -142,3 +142,7 @@ releases:
   v1.9.2:
   - Scalelist Up: Fix issue with scaledown on rollback
   - Terminal Plugin: Show current messages as debug logs.
+
+  v1.9.3:
+  - Raise NonRecoverableError exception on failed proxy executions.
+  - Increase default execution timeout to 1800 seconds.

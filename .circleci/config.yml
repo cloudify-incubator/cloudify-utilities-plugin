@@ -124,6 +124,7 @@ workflows:
       - cloudify-manager:
           context: ecosystem
           requires:
+            - unittests
             - wagon
           filters:
             branches:
