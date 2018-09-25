@@ -146,3 +146,6 @@ releases:
   v1.9.3:
   - Raise NonRecoverableError exception on failed proxy executions.
   - Increase default execution timeout to 1800 seconds.
+
+  v1.9.4:
+  - Deployment proxy: Ignore proxy deployment uninstall errors unless user specifies otherwise.

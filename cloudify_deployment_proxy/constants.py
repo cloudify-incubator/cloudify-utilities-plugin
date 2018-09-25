@@ -12,13 +12,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-UNINSTALL_ARGS = {
-    'allow_custom_parameters': True,
-    'parameters': {
-        'ignore_failure': True
-    }
-}
-
 DEPLOYMENTS_TIMEOUT = 120
 EXECUTIONS_TIMEOUT = 900
 POLLING_INTERVAL = 10
