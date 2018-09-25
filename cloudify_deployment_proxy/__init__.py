@@ -25,7 +25,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.utils import exception_to_error_cause
 
 from .constants import (
-    UNINSTALL_ARGS,
     EXECUTIONS_TIMEOUT,
     POLLING_INTERVAL,
     EXTERNAL_RESOURCE,
@@ -428,11 +427,7 @@ class DeploymentProxyBase(object):
             self.deployment.get(EXTERNAL_RESOURCE) and self.reexecute
         ) or not self.deployment.get(EXTERNAL_RESOURCE):
 
-            execution_args = \
-                self.config.get(
-                    'executions_start_args',
-                    UNINSTALL_ARGS if self.workflow_id == 'uninstall' else {}
-                )
+            execution_args = self.config.get('executions_start_args', {})
             client_args = \
                 dict(deployment_id=self.deployment_id,
                      workflow_id=self.workflow_id,
