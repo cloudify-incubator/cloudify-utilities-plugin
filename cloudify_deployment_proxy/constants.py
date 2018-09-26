@@ -13,7 +13,7 @@
 #    * limitations under the License.
 
 DEPLOYMENTS_TIMEOUT = 120
-EXECUTIONS_TIMEOUT = 900
+EXECUTIONS_TIMEOUT = 1800
 POLLING_INTERVAL = 10
 EXTERNAL_RESOURCE = 'external_resource'
 

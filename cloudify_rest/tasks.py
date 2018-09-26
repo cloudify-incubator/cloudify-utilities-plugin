@@ -19,7 +19,11 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 from rest_sdk import utility, exceptions
 
 
-def execute(params, template_file, **kwargs):
+def execute(params=None, template_file=None, **kwargs):
+
+    params = params or {}
+    template_file = template_file or ''
+
     ctx.logger.debug(
         'execute \n params {} \n template \n {}'.format(params, template_file))
     runtime_properties = ctx.instance.runtime_properties.copy()
