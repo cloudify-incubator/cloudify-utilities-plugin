@@ -285,7 +285,7 @@ node_types:
             timeout:
               type: integer
               description: How long (in seconds) to wait for execution to finish before timing out
-              default: 900
+              default: 1800
             interval:
               type: integer
               description: Polling interval (seconds)
@@ -452,7 +452,6 @@ node_types:
           certificate.
         type: boolean
         default: true
-
     interfaces:
       cloudify.interfaces.lifecycle:
         create:

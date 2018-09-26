@@ -53,7 +53,11 @@ def _handle_parameters(parameters):
         return json.loads(parameters)
 
 
-def load_configuration(parameters, merge_dicts, **kwargs):
+def load_configuration(parameters=None, merge_dicts=False, **kwargs):
+
+    parameters = parameters or \
+        ctx.node.properties.get('parameters_json', {})
+
     # load params
     params = _handle_parameters(parameters)
 
@@ -67,8 +71,13 @@ def load_configuration(parameters, merge_dicts, **kwargs):
     ctx.instance.runtime_properties['params'] = p
 
 
-def load_configuration_to_runtime_properties(source_config, **kwargs):
+def load_configuration_to_runtime_properties(source_config=None, **kwargs):
+
+    source_config = source_config or \
+        ctx.target.instance.runtime_properties.get('params', {})
+
     old_params = ctx.source.instance.runtime_properties.get('params', {})
+
     # prevent recursion by removing old_params from old_params
     old_params['old_params'] = {}
     # retrive relevant parameters list from node properties
