@@ -139,6 +139,14 @@ class DeploymentProxyBase(object):
         # successfully
         self.execution_id = None
 
+        if 'pagination_offset' in operation_inputs:
+            os.environ['PAGINATION_OFFSET'] = \
+                operation_inputs.get('pagination_offset', 0)
+
+        if 'pagination_size' in operation_inputs:
+            os.environ['PAGINATION_SIZE'] = \
+                operation_inputs.get('pagination_size', 1000)
+
     def dp_get_client_response(self,
                                _client,
                                _client_attr,
