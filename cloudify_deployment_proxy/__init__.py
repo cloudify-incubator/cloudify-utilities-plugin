@@ -70,9 +70,9 @@ class DeploymentProxyBase(object):
 
         # These should not make their way into the Operation inputs.
         os.environ['_PAGINATION_OFFSET'] = \
-            operation_inputs.pop('pagination_offset', 0)
+            str(operation_inputs.pop('pagination_offset', 0))
         os.environ['_PAGINATION_SIZE'] = \
-            operation_inputs.pop('pagination_size', 1000)
+            str(operation_inputs.pop('pagination_size', 1000))
 
         # cloudify client
         self.client_config = get_desired_value(
