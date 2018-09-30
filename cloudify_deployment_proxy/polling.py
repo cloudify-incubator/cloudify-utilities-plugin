@@ -150,26 +150,39 @@ def dep_logs_redirect(_client, execution_id):
 
 def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
 
-    try:
-        _execs = _client.executions.list(
-            deployment_id=getenv('_DEPLOYMENT_ID'),
-            include_system_workflows=True,
-            _offset=getenv('_PAGINATION_OFFSET'),
-            _size=getenv('_PAGINATION_SIZE'))
-    except CloudifyClientError as ex:
-        raise NonRecoverableError(
-            'Executions list failed {0}.'.format(str(ex)))
-    else:
+    _offset = getenv('_PAGINATION_OFFSET')
+    _size = getenv('_PAGINATION_SIZE')
+
+    while True:
+
+        try:
+            _execs = _client.executions.list(
+                include_system_workflows=True,
+                _offset=_offset,
+                _size=_size)
+        except CloudifyClientError as ex:
+            raise NonRecoverableError(
+                'Executions list failed {0}.'.format(str(ex)))
+
         for _exec in _execs:
+
             if _exec.get('is_system_workflow'):
                 if _exec.get('status') not in ('terminated', 'failed',
                                                'cancelled'):
                     return False
+
             if _check_all_in_deployment:
                 if _check_all_in_deployment == _exec.get('deployment_id'):
                     if _exec.get('status') not in ('terminated', 'failed',
                                                    'cancelled'):
                         return False
+
+        if _execs.metadata.pagination.total == \
+                _execs.metadata.pagination.offset:
+            break
+
+        _offset = _offset + _size
+
     return True
 
 

@@ -59,8 +59,7 @@ from .utils import (
 
 class DeploymentProxyBase(object):
 
-    def __init__(self,
-                 operation_inputs):
+    def __init__(self, operation_inputs):
         """
         Sets the properties that all operations need.
         :param operation_inputs: The inputs from the operation.
@@ -68,6 +67,12 @@ class DeploymentProxyBase(object):
 
         full_operation_name = ctx.operation.name
         self.operation_name = full_operation_name.split('.').pop()
+
+        # These should not make their way into the Operation inputs.
+        os.environ['_PAGINATION_OFFSET'] = \
+            operation_inputs.pop('pagination_offset', 0)
+        os.environ['_PAGINATION_SIZE'] = \
+            operation_inputs.pop('pagination_size', 1000)
 
         # cloudify client
         self.client_config = get_desired_value(
@@ -138,16 +143,6 @@ class DeploymentProxyBase(object):
         # This ``execution_id`` will be set once execute workflow done
         # successfully
         self.execution_id = None
-
-        if 'pagination_offset' in operation_inputs:
-            os.environ['_PAGINATION_OFFSET'] = \
-                operation_inputs.get('pagination_offset', 0)
-
-        if 'pagination_size' in operation_inputs:
-            os.environ['_PAGINATION_SIZE'] = \
-                operation_inputs.get('pagination_size', 1000)
-
-        os.environ['_DEPLOYMENT_ID'] = self.deployment_id
 
     def dp_get_client_response(self,
                                _client,
