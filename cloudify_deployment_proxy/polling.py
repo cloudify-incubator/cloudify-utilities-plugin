@@ -150,8 +150,8 @@ def dep_logs_redirect(_client, execution_id):
 
 def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
 
-    _offset = int(getenv('_PAGINATION_OFFSET'))
-    _size = int(getenv('_PAGINATION_SIZE'))
+    _offset = int(getenv('_PAGINATION_OFFSET', 0))
+    _size = int(getenv('_PAGINATION_SIZE', 1000))
 
     while True:
 
