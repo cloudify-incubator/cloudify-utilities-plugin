@@ -177,7 +177,7 @@ def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
                                                    'cancelled'):
                         return False
 
-        if _execs.metadata.pagination.total == \
+        if _execs.metadata.pagination.total <= \
                 _execs.metadata.pagination.offset:
             break
 
