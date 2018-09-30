@@ -152,9 +152,10 @@ def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
 
     try:
         _execs = _client.executions.list(
+            deployment_id=getenv('_DEPLOYMENT_ID'),
             include_system_workflows=True,
-            _offset=getenv('PAGINATION_OFFSET'),
-            _size=getenv('PAGINATION_SIZE'))
+            _offset=getenv('_PAGINATION_OFFSET'),
+            _size=getenv('_PAGINATION_SIZE'))
     except CloudifyClientError as ex:
         raise NonRecoverableError(
             'Executions list failed {0}.'.format(str(ex)))
