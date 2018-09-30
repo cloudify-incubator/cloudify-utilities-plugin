@@ -16,6 +16,7 @@ import mock
 
 from cloudify.state import current_ctx
 from cloudify.exceptions import NonRecoverableError
+from cloudify_rest_client.responses import Pagination
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .client_mock import MockCloudifyRestClient
@@ -32,15 +33,26 @@ class TestDeployment(DeploymentProxyTestBase):
 
     def setUp(self):
         super(TestDeployment, self).setUp()
+
         mock_sleep = mock.MagicMock()
         self.sleep_mock = mock.patch('time.sleep', mock_sleep)
         self.sleep_mock.start()
+
+        self.pagination_patch = \
+            mock.patch('cloudify_rest_client.responses.Metadata.pagination')
+        self.pagination_patch = self.pagination_patch.start()
+        self.pagination_patch.return_value = Pagination({
+            'offset': 0,
+            'total': 0,
+            'size': 1000,
+        })
 
     def tearDown(self):
         if self.sleep_mock:
             self.sleep_mock.stop()
             self.sleep_mock = None
         super(TestDeployment, self).tearDown()
+        self.pagination_patch.stop()
 
     def test_delete_deployment_rest_client_error(self):
 
