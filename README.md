@@ -89,4 +89,5 @@ Utilities for extending Cloudify features.
     * Scalelist Up: Fix issue with scaledown on rollback
     * Terminal Plugin: Show current messages as debug logs.
   - v1.9.3:
-    * CloudInit plugin: Add 'external_content' property
+    * CloudInit plugin: Add possibility of using external resources/jinja2 templates
+      from blueprint directory in `write_files.content`

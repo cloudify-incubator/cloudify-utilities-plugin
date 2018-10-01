@@ -2,16 +2,12 @@
 
 Cloud-Init is the standard for configuration of cloud instances. See [examples](http://cloudinit.readthedocs.io/en/latest/topics/examples.html).
 
-### v1.9.3 extension: external_content
+### v1.9.3 extension: external files/jinja2 templates in write_files.content
 
 To use files from blueprint directory in resource_config -> write_files ->
-content, `external_content` property has to be set to `true`. Then, it will
-be possible to use path to the file under `content` key, besides passing
-the whole script.
-
-### v1.9.3 extension: params
-
-When using `external_content`, it is possible to place path to jinja2
-template under the `content` key. To render such template, a set of variables
-has to be defined under `params` property of a
-`cloudify.nodes.CloudInit.CloudConfig` node.
+content, it has to be defined as a dictionary which may contain three keys:
+* `resource_type`: if it's filled with string "file_resource", the plugin
+will be looking for resources under the path defined in `resource_name`,
+* `resource_name`: defines the path, where the resource resides,
+* `template_variables`: if not empty, this dictionary is being used to fill
+the resource content (jinja2 template) with variables.

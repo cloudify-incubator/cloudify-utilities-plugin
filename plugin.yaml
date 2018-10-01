@@ -312,10 +312,6 @@ node_types:
         default: '#cloud-config'
       encode_base64:
         default: false
-      external_content:
-        default: false
-      params:
-        default: {}
       resource_config:
         default: {}
     interfaces:

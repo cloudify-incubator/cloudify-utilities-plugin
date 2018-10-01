@@ -26,35 +26,31 @@ class CloudInit(object):
         :param operation_inputs: The inputs from the operation.
         """
 
-        self.config = self.get_config(operation_inputs)
+        self.config = self.get_config(self, operation_inputs)
+
+    def get_external_resource(self, config):
+        for f in config.get('write_files', []):
+            if not isinstance(f, dict):
+                break
+            try:
+                resource_type = f['content'].get('resource_type', '')
+                resource_name = f['content'].get('resource_name', '')
+                template_variables = f['content'].get('template_variables', {})
+                if 'file_resource' == resource_type:
+                    f['content'] = ctx.get_resource_and_render(resource_name, template_variables)
+            except ValueError:
+                ctx.logger.debug('No external resource recognized.')
+                pass
+        return config
 
     @staticmethod
-    def get_config(inputs):
+    def get_config(self, inputs):
 
         config = ctx.node.properties.get('resource_config', {})
         config.update(
             ctx.instance.runtime_properties.get('resource_config', {}))
         config.update(inputs.get('resource_config', {}))
-
-        params = ctx.node.properties.get('params', {})
-
-        external_content = ctx.node.properties.get('external_content')
-        if external_content:
-            try:
-                for file in config['write_files']:
-                    ctx.logger.debug("Content before render: {}".format(
-                        file['content']))
-                    ctx.logger.debug("Render params: {}".format(params.copy()))
-                    content = \
-                        ctx.get_resource_and_render(file['content'], params.copy())
-                    ctx.logger.debug("Content after render: {}".format(
-                        content))
-                    if content:
-                        file['content'] = content
-            except KeyError as err:
-                ctx.logger.error("'external_content' can be used only with \
-                    resource_config['write_files']['content']")
-                raise
+        config.update(self.get_external_resource(config.copy()))
 
         return config
 

@@ -144,5 +144,5 @@ releases:
   - Terminal Plugin: Show current messages as debug logs.
 
   v1.9.3:
-  - CloudInit plugin: Add 'external_content' property
-  - CloudInit plugin: Add jinja2 templates rendering (new 'params' property)
+  - CloudInit plugin: Add possibility of using external resources/jinja2 templates
+    from blueprint directory in `write_files.content`

@@ -18,17 +18,14 @@ inputs:
   sudo:
     default: ['ALL=(ALL) NOPASSWD:ALL']
 
-  hostname:
-    default: test
+  params:
+    default: {'hostname': 'test'}
 
 node_templates:
 
   user1:
     type: cloudify.nodes.CloudInit.CloudConfig
     properties:
-      external_content: true
-      params:
-        hostname: { get_input: hostname }
       resource_config:
         users:
           - name: { get_input: user }
@@ -53,11 +50,17 @@ node_templates:
                 - path: /config/adjust_aging_data_for_admin.sh
                   permissions: 0755
                   owner: root:root
-                  content: resources/adjust_aging_data_for_admin.sh
+                  content:
+                    resource_type: file_resource
+                    resource_name: resources/adjust_aging_data_for_admin.sh
+                    template_variables: { get_input: params }
                 - path: /config/set_hostname.sh
                   permissions: 0755
                   owner: root:root
-                  content: resources/set_hostname.sh
+                  content:
+                    resource_type: file_resource
+                    resource_name: resources/set_hostname.sh
+                    template_variables: { get_input: params }
               runcmd:
                 - nohup sh -c '/config/adjust_aging_data_for_admin.sh'
                 - nohup sh -c '/config/set_hostname.sh'
