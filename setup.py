@@ -29,7 +29,8 @@ setuptools.setup(
               'cloudify_suspend',
               'cloudify_cloudinit',
               'cloudify_rest',
-              'cloudify_scalelist'],
+              'cloudify_scalelist',
+              'cloudify_secrets'],
     license='LICENSE',
     install_requires=[
         'cloudify-plugins-common>=3.4.2',
