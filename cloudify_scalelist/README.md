@@ -25,7 +25,9 @@ Parameters:
 ### scaledownlist
 
 Remove all instances from same transaction/property as node selected by
-`scale_node_name`.
+`scale_node_name`. If instances can't be deleted in one transaction - as result
+of workflow will be uninstalled instances with "uninitialized" status, you
+should ignore such instances in future uninstall actions.
 
 Parameters:
 * `scale_compute`: If a node name is passed as the `scale_node_name` parameter
