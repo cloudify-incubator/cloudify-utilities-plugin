@@ -61,9 +61,17 @@ In runtime properties will be provided outputs from deployment.
 * `start`:
     * `workflow_id`: workflow name for run, by default `install`.
     * `timeout`: workflow timeout.
+    * `interval`: polling interval.
+    * `state`: Optional, final state for workflow, by default `terminated`.
+    * `pagination_offset`: Optional, pagination offset, by default `0`.
+    * `pagination_size`: Optional, pagination size, by default `1000`.
 * `stop`:
     * `workflow_id`: workflow name for run, by default `uninstall`.
     * `timeout`: workflow timeout.
+    * `interval`: polling interval.
+    * `state`: Optional, final state for workflow, by default `terminated`.
+    * `pagination_offset`: Optional, pagination offset, by default `0`.
+    * `pagination_size`: Optional, pagination size, by default `1000`.
     
 **Runtime properties:**
 
