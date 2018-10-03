@@ -60,9 +60,11 @@ In runtime properties will be provided outputs from deployment.
 
 * `start`:
     * `workflow_id`: workflow name for run, by default `install`.
+    * `timeout`: workflow timeout.
 * `stop`:
     * `workflow_id`: workflow name for run, by default `uninstall`.
-
+    * `timeout`: workflow timeout.
+    
 **Runtime properties:**
 
 * `blueprint`:
