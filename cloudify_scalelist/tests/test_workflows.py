@@ -705,12 +705,20 @@ class TestScaleList(unittest.TestCase):
             with self.assertRaises(ValueError):
                 workflows._get_scale_list(
                     ctx=_ctx,
-                    scalable_entity_properties=['a', 'b'])
+                    scalable_entity_properties=['a', 'b'],
+                    property_type=dict)
             # Check wrong type of scalable_entity_properties item
             with self.assertRaises(ValueError):
                 workflows._get_scale_list(
                     ctx=_ctx,
-                    scalable_entity_properties={'a': {'b': 'c'}})
+                    scalable_entity_properties={'a': {'b': 'c'}},
+                    property_type=dict)
+            # string instead dict
+            with self.assertRaises(ValueError):
+                workflows._get_scale_list(
+                    ctx=_ctx,
+                    scalable_entity_properties={'a': ['b', 'c']},
+                    property_type=dict)
             # correct values
             result = workflows._get_scale_list(
                 ctx=_ctx,
@@ -718,7 +726,8 @@ class TestScaleList(unittest.TestCase):
                     'one': [{'name': 'one'}],
                     'two': [{'name': 'two'}],
                     'not_in_group': [{'name': 'separate'}],
-                }
+                },
+                property_type=dict
             )
             for k in result:
                 result[k]['values'].sort()
