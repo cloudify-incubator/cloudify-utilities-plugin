@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.5.zip
-    package_version: '1.9.5'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.6.zip
+    package_version: '1.9.6'
 
   cfy_files: *utilities_plugin
 
@@ -595,6 +595,9 @@ workflows:
         default: false
       ignore_failure:
         default: false
+        type: boolean
+      ignore_rollback_failure:
+        default: true
         type: boolean
       scale_transaction_field:
         type: string

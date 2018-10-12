@@ -42,7 +42,7 @@ Plugin           | VM Snapshot | VM Backup  | VM Snapshot Restore | VM Backup Re
 ---------------- | ----------- | -----------| ------------------- | ----------------- |------------------- | ----------------------
 Openstack 2.9.0+ | Y           | Y          | Y                   | Y                 | Y                  | Y
 vSphere 2.7.0+   | Y           | N (No API) | Y                   | N (No API)        | Y                  | N (No API)
-LibVirt 0.4.1+   | Y           | Y          | Y                   | Y (By Compare)    | Y                  | Y
+LibVirt 0.6.0+   | Y           | Y          | Y                   | Y (Bypassed)      | Y                  | Y
 
 Plugin           | Network Snapshot | Network Backup | Network Snapshot Restore | Network Backup Restore | Network Snapshot Remove | Network Backup Remove
 ---------------- | ---------------- | -------------- | ------------------------ | ---------------------- |------------------------ | ---------------------
@@ -59,7 +59,7 @@ LibVirt 0.4.1+   | Y (By VM)       | Y (Bypassed)  | Y (By VM)               | N
 Abbreviations:
  * `N/A` - Not supported by plugin.
  * `Y` - Supported by plugin.
- * `Y (Bypassed)` - Can be bypassed by separate API.
+ * `Y (Bypassed)` - Can be bypassed by separate API or property.
  * `Y (By VM)` - Created automatically by run action on connected VM.
  * `Y (By Compare)` - Code show difference between states without reconfigure object.
  * `N (No API)` - Unsupported by infrastructure API.

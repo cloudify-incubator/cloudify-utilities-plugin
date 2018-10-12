@@ -169,10 +169,20 @@ def _get_scale_list(ctx, scalable_entity_properties):
 
     ctx.logger.debug("Scale entities: {}"
                      .format(repr(scalable_entity_properties)))
+
+    if not isinstance(scalable_entity_properties, dict):
+        raise ValueError(
+            "You use wrong value for 'scalable_entity_properties': {}"
+            .format(repr(scalable_entity_properties)))
+
     for node_name in scalable_entity_properties:
         # get node counts
         node_amount = len(scalable_entity_properties[node_name])
 
+        if not isinstance(scalable_entity_properties[node_name], list):
+            raise ValueError(
+                "You use wrong value for 'scalable_entity_properties' item: {}"
+                .format(repr(scalable_entity_properties[node_name])))
         # get parent group
         for scalegroup in groups:
             # check that we really have such scalling group
@@ -234,6 +244,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field=None,
                         scale_transaction_value=None,
                         ignore_failure=False,
+                        ignore_rollback_failure=True,
                         instances_remove_ids=None):
     modification = ctx.deployment.start_modification(scale_settings)
     graph = ctx.graph_mode()
@@ -288,7 +299,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                 ctx.logger.error('Scale out failed, scaling back in. {}'
                                  .format(repr(ex)))
                 _uninstall_instances(ctx, graph, added, related,
-                                     ignore_failure)
+                                     ignore_rollback_failure)
                 raise ex
 
         if len(set(modification.removed.node_instances)):
@@ -471,6 +482,7 @@ def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):
 def scaleuplist(ctx, scalable_entity_properties,
                 scale_compute=False,
                 ignore_failure=False,
+                ignore_rollback_failure=True,
                 scale_transaction_field="",
                 scale_transaction_value="",
                 **kwargs):
@@ -483,7 +495,7 @@ def scaleuplist(ctx, scalable_entity_properties,
 
     _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field, scale_transaction_value,
-                        ignore_failure)
+                        ignore_failure, ignore_rollback_failure)
 
 
 def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
