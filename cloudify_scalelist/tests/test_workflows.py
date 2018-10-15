@@ -277,7 +277,26 @@ class TestScaleList(unittest.TestCase):
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
-            # can downscale without errors
+            # can downscale without errors, stop on failure
+            fake_run_scale = Mock(return_value=None)
+            with patch(
+                "cloudify_scalelist.workflows._run_scale_settings",
+                fake_run_scale
+            ):
+                workflows.scaleuplist(
+                    ctx=_ctx,
+                    scale_compute=True,
+                    scale_transaction_field="_transaction",
+                    scale_transaction_value="transaction_value",
+                    ignore_rollback_failure=False,
+                    scalable_entity_properties={
+                        'one': [{'name': 'one'}],
+                    })
+            fake_run_scale.assert_called_with(
+                _ctx, {'one_scale': {'instances': 11}},
+                {'one': [{'name': 'one'}]}, '_transaction',
+                'transaction_value', False, False)
+            # can downscale without errors, ignore failure
             fake_run_scale = Mock(return_value=None)
             with patch(
                 "cloudify_scalelist.workflows._run_scale_settings",
@@ -294,7 +313,7 @@ class TestScaleList(unittest.TestCase):
             fake_run_scale.assert_called_with(
                 _ctx, {'one_scale': {'instances': 11}},
                 {'one': [{'name': 'one'}]}, '_transaction',
-                'transaction_value', False)
+                'transaction_value', False, True)
 
     def test_run_scale_settings(self):
         _ctx = self._gen_ctx()
@@ -422,8 +441,9 @@ class TestScaleList(unittest.TestCase):
                         Exception,
                         "Failed install"
                     ):
-                        workflows._run_scale_settings(_ctx, scale_settings,
-                                                      {})
+                        workflows._run_scale_settings(
+                            _ctx, scale_settings, {},
+                            ignore_rollback_failure=False)
                 fake_uninstall_instances.assert_called_with(
                     _ctx, _ctx.graph_mode(),
                     set([added_instance]), set([related_instance]),
@@ -681,13 +701,33 @@ class TestScaleList(unittest.TestCase):
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
+            # Check wrong type of scalable_entity_properties
+            with self.assertRaises(ValueError):
+                workflows._get_scale_list(
+                    ctx=_ctx,
+                    scalable_entity_properties=['a', 'b'],
+                    property_type=dict)
+            # Check wrong type of scalable_entity_properties item
+            with self.assertRaises(ValueError):
+                workflows._get_scale_list(
+                    ctx=_ctx,
+                    scalable_entity_properties={'a': {'b': 'c'}},
+                    property_type=dict)
+            # string instead dict
+            with self.assertRaises(ValueError):
+                workflows._get_scale_list(
+                    ctx=_ctx,
+                    scalable_entity_properties={'a': ['b', 'c']},
+                    property_type=dict)
+            # correct values
             result = workflows._get_scale_list(
                 ctx=_ctx,
                 scalable_entity_properties={
                     'one': [{'name': 'one'}],
                     'two': [{'name': 'two'}],
                     'not_in_group': [{'name': 'separate'}],
-                }
+                },
+                property_type=dict
             )
             for k in result:
                 result[k]['values'].sort()

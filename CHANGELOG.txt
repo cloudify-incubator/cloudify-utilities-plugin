@@ -152,3 +152,7 @@ releases:
 
   v1.9.5:
   - Deployment proxy: Using pagination in executions list.
+
+  v1.9.6:
+  - Scalelist: Add `ignore_rollback_failure` parameter for ignore action failures on rollback.
+  - Scalelist: More strict validation for parameters in scalelist up.

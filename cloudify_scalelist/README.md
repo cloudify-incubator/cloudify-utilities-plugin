@@ -17,7 +17,8 @@ Parameters:
   parameter and that node is contained (transitively) within a compute node
   and this property is `true`, operate on the compute node instead of the
   specified node. Default: `false`
-* `ignore_failure`: Default: `false`
+* `ignore_failure`: Ignore failure on install. Default: `false`
+* `ignore_rollback_failure`: Ignore failure on rollback. Default: `true`
 * `scale_transaction_field`: Place to save transaction id created in same
   transaction. Default: _transaction_id
 * `scale_transaction_value`: Optional, transaction value.
@@ -26,7 +27,7 @@ Parameters:
 
 Remove all instances from same transaction/property as node selected by
 `scale_node_name`. If instances can't be deleted in one transaction - as result
-of workflow will be uninstalled instances with "uninitialized" status and runtime 
+of workflow will be uninstalled instances with "uninitialized" status and runtime
 properties cleaned up, you should ignore such instances in future uninstall actions.
 
 Parameters:
