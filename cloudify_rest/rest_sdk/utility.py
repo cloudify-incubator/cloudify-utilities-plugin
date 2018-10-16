@@ -58,8 +58,7 @@ def process(params, template, request_props):
             'call_with_request_props \n {}'.format(call_with_request_props))
         response = _send_request(call_with_request_props)
         _process_response(response, call, result_properties)
-    result_properties = {'result_propeties': result_properties, # Keep this for backward compatibility
-                         'result_properties': result_properties,
+    result_properties = {'result_properties': result_properties,
                          'calls': calls}
     return result_properties
 
