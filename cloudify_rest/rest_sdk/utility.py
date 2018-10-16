@@ -37,13 +37,13 @@ TEMPLATE_PROPERTY_RETRY_ON_CONNECTION_ERROR = 'retry_on_connection_error'
 def process(params, template, request_props):
     logger.debug('template : {}'.format(template))
     template_yaml = yaml.load(template)
-    result_propeties = {}
+    result_properties = {}
     calls = []
     for call in template_yaml['rest_calls']:
         call_with_request_props = request_props.copy()
         logger.debug('call \n {}'.format(call))
         # enrich params with items stored in runtime props by prev calls
-        params.update(result_propeties)
+        params.update(result_properties)
         call = str(call)
         # Remove quotation marks before and after jinja blocks
         call = re.sub(r'\'\{\%', '{%', call)
@@ -57,9 +57,11 @@ def process(params, template, request_props):
         logger.info(
             'call_with_request_props \n {}'.format(call_with_request_props))
         response = _send_request(call_with_request_props)
-        _process_response(response, call, result_propeties)
-    result_propeties = {'result_propeties': result_propeties, 'calls': calls}
-    return result_propeties
+        _process_response(response, call, result_properties)
+    result_properties = {'result_propeties': result_properties, # Keep this for backward compatibility
+                         'result_properties': result_properties,
+                         'calls': calls}
+    return result_properties
 
 
 def _send_request(call):
