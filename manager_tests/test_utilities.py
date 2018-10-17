@@ -193,8 +193,8 @@ class TestUtilities(EcosystemTestBase):
             blueprint_id,
             'cloudify.rest.Requests')
         rest_instance = rs[0]['instances'][0]['runtime_properties']
-        if 'commit' not in rest_instance['result_propeties']:
+        if 'commit' not in rest_instance['result_properties']:
             raise Exception(
                 '{0} not in {1}'.format(
-                    'commit', rest_instance['result_propeties']))
+                    'commit', rest_instance['result_properties']))
         utils.execute_uninstall(blueprint_id)
