@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.6.zip
-    package_version: '1.9.6'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.7.zip
+    package_version: '1.9.7'
 
   cfy_files: *utilities_plugin
 
@@ -647,6 +647,11 @@ workflows:
         description: >
           Node runtime properties field value for search. Can be provided
           as list of possible values.
+      force_db_cleanup:
+        default: false
+        description: >
+            Run DB cleanup directly if instances can't be deleted in one
+            transaction.
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation

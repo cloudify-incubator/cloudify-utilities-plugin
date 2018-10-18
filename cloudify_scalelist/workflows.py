@@ -11,9 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import subprocess
+
 from cloudify.decorators import workflow
 from cloudify.plugins import lifecycle
 from cloudify.manager import get_rest_client
+
+
+def _execute_command(ctx, command):
+
+    ctx.logger.debug('command: {0}.'.format(repr(command)))
+
+    subprocess_args = {
+        'args': command,
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.PIPE
+    }
+    ctx.logger.debug('subprocess_args {0}.'.format(subprocess_args))
+
+    process = subprocess.Popen(**subprocess_args)
+    output, error = process.communicate()
+
+    ctx.logger.debug('command: {0} '.format(repr(command)))
+    ctx.logger.debug('output: {0} '.format(output))
+    ctx.logger.debug('error: {0} '.format(error))
+    ctx.logger.debug('process.returncode: {0} '.format(process.returncode))
+
+    if process.returncode:
+        ctx.logger.error(
+            'Running `{0}` returns {1} with message {2} and error: {3}.'
+            .format(repr(command), process.returncode, repr(output),
+                    repr(error)))
 
 
 def _update_runtime_properties(ctx, instance_id, properties_updates):
@@ -392,6 +420,7 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
 @workflow
 def scaledownlist(ctx, scale_compute=False,
                   ignore_failure=False,
+                  force_db_cleanup=False,
                   scale_transaction_field="",
                   scale_node_name=None,
                   scale_node_field="",
@@ -449,6 +478,14 @@ def scaledownlist(ctx, scale_compute=False,
                     removed.append(instance)
         _uninstall_instances(ctx, ctx.graph_mode(), removed, [],
                              ignore_failure)
+
+        # remove from DB
+        if force_db_cleanup:
+            ctx.logger.info('Force cleanup in DB.')
+            _execute_command(ctx, [
+                "sudo", "/opt/manager/env/bin/python",
+                '/opt/manager/scripts/cleanup_deployments.py',
+                ctx.deployment.id])
 
 
 def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):

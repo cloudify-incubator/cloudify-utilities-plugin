@@ -47,6 +47,8 @@ Parameters:
   ```c```.
 * `scale_node_field_value`: Node runtime properties field value for search.
   Can be provided as list of possible values.
+* `force_db_cleanup`: Run DB cleanup directly if instances can't be deleted in
+  one transaction.
 
 ### update_operation_filtered
 
@@ -396,3 +398,16 @@ Executing workflow update_operation_filtered on deployment examples [timeout=900
 Finished executing workflow update_operation_filtered on deployment examples
 * Run 'cfy events list -e 7f5231e7-e440-4378-ada1-9088fa405532' to retrieve the execution's events/logs
 ```
+
+## Remove instances from DB
+
+Run on manager for enable DB cleanup on manager:
+
+* Enable ability to run scripts from `cfyuser` with `sudo`.
+```shell
+$ sudo su -c "echo '' >> /etc/sudoers.d/cfyuser"
+$ sudo su -c "echo 'cfyuser ALL=(ALL) NOPASSWD:/opt/manager/env/bin/python' >> /etc/sudoers.d/cfyuser"
+```
+* Copy `cloudify_scalelist/examples/scripts/cleanup_deployments.py` to
+`/opt/manager/scripts/`.
+* Use `scaledownlist` with `force_db_cleanup`==`True`.
