@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.7.zip
-    package_version: '1.9.7'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.8.zip
+    package_version: '1.9.8'
 
   cfy_files: *utilities_plugin
 
@@ -650,8 +650,12 @@ workflows:
       force_db_cleanup:
         default: false
         description: >
-            Run DB cleanup directly if instances can't be deleted in one
-            transaction.
+          Run DB cleanup directly if instances can't be deleted in one
+          transaction.
+      all_results:
+        default: false
+        description: >
+          Get all instances for filter. Required 4.3+ manager.
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
