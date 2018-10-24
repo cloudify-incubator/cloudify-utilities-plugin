@@ -26,7 +26,7 @@ class CloudInit(object):
         :param operation_inputs: The inputs from the operation.
         """
 
-        self.config = self.get_config(self, operation_inputs)
+        self.config = self.get_config(operation_inputs)
 
     def get_external_resource(self, config):
         for f in config.get('write_files', []):
