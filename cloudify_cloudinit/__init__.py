@@ -43,7 +43,6 @@ class CloudInit(object):
                 pass
         return config
 
-    @staticmethod
     def get_config(self, inputs):
 
         config = ctx.node.properties.get('resource_config', {})
