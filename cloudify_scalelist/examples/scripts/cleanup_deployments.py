@@ -8,15 +8,20 @@ from manager_rest.manager_exceptions import NotFoundError
 from manager_rest.resource_manager import ResourceManager
 
 
-def cleanup_deployment(depl_id):
+def cleanup_deployment(depl_id, get_all):
     with setup_flask_app().app_context():
         sm = get_storage_manager()
         params_filter = ResourceManager.create_filters_dict(
             deployment_id=depl_id)
+        list_kwargs = {
+            'filters': params_filter,
+            'include': None
+        }
+        if get_all:
+            list_kwargs['get_all_results'] = True
+
         instances = get_storage_manager().list(
-            models.NodeInstance,
-            filters=params_filter,
-            include=None
+            models.NodeInstance, **list_kwargs
         ).items
         alive_instances = []
         delete_instances = []
@@ -49,11 +54,7 @@ def cleanup_deployment(depl_id):
                     instance.id, repr(instance.relationships)))
                 sm.update(instance)
         # cleanup nodes
-        nodes = get_storage_manager().list(
-            models.Node,
-            filters=params_filter,
-            include=None
-        ).items
+        nodes = get_storage_manager().list(models.Node, **list_kwargs).items
         for node in nodes:
             if node.id in count_instances:
                 node.number_of_instances = count_instances[node.id]
@@ -83,17 +84,20 @@ def cleanup_deployment(depl_id):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
         sys.stderr.write(
-            'Usage: {prog} <deployment id>\n'.format(
+            'Usage: {prog} <deployment id> {page, all}\n'.format(
                 prog=sys.argv[0],
             )
         )
         sys.exit(1)
     depl_id = sys.argv[1]
+    get_all = False
+    if len(sys.argv) == 3 and sys.argv[2] == 'all':
+        get_all = True
 
     try:
-        cleanup_deployment(depl_id)
+        cleanup_deployment(depl_id, get_all)
     except NotFoundError:
         sys.stderr.write(
             'Could not find deployment: {depl_id}\n'.format(

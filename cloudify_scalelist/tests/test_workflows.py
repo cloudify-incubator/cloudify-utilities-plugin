@@ -168,10 +168,26 @@ class TestScaleList(unittest.TestCase):
         # empty values
         with self.assertRaises(ValueError):
             workflows.scaledownlist(ctx=Mock())
-
-        # no nodes with such value
+        # no nodes with such value, all instances
         _ctx = self._gen_ctx()
         client = self._gen_rest_client()
+        client.node_instances.list = Mock(return_value=[])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            workflows.scaledownlist(
+                ctx=_ctx,
+                scale_transaction_field='_transaction',
+                all_results=True,
+                scale_node_name="node", scale_node_field="name",
+                scale_node_field_value="value"
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                _get_all_results=True,
+                deployment_id='deployment_id')
+        # only first page
         client.node_instances.list = Mock(return_value=[])
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
@@ -672,7 +688,7 @@ class TestScaleList(unittest.TestCase):
                     uninstall_command.assert_called_with(args=[
                         'sudo', '/opt/manager/env/bin/python',
                         '/opt/manager/scripts/cleanup_deployments.py',
-                        'deployment_id'],
+                        'deployment_id', 'page'],
                         stderr=-1, stdout=-1)
                     uninstall_process.communicate.assert_called_with()
                 fake_uninstall_instances.assert_called_with(
@@ -851,6 +867,27 @@ class TestScaleList(unittest.TestCase):
     def test_get_transaction_instances_nosuch(self):
         _ctx = self._gen_ctx()
         client = self._gen_rest_client()
+        # get all instances
+        client.node_instances.list = Mock(return_value=[])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            self.assertEqual(
+                workflows._get_transaction_instances(
+                    ctx=_ctx,
+                    all_results=True,
+                    scale_transaction_field='_transaction',
+                    scale_node_names="a_type",
+                    scale_node_field_path=["name"],
+                    scale_node_field_values=["value"]
+                ), ({}, [])
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                _get_all_results=True,
+                deployment_id='deployment_id')
+        # get only first page
         client.node_instances.list = Mock(return_value=[])
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
@@ -879,7 +916,26 @@ class TestScaleList(unittest.TestCase):
         instance_a.runtime_properties = {
             'name': 'value'
         }
-
+        # get all instances
+        client.node_instances.list = Mock(return_value=[instance_a])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            self.assertEqual(
+                workflows._get_transaction_instances(
+                    ctx=_ctx,
+                    scale_transaction_field='_transaction',
+                    all_results=True,
+                    scale_node_names="a_type", scale_node_field_path=["name"],
+                    scale_node_field_values=["value"]
+                ), ({'a_type': ['a_id']}, ['a_id'])
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                _get_all_results=True,
+                deployment_id='deployment_id')
+        # get only first page
         client.node_instances.list = Mock(return_value=[instance_a])
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
@@ -907,7 +963,26 @@ class TestScaleList(unittest.TestCase):
         instance_a.runtime_properties = {
             'name': 'value'
         }
-
+        # get all instances
+        client.node_instances.list = Mock(return_value=[instance_a])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            self.assertEqual(
+                workflows._get_transaction_instances(
+                    ctx=_ctx,
+                    all_results=True,
+                    scale_transaction_field=None,
+                    scale_node_names=None, scale_node_field_path=["name"],
+                    scale_node_field_values=["value"]
+                ), ({'a_type': ['a_id']}, ['a_id'])
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                _get_all_results=True,
+                deployment_id='deployment_id')
+        # get only first page
         client.node_instances.list = Mock(return_value=[instance_a])
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",

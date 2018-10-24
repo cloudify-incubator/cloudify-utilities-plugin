@@ -160,3 +160,8 @@ releases:
   v1.9.7:
   - Scalelist: Run cleanup instances after uinstall in DB by `force_db_cleanup` flag.
   - RestAPI: rename `result_propeties` to `result_properties`.
+
+  v1.9.8:
+  - Scalelist: Use `get_all_results` in `cleanup_deployments.py` and
+    `_get_transaction_instances`. (Logic available by flag `all_results` for 4.4+
+    manager only).

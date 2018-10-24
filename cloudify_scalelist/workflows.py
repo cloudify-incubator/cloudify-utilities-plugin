@@ -115,12 +115,16 @@ def _get_field_value_recursive(ctx, properties, path):
 
 def _get_transaction_instances(ctx, scale_transaction_field,
                                scale_node_names, scale_node_field_path,
-                               scale_node_field_values):
+                               scale_node_field_values, all_results=False):
     client = get_rest_client()
     # search transaction ids
-    instances = client.node_instances.list(deployment_id=ctx.deployment.id,
-                                           _include=['runtime_properties',
-                                                     'node_id', 'id'])
+    list_kwargs = {
+        'deployment_id': ctx.deployment.id,
+        '_include': ['runtime_properties', 'node_id', 'id']
+    }
+    if all_results:
+        list_kwargs['_get_all_results'] = True
+    instances = client.node_instances.list(**list_kwargs)
     transaction_ids = []
     node_instances = {}
     instance_ids = []
@@ -165,9 +169,7 @@ def _get_transaction_instances(ctx, scale_transaction_field,
     ctx.logger.debug("Transaction ids: {}".format(repr(transaction_ids)))
 
     # search instances for remove
-    instances = client.node_instances.list(deployment_id=ctx.deployment.id,
-                                           _include=['runtime_properties',
-                                                     'id', 'node_id'])
+    instances = client.node_instances.list(**list_kwargs)
 
     for instance in instances:
         runtime_properties = instance.runtime_properties
@@ -425,6 +427,7 @@ def scaledownlist(ctx, scale_compute=False,
                   scale_node_name=None,
                   scale_node_field="",
                   scale_node_field_value="",
+                  all_results=False,
                   **kwargs):
     if (
         not scale_node_field
@@ -453,7 +456,8 @@ def scaledownlist(ctx, scale_compute=False,
         scale_transaction_field=scale_transaction_field,
         scale_node_names=scale_node_name,
         scale_node_field_path=scale_node_field,
-        scale_node_field_values=scale_node_field_value)
+        scale_node_field_values=scale_node_field_value,
+        all_results=all_results)
 
     if not instance_ids:
         ctx.logger.info("Empty list for instances for remove.")
@@ -485,7 +489,7 @@ def scaledownlist(ctx, scale_compute=False,
             _execute_command(ctx, [
                 "sudo", "/opt/manager/env/bin/python",
                 '/opt/manager/scripts/cleanup_deployments.py',
-                ctx.deployment.id])
+                ctx.deployment.id, 'all' if all_results else 'page'])
 
 
 def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):

@@ -49,6 +49,8 @@ Parameters:
   Can be provided as list of possible values.
 * `force_db_cleanup`: Run DB cleanup directly if instances can't be deleted in
   one transaction.
+* `all_results`: Get all instances for filter. Required 4.4+ manager.
+  Default: `false`
 
 ### update_operation_filtered
 
