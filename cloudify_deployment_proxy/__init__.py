@@ -25,7 +25,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.utils import exception_to_error_cause
 
 from .constants import (
-    UNINSTALL_ARGS,
     EXECUTIONS_TIMEOUT,
     POLLING_INTERVAL,
     EXTERNAL_RESOURCE,
@@ -60,8 +59,7 @@ from .utils import (
 
 class DeploymentProxyBase(object):
 
-    def __init__(self,
-                 operation_inputs):
+    def __init__(self, operation_inputs):
         """
         Sets the properties that all operations need.
         :param operation_inputs: The inputs from the operation.
@@ -69,6 +67,12 @@ class DeploymentProxyBase(object):
 
         full_operation_name = ctx.operation.name
         self.operation_name = full_operation_name.split('.').pop()
+
+        # These should not make their way into the Operation inputs.
+        os.environ['_PAGINATION_OFFSET'] = \
+            str(operation_inputs.pop('pagination_offset', 0))
+        os.environ['_PAGINATION_SIZE'] = \
+            str(operation_inputs.pop('pagination_size', 1000))
 
         # cloudify client
         self.client_config = get_desired_value(
@@ -428,11 +432,7 @@ class DeploymentProxyBase(object):
             self.deployment.get(EXTERNAL_RESOURCE) and self.reexecute
         ) or not self.deployment.get(EXTERNAL_RESOURCE):
 
-            execution_args = \
-                self.config.get(
-                    'executions_start_args',
-                    UNINSTALL_ARGS if self.workflow_id == 'uninstall' else {}
-                )
+            execution_args = self.config.get('executions_start_args', {})
             client_args = \
                 dict(deployment_id=self.deployment_id,
                      workflow_id=self.workflow_id,

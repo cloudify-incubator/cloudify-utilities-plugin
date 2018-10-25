@@ -146,3 +146,24 @@ releases:
   v1.9.3:
   - CloudInit plugin: Add possibility of using external resources/jinja2 templates
     from blueprint directory in `write_files.content`
+  - Raise NonRecoverableError exception on failed proxy executions.
+  - Increase default execution timeout to 1800 seconds.
+
+  v1.9.4:
+  - Deployment proxy: Ignore proxy deployment uninstall errors unless user specifies otherwise.
+
+  v1.9.5:
+  - Deployment proxy: Using pagination in executions list.
+
+  v1.9.6:
+  - Scalelist: Add `ignore_rollback_failure` parameter for ignore action failures on rollback.
+  - Scalelist: More strict validation for parameters in scalelist up.
+
+  v1.9.7:
+  - Scalelist: Run cleanup instances after uinstall in DB by `force_db_cleanup` flag.
+  - RestAPI: rename `result_propeties` to `result_properties`.
+
+  v1.9.8:
+  - Scalelist: Use `get_all_results` in `cleanup_deployments.py` and
+    `_get_transaction_instances`. (Logic available by flag `all_results` for 4.4+
+    manager only).

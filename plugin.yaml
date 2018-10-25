@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.3.zip
-    package_version: '1.9.3'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.8.zip
+    package_version: '1.9.8'
 
   cfy_files: *utilities_plugin
 
@@ -285,7 +285,7 @@ node_types:
             timeout:
               type: integer
               description: How long (in seconds) to wait for execution to finish before timing out
-              default: 900
+              default: 1800
             interval:
               type: integer
               description: Polling interval (seconds)
@@ -295,6 +295,15 @@ node_types:
           inputs:
             workflow_id:
               default: uninstall
+            resource_config:
+              default:
+                blueprint: { get_property: [ SELF, resource_config, blueprint ] }
+                deployment: { get_property: [ SELF, resource_config, deployment ] }
+                reexecute: { get_property: [ SELF, resource_config, reexecute ] }
+                executions_start_args:
+                  allow_custom_parameters: true
+                  parameters:
+                    ignore_failure: true
         delete:
           implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
 
@@ -443,7 +452,6 @@ node_types:
           certificate.
         type: boolean
         default: true
-
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -588,6 +596,9 @@ workflows:
       ignore_failure:
         default: false
         type: boolean
+      ignore_rollback_failure:
+        default: true
+        type: boolean
       scale_transaction_field:
         type: string
         default: _transaction_id
@@ -636,6 +647,15 @@ workflows:
         description: >
           Node runtime properties field value for search. Can be provided
           as list of possible values.
+      force_db_cleanup:
+        default: false
+        description: >
+          Run DB cleanup directly if instances can't be deleted in one
+          transaction.
+      all_results:
+        default: false
+        description: >
+          Get all instances for filter. Required 4.3+ manager.
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation

@@ -12,6 +12,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from os import getenv
 import time
 
 from cloudify import ctx
@@ -149,22 +150,39 @@ def dep_logs_redirect(_client, execution_id):
 
 def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
 
-    try:
-        _execs = _client.executions.list(include_system_workflows=True)
-    except CloudifyClientError as ex:
-        raise NonRecoverableError(
-            'Executions list failed {0}.'.format(str(ex)))
-    else:
+    _offset = int(getenv('_PAGINATION_OFFSET', 0))
+    _size = int(getenv('_PAGINATION_SIZE', 1000))
+
+    while True:
+
+        try:
+            _execs = _client.executions.list(
+                include_system_workflows=True,
+                _offset=_offset,
+                _size=_size)
+        except CloudifyClientError as ex:
+            raise NonRecoverableError(
+                'Executions list failed {0}.'.format(str(ex)))
+
         for _exec in _execs:
+
             if _exec.get('is_system_workflow'):
                 if _exec.get('status') not in ('terminated', 'failed',
                                                'cancelled'):
                     return False
+
             if _check_all_in_deployment:
                 if _check_all_in_deployment == _exec.get('deployment_id'):
                     if _exec.get('status') not in ('terminated', 'failed',
                                                    'cancelled'):
                         return False
+
+        if _execs.metadata.pagination.total <= \
+                _execs.metadata.pagination.offset:
+            break
+
+        _offset = _offset + _size
+
     return True
 
 
@@ -196,6 +214,9 @@ def dep_workflow_in_state_pollster(_client,
             ' {0} is {1}'.format(_execution_id, _state))
 
         return True
+    elif _exec.get('status') == 'failed':
+        raise NonRecoverableError(
+            'Execution {0} failed.'.format(str(_exec)))
 
     return False
 

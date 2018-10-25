@@ -70,7 +70,7 @@ class TestPlugin(unittest.TestCase):
             tasks.execute(params, 'mock_param')
             # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
-                _ctx.instance.runtime_properties.get('result_propeties'),
+                _ctx.instance.runtime_properties.get('result_properties'),
                 {'nested_key0': u'nested_value1',
                  'nested_key1': u'nested_value2',
                  'id0': u'1',
@@ -182,7 +182,7 @@ class TestPlugin(unittest.TestCase):
             tasks.execute({}, 'mock_param')
             # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
-                _ctx.instance.runtime_properties.get('result_propeties'),
+                _ctx.instance.runtime_properties.get('result_properties'),
                 {'UUID': '111111111111111111111111111111',
                  'CPUID': 'ABS:FFF222777'})
 

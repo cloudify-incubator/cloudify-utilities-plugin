@@ -17,7 +17,8 @@ Parameters:
   parameter and that node is contained (transitively) within a compute node
   and this property is `true`, operate on the compute node instead of the
   specified node. Default: `false`
-* `ignore_failure`: Default: `false`
+* `ignore_failure`: Ignore failure on install. Default: `false`
+* `ignore_rollback_failure`: Ignore failure on rollback. Default: `true`
 * `scale_transaction_field`: Place to save transaction id created in same
   transaction. Default: _transaction_id
 * `scale_transaction_value`: Optional, transaction value.
@@ -25,7 +26,9 @@ Parameters:
 ### scaledownlist
 
 Remove all instances from same transaction/property as node selected by
-`scale_node_name`.
+`scale_node_name`. If instances can't be deleted in one transaction - as result
+of workflow will be uninstalled instances with "uninitialized" status and runtime
+properties cleaned up, you should ignore such instances in future uninstall actions.
 
 Parameters:
 * `scale_compute`: If a node name is passed as the `scale_node_name` parameter
@@ -44,6 +47,10 @@ Parameters:
   ```c```.
 * `scale_node_field_value`: Node runtime properties field value for search.
   Can be provided as list of possible values.
+* `force_db_cleanup`: Run DB cleanup directly if instances can't be deleted in
+  one transaction.
+* `all_results`: Get all instances for filter. Required 4.4+ manager.
+  Default: `false`
 
 ### update_operation_filtered
 
@@ -393,3 +400,16 @@ Executing workflow update_operation_filtered on deployment examples [timeout=900
 Finished executing workflow update_operation_filtered on deployment examples
 * Run 'cfy events list -e 7f5231e7-e440-4378-ada1-9088fa405532' to retrieve the execution's events/logs
 ```
+
+## Remove instances from DB
+
+Run on manager for enable DB cleanup on manager:
+
+* Enable ability to run scripts from `cfyuser` with `sudo`.
+```shell
+$ sudo su -c "echo '' >> /etc/sudoers.d/cfyuser"
+$ sudo su -c "echo 'cfyuser ALL=(ALL) NOPASSWD:/opt/manager/env/bin/python' >> /etc/sudoers.d/cfyuser"
+```
+* Copy `cloudify_scalelist/examples/scripts/cleanup_deployments.py` to
+`/opt/manager/scripts/`.
+* Use `scaledownlist` with `force_db_cleanup`==`True`.

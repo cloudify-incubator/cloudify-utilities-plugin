@@ -32,14 +32,29 @@ class TestDeployment(DeploymentProxyTestBase):
 
     def setUp(self):
         super(TestDeployment, self).setUp()
+
         mock_sleep = mock.MagicMock()
         self.sleep_mock = mock.patch('time.sleep', mock_sleep)
         self.sleep_mock.start()
+
+        self.total_patch = \
+            mock.patch('cloudify_rest_client.responses.Pagination.total',
+                       new_callable=mock.PropertyMock)
+        self.total_patch = self.total_patch.start()
+        self.total_patch.return_value = 1
+
+        self.offset_patch = \
+            mock.patch('cloudify_rest_client.responses.Pagination.offset',
+                       new_callable=mock.PropertyMock)
+        self.offset_patch = self.offset_patch.start()
+        self.offset_patch.return_value = 1
 
     def tearDown(self):
         if self.sleep_mock:
             self.sleep_mock.stop()
             self.sleep_mock = None
+        self.offset_patch.stop()
+        self.total_patch.stop()
         super(TestDeployment, self).tearDown()
 
     def test_delete_deployment_rest_client_error(self):
@@ -96,7 +111,6 @@ class TestDeployment(DeploymentProxyTestBase):
 
     def test_delete_deployment_any_dep_by_id(self):
         # Tests that deployments runs any_dep_by_id
-
         test_name = 'test_delete_deployment_any_dep_by_id'
         _ctx = self.get_mock_ctx(test_name)
         current_ctx.set(_ctx)

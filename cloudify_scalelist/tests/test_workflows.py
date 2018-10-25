@@ -168,10 +168,26 @@ class TestScaleList(unittest.TestCase):
         # empty values
         with self.assertRaises(ValueError):
             workflows.scaledownlist(ctx=Mock())
-
-        # no noes with such value
+        # no nodes with such value, all instances
         _ctx = self._gen_ctx()
         client = self._gen_rest_client()
+        client.node_instances.list = Mock(return_value=[])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            workflows.scaledownlist(
+                ctx=_ctx,
+                scale_transaction_field='_transaction',
+                all_results=True,
+                scale_node_name="node", scale_node_field="name",
+                scale_node_field_value="value"
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                _get_all_results=True,
+                deployment_id='deployment_id')
+        # only first page
         client.node_instances.list = Mock(return_value=[])
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
@@ -277,7 +293,26 @@ class TestScaleList(unittest.TestCase):
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
-            # can downscale without errors
+            # can downscale without errors, stop on failure
+            fake_run_scale = Mock(return_value=None)
+            with patch(
+                "cloudify_scalelist.workflows._run_scale_settings",
+                fake_run_scale
+            ):
+                workflows.scaleuplist(
+                    ctx=_ctx,
+                    scale_compute=True,
+                    scale_transaction_field="_transaction",
+                    scale_transaction_value="transaction_value",
+                    ignore_rollback_failure=False,
+                    scalable_entity_properties={
+                        'one': [{'name': 'one'}],
+                    })
+            fake_run_scale.assert_called_with(
+                _ctx, {'one_scale': {'instances': 11}},
+                {'one': [{'name': 'one'}]}, '_transaction',
+                'transaction_value', False, False)
+            # can downscale without errors, ignore failure
             fake_run_scale = Mock(return_value=None)
             with patch(
                 "cloudify_scalelist.workflows._run_scale_settings",
@@ -294,7 +329,7 @@ class TestScaleList(unittest.TestCase):
             fake_run_scale.assert_called_with(
                 _ctx, {'one_scale': {'instances': 11}},
                 {'one': [{'name': 'one'}]}, '_transaction',
-                'transaction_value', False)
+                'transaction_value', False, True)
 
     def test_run_scale_settings(self):
         _ctx = self._gen_ctx()
@@ -422,8 +457,9 @@ class TestScaleList(unittest.TestCase):
                         Exception,
                         "Failed install"
                     ):
-                        workflows._run_scale_settings(_ctx, scale_settings,
-                                                      {})
+                        workflows._run_scale_settings(
+                            _ctx, scale_settings, {},
+                            ignore_rollback_failure=False)
                 fake_uninstall_instances.assert_called_with(
                     _ctx, _ctx.graph_mode(),
                     set([added_instance]), set([related_instance]),
@@ -633,12 +669,28 @@ class TestScaleList(unittest.TestCase):
                     "cloudify_scalelist.workflows._uninstall_instances",
                     fake_uninstall_instances
                 ):
-                    workflows.scaledownlist(
-                        ctx=_ctx,
-                        scale_transaction_field='_transaction',
-                        scale_node_name="a_type", scale_node_field="name",
-                        scale_node_field_value="value"
-                    )
+                    uninstall_process = Mock()
+                    uninstall_process.returncode = 1
+                    uninstall_process.communicate = Mock(
+                        return_value=('output', 'error'))
+                    uninstall_command = Mock(return_value=uninstall_process)
+                    with patch(
+                        "cloudify_scalelist.workflows.subprocess.Popen",
+                        uninstall_command
+                    ):
+                        workflows.scaledownlist(
+                            ctx=_ctx,
+                            scale_transaction_field='_transaction',
+                            scale_node_name="a_type", scale_node_field="name",
+                            scale_node_field_value="value",
+                            force_db_cleanup=True
+                        )
+                    uninstall_command.assert_called_with(args=[
+                        'sudo', '/opt/manager/env/bin/python',
+                        '/opt/manager/scripts/cleanup_deployments.py',
+                        'deployment_id', 'page'],
+                        stderr=-1, stdout=-1)
+                    uninstall_process.communicate.assert_called_with()
                 fake_uninstall_instances.assert_called_with(
                     _ctx, _ctx.graph_mode(),
                     [a_instance, b_instance], [],
@@ -681,13 +733,33 @@ class TestScaleList(unittest.TestCase):
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
+            # Check wrong type of scalable_entity_properties
+            with self.assertRaises(ValueError):
+                workflows._get_scale_list(
+                    ctx=_ctx,
+                    scalable_entity_properties=['a', 'b'],
+                    property_type=dict)
+            # Check wrong type of scalable_entity_properties item
+            with self.assertRaises(ValueError):
+                workflows._get_scale_list(
+                    ctx=_ctx,
+                    scalable_entity_properties={'a': {'b': 'c'}},
+                    property_type=dict)
+            # string instead dict
+            with self.assertRaises(ValueError):
+                workflows._get_scale_list(
+                    ctx=_ctx,
+                    scalable_entity_properties={'a': ['b', 'c']},
+                    property_type=dict)
+            # correct values
             result = workflows._get_scale_list(
                 ctx=_ctx,
                 scalable_entity_properties={
                     'one': [{'name': 'one'}],
                     'two': [{'name': 'two'}],
                     'not_in_group': [{'name': 'separate'}],
-                }
+                },
+                property_type=dict
             )
             for k in result:
                 result[k]['values'].sort()
@@ -795,6 +867,27 @@ class TestScaleList(unittest.TestCase):
     def test_get_transaction_instances_nosuch(self):
         _ctx = self._gen_ctx()
         client = self._gen_rest_client()
+        # get all instances
+        client.node_instances.list = Mock(return_value=[])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            self.assertEqual(
+                workflows._get_transaction_instances(
+                    ctx=_ctx,
+                    all_results=True,
+                    scale_transaction_field='_transaction',
+                    scale_node_names="a_type",
+                    scale_node_field_path=["name"],
+                    scale_node_field_values=["value"]
+                ), ({}, [])
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                _get_all_results=True,
+                deployment_id='deployment_id')
+        # get only first page
         client.node_instances.list = Mock(return_value=[])
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
@@ -823,7 +916,26 @@ class TestScaleList(unittest.TestCase):
         instance_a.runtime_properties = {
             'name': 'value'
         }
-
+        # get all instances
+        client.node_instances.list = Mock(return_value=[instance_a])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            self.assertEqual(
+                workflows._get_transaction_instances(
+                    ctx=_ctx,
+                    scale_transaction_field='_transaction',
+                    all_results=True,
+                    scale_node_names="a_type", scale_node_field_path=["name"],
+                    scale_node_field_values=["value"]
+                ), ({'a_type': ['a_id']}, ['a_id'])
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                _get_all_results=True,
+                deployment_id='deployment_id')
+        # get only first page
         client.node_instances.list = Mock(return_value=[instance_a])
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
@@ -851,7 +963,26 @@ class TestScaleList(unittest.TestCase):
         instance_a.runtime_properties = {
             'name': 'value'
         }
-
+        # get all instances
+        client.node_instances.list = Mock(return_value=[instance_a])
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            self.assertEqual(
+                workflows._get_transaction_instances(
+                    ctx=_ctx,
+                    all_results=True,
+                    scale_transaction_field=None,
+                    scale_node_names=None, scale_node_field_path=["name"],
+                    scale_node_field_values=["value"]
+                ), ({'a_type': ['a_id']}, ['a_id'])
+            )
+            client.node_instances.list.assert_called_with(
+                _include=['runtime_properties', 'node_id', 'id'],
+                _get_all_results=True,
+                deployment_id='deployment_id')
+        # get only first page
         client.node_instances.list = Mock(return_value=[instance_a])
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",

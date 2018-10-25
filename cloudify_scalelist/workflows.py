@@ -11,9 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import subprocess
+
 from cloudify.decorators import workflow
 from cloudify.plugins import lifecycle
 from cloudify.manager import get_rest_client
+
+
+def _execute_command(ctx, command):
+
+    ctx.logger.debug('command: {0}.'.format(repr(command)))
+
+    subprocess_args = {
+        'args': command,
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.PIPE
+    }
+    ctx.logger.debug('subprocess_args {0}.'.format(subprocess_args))
+
+    process = subprocess.Popen(**subprocess_args)
+    output, error = process.communicate()
+
+    ctx.logger.debug('command: {0} '.format(repr(command)))
+    ctx.logger.debug('output: {0} '.format(output))
+    ctx.logger.debug('error: {0} '.format(error))
+    ctx.logger.debug('process.returncode: {0} '.format(process.returncode))
+
+    if process.returncode:
+        ctx.logger.error(
+            'Running `{0}` returns {1} with message {2} and error: {3}.'
+            .format(repr(command), process.returncode, repr(output),
+                    repr(error)))
 
 
 def _update_runtime_properties(ctx, instance_id, properties_updates):
@@ -87,12 +115,16 @@ def _get_field_value_recursive(ctx, properties, path):
 
 def _get_transaction_instances(ctx, scale_transaction_field,
                                scale_node_names, scale_node_field_path,
-                               scale_node_field_values):
+                               scale_node_field_values, all_results=False):
     client = get_rest_client()
     # search transaction ids
-    instances = client.node_instances.list(deployment_id=ctx.deployment.id,
-                                           _include=['runtime_properties',
-                                                     'node_id', 'id'])
+    list_kwargs = {
+        'deployment_id': ctx.deployment.id,
+        '_include': ['runtime_properties', 'node_id', 'id']
+    }
+    if all_results:
+        list_kwargs['_get_all_results'] = True
+    instances = client.node_instances.list(**list_kwargs)
     transaction_ids = []
     node_instances = {}
     instance_ids = []
@@ -137,9 +169,7 @@ def _get_transaction_instances(ctx, scale_transaction_field,
     ctx.logger.debug("Transaction ids: {}".format(repr(transaction_ids)))
 
     # search instances for remove
-    instances = client.node_instances.list(deployment_id=ctx.deployment.id,
-                                           _include=['runtime_properties',
-                                                     'id', 'node_id'])
+    instances = client.node_instances.list(**list_kwargs)
 
     for instance in instances:
         runtime_properties = instance.runtime_properties
@@ -162,17 +192,37 @@ def _get_transaction_instances(ctx, scale_transaction_field,
     return node_instances, instance_ids
 
 
-def _get_scale_list(ctx, scalable_entity_properties):
+def _get_scale_list(ctx, scalable_entity_properties, property_type):
+    # scalable_entity_properties - dictionary with such structure:
+    # {
+    #   node_name: [{runtime_properties}]
+    # }
+    # property_type - kind of values inside list of node names(types).
     scalable_entity_dict = {}
     scaling_groups = ctx.deployment.scaling_groups
     groups = _deployments_get_groups(ctx)
 
     ctx.logger.debug("Scale entities: {}"
                      .format(repr(scalable_entity_properties)))
+
+    if not isinstance(scalable_entity_properties, dict):
+        raise ValueError(
+            "You use wrong value for 'scalable_entity_properties': {}"
+            .format(repr(scalable_entity_properties)))
+
     for node_name in scalable_entity_properties:
         # get node counts
         node_amount = len(scalable_entity_properties[node_name])
 
+        if not isinstance(scalable_entity_properties[node_name], list):
+            raise ValueError(
+                "You use wrong value for 'scalable_entity_properties' item: {}"
+                .format(repr(scalable_entity_properties[node_name])))
+        for el in scalable_entity_properties[node_name]:
+            if not isinstance(el, property_type):
+                raise ValueError(
+                    "You use wrong value for runtime properties item: {}"
+                    .format(repr(scalable_entity_properties[node_name])))
         # get parent group
         for scalegroup in groups:
             # check that we really have such scalling group
@@ -234,6 +284,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field=None,
                         scale_transaction_value=None,
                         ignore_failure=False,
+                        ignore_rollback_failure=True,
                         instances_remove_ids=None):
     modification = ctx.deployment.start_modification(scale_settings)
     graph = ctx.graph_mode()
@@ -288,7 +339,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                 ctx.logger.error('Scale out failed, scaling back in. {}'
                                  .format(repr(ex)))
                 _uninstall_instances(ctx, graph, added, related,
-                                     ignore_failure)
+                                     ignore_rollback_failure)
                 raise ex
 
         if len(set(modification.removed.node_instances)):
@@ -371,10 +422,12 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
 @workflow
 def scaledownlist(ctx, scale_compute=False,
                   ignore_failure=False,
+                  force_db_cleanup=False,
                   scale_transaction_field="",
                   scale_node_name=None,
                   scale_node_field="",
                   scale_node_field_value="",
+                  all_results=False,
                   **kwargs):
     if (
         not scale_node_field
@@ -403,14 +456,16 @@ def scaledownlist(ctx, scale_compute=False,
         scale_transaction_field=scale_transaction_field,
         scale_node_names=scale_node_name,
         scale_node_field_path=scale_node_field,
-        scale_node_field_values=scale_node_field_value)
+        scale_node_field_values=scale_node_field_value,
+        all_results=all_results)
 
     if not instance_ids:
         ctx.logger.info("Empty list for instances for remove.")
         return
 
+    # we have list of instances_id(string) as part of scale dictionary
     scale_settings = _scaledown_group_to_settings(
-        ctx, _get_scale_list(ctx, instances), scale_compute)
+        ctx, _get_scale_list(ctx, instances, basestring), scale_compute)
 
     try:
         _run_scale_settings(ctx, scale_settings, {},
@@ -427,6 +482,14 @@ def scaledownlist(ctx, scale_compute=False,
                     removed.append(instance)
         _uninstall_instances(ctx, ctx.graph_mode(), removed, [],
                              ignore_failure)
+
+        # remove from DB
+        if force_db_cleanup:
+            ctx.logger.info('Force cleanup in DB.')
+            _execute_command(ctx, [
+                "sudo", "/opt/manager/env/bin/python",
+                '/opt/manager/scripts/cleanup_deployments.py',
+                ctx.deployment.id, 'all' if all_results else 'page'])
 
 
 def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):
@@ -471,6 +534,7 @@ def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):
 def scaleuplist(ctx, scalable_entity_properties,
                 scale_compute=False,
                 ignore_failure=False,
+                ignore_rollback_failure=True,
                 scale_transaction_field="",
                 scale_transaction_value="",
                 **kwargs):
@@ -478,12 +542,15 @@ def scaleuplist(ctx, scalable_entity_properties,
     if not scalable_entity_properties:
         raise ValueError('Empty list of scale nodes')
 
+    # we have list of dictionaries with runtime properties for new instances as
+    # part of scale dictionary
     scale_settings = _scaleup_group_to_settings(
-        ctx, _get_scale_list(ctx, scalable_entity_properties), scale_compute)
+        ctx, _get_scale_list(ctx, scalable_entity_properties, dict),
+        scale_compute)
 
     _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field, scale_transaction_value,
-                        ignore_failure)
+                        ignore_failure, ignore_rollback_failure)
 
 
 def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
