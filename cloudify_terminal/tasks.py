@@ -18,8 +18,21 @@ from cloudify import ctx
 from cloudify import exceptions as cfy_exc
 from cloudify.decorators import operation
 
-
 import terminal_connection
+
+
+def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
+    retry_count = 10
+    while retry_count > 0:
+        try:
+            return func(*args, **kwargs)
+        except terminal_connection.RecoverableWarning as e:
+            ctx.logger.info("Need for rerun: {}".format(repr(e)))
+            retry_count -= 1
+            time.sleep(retry_sleep)
+
+    raise cfy_exc.RecoverableError(
+        "Failed to rerun: {}:{}".format(repr(args), repr(kwargs)))
 
 
 @operation
@@ -64,7 +77,9 @@ def run(**kwargs):
 
     # additional settings
     global_promt_check = terminal_auth.get('promt_check')
-    global_error_examples = terminal_auth.get('errors')
+    global_warning_examples = terminal_auth.get('warnings', [])
+    global_error_examples = terminal_auth.get('errors', [])
+    global_critical_examples = terminal_auth.get('criticals', [])
     exit_command = terminal_auth.get('exit_command', 'exit')
     # save logs to debug file
     log_file_name = None
@@ -76,13 +91,13 @@ def run(**kwargs):
             "Communication logs will be saved to %s" % log_file_name
         )
 
-    connection = terminal_connection.connection()
+    connection = terminal_connection.RawConnection(logger=ctx.logger,
+                                                   log_file_name=log_file_name)
 
     for ip in ip_list:
         try:
             prompt = connection.connect(ip, user, password, key_content, port,
-                                        global_promt_check, logger=ctx.logger,
-                                        log_file_name=log_file_name)
+                                        global_promt_check)
             ctx.logger.info("Will be used: " + ip)
             break
 
@@ -98,6 +113,8 @@ def run(**kwargs):
         responses = call.get('responses', [])
         promt_check = call.get('promt_check', global_promt_check)
         error_examples = call.get('errors', global_error_examples)
+        warning_examples = call.get('warnings', global_warning_examples)
+        critical_examples = call.get('criticals', global_critical_examples)
         # use action if exist
         operation = call.get('action', "")
         # use template if have
@@ -145,8 +162,21 @@ def run(**kwargs):
 
             ctx.logger.info("Executing template...")
             ctx.logger.debug("Execute: " + op_line)
-            result_part = connection.run(op_line, promt_check,
-                                         error_examples, responses)
+
+            result_part = _rerun(
+                ctx=ctx,
+                func=connection.run,
+                args=[],
+                kwargs={
+                    "command": op_line,
+                    "prompt_check": promt_check,
+                    "error_examples": error_examples,
+                    "warning_examples": warning_examples,
+                    "critical_examples": critical_examples,
+                    "responses": responses
+                },
+                retry_count=call.get('retry_count', 10),
+                retry_sleep=call.get('retry_sleep', 15))
 
             if result_part.strip():
                 ctx.logger.info(result_part.strip())
@@ -160,7 +190,11 @@ def run(**kwargs):
 
     while not connection.is_closed() and exit_command:
         ctx.logger.info("Execute close")
-        result = connection.run(exit_command, promt_check, error_examples)
+        result = connection.run(command=exit_command,
+                                prompt_check=promt_check,
+                                warning_examples=global_warning_examples,
+                                error_examples=global_error_examples,
+                                critical_examples=global_error_examples)
         ctx.logger.info("Result of close: " + repr(result))
         time.sleep(1)
 
