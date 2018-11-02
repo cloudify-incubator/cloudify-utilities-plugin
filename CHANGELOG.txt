@@ -165,3 +165,8 @@ releases:
   - Scalelist: Use `get_all_results` in `cleanup_deployments.py` and
     `_get_transaction_instances`. (Logic available by flag `all_results` for 4.4+
     manager only).
+
+  v1.9.9:
+  - Scalelist: Add `node_sequence` for override relationships.
+  - Terminal: Hide debug messages.
+  - Terminal: Filter warnings and critical errors.
