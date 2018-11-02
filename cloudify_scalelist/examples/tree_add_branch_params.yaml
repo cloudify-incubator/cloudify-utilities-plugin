@@ -1,3 +1,6 @@
+node_sequence:
+- leaf
+- branch
 scalable_entity_properties:
   branch:
   - config:
