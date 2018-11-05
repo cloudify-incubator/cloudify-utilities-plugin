@@ -20,10 +20,14 @@ from cloudify import exceptions as cfy_exc
 DEFAULT_PROMT = ["#", "$"]
 
 
-class connection(object):
+# recoverable error based on warning
+class RecoverableWarning(cfy_exc.RecoverableError):
+    pass
 
-    # ssh connection
-    ssh = None
+
+class BaseConnection(object):
+
+    # connection
     conn = None
 
     # global settings
@@ -33,13 +37,20 @@ class connection(object):
     # buffer for same packages, will save partial packages between calls
     buff = ""
 
+    def __init__(self, logger=None, log_file_name=None):
+        self.logger = logger
+        self.log_file_name = log_file_name
+        self.conn = None
+        self.buff = ""
+
+    # work with log
     def _write_to_log(self, text, output=True):
         # write to log communication dump
+        if not self.log_file_name:
+            return
         if output:
             # we really want to see what server do before finish
             self.logger.debug(repr(text))
-        if not self.log_file_name:
-            return
         log_file_name = self.log_file_name + ('' if output else ".in")
         try:
             dir = os.path.dirname(log_file_name)
@@ -51,6 +62,7 @@ class connection(object):
             if self.logger:
                 self.logger.info(str(e))
 
+    # connection function
     def _conn_send(self, message):
         curr_pos = 0
         while curr_pos < len(message):
@@ -72,10 +84,38 @@ class connection(object):
         self._write_to_log(recieved)
         if not recieved:
             if self.logger:
-                self.logger.info("We have empty response.")
+                self.logger.warn("We have empty response.")
             time.sleep(1)
         return recieved
 
+    def is_closed(self):
+        if self.conn:
+            return self.conn.closed
+        return True
+
+    def _conn_close(self):
+        try:
+            if self.conn:
+                # sometime code can't close in time
+                self.conn.close()
+        finally:
+            pass
+
+    def _send_response(self, line, responses):
+        # return position next to question
+        if responses:
+            for response in responses:
+                # question check
+                question_pos = line.find(response['question'])
+                if question_pos != -1:
+                    # response to question
+                    self._conn_send(response.get('answer', ""))
+                    if response.get('newline', False):
+                        self._conn_send("\n")
+                    return question_pos + len(response['question'])
+        return -1
+
+    # search/cleanup in buf
     def _find_any_in(self, buff, promt_check):
         for code in promt_check:
             position = buff.find(code)
@@ -95,14 +135,17 @@ class connection(object):
             backspace = text.find("\b")
         return text
 
+
+class RawConnection(BaseConnection):
+
+    # ssh connection
+    ssh = None
+
     def connect(self, ip, user, password=None, key_content=None, port=22,
-                prompt_check=None, logger=None, log_file_name=None):
+                prompt_check=None):
         """open connection"""
         if not prompt_check:
             prompt_check = DEFAULT_PROMT
-
-        self.logger = logger
-        self.log_file_name = log_file_name
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -118,7 +161,6 @@ class connection(object):
                              timeout=5, allow_agent=False, look_for_keys=False)
 
         self.conn = self.ssh.invoke_shell()
-        self.buff = ""
 
         while self._find_any_in(self.buff, prompt_check) == -1:
             self.buff += self._conn_recv(256)
@@ -136,8 +178,13 @@ class connection(object):
                 self.logger.info("Wellcome message: " + "\n".join(lines[:-1]))
         return self.hostname
 
-    def _cleanup_response(self, text, prefix, error_examples):
-        if not error_examples:
+    def _cleanup_response(self, text, prefix, warning_examples,
+                          error_examples, critical_examples):
+        if (
+            not error_examples and
+            not warning_examples and
+            not critical_examples
+        ):
             return text.strip()
 
         # check command echo
@@ -145,7 +192,7 @@ class connection(object):
         prefix_pos = text.find(prefix)
         if prefix_pos == -1:
             if self.logger:
-                self.logger.info(
+                self.logger.debug(
                     "Have not found '%s' in response: '%s'" % (
                         prefix, repr(text)
                     )
@@ -153,7 +200,7 @@ class connection(object):
         else:
             if text[:prefix_pos].strip():
                 if self.logger:
-                    self.logger.info(
+                    self.logger.debug(
                         "Some mess before '%s' in response: '%s'" % (
                             prefix, repr(text)
                         )
@@ -171,31 +218,38 @@ class connection(object):
             else:
                 response = text
 
+        # check for warnings started only from new line
+        if warning_examples:
+            warnings_with_new_line = ["\n" + warning
+                                      for warning in warning_examples]
+            if self._find_any_in(response, warnings_with_new_line) != -1:
+                # close is not needed, we will rerun later
+                raise RecoverableWarning(
+                    "Looks as we have warning in response: %s" % (text)
+                )
         # check for errors started only from new line
-        errors_with_new_line = ["\n" + error for error in error_examples]
-        if self._find_any_in(response, errors_with_new_line) != -1:
-            if not self.is_closed():
-                self.close()
-            raise cfy_exc.RecoverableError(
-                "Looks as we have error in response: %s" % (text)
-            )
+        if error_examples:
+            errors_with_new_line = ["\n" + error for error in error_examples]
+            if self._find_any_in(response, errors_with_new_line) != -1:
+                if not self.is_closed():
+                    self.close()
+                raise cfy_exc.RecoverableError(
+                    "Looks as we have error in response: %s" % (text)
+                )
+        # check for criticals started only from new line
+        if critical_examples:
+            criticals_with_new_line = ["\n" + critical
+                                       for critical in critical_examples]
+            if self._find_any_in(response, criticals_with_new_line) != -1:
+                if not self.is_closed():
+                    self.close()
+                raise cfy_exc.NonRecoverableError(
+                    "Looks as we have critical in response: %s" % (text)
+                )
         return response.strip()
 
-    def _send_response(self, line, responses):
-        # return position next to question
-        if responses:
-            for response in responses:
-                # question check
-                question_pos = line.find(response['question'])
-                if question_pos != -1:
-                    # response to question
-                    self._conn_send(response.get('answer', ""))
-                    if response.get('newline', False):
-                        self._conn_send("\n")
-                    return question_pos + len(response['question'])
-        return -1
-
-    def run(self, command, prompt_check=None, error_examples=None,
+    def run(self, command, prompt_check=None, warning_examples=None,
+            error_examples=None, critical_examples=None,
             responses=None):
         if not prompt_check:
             prompt_check = DEFAULT_PROMT
@@ -217,9 +271,12 @@ class connection(object):
                 # check for close, and only after that for responses
                 if self.conn.closed:
                     message_from_server += self.buff
-                    return self._cleanup_response(message_from_server,
-                                                  response_prefix,
-                                                  error_examples)
+                    return self._cleanup_response(
+                        text=message_from_server,
+                        prefix=response_prefix,
+                        warning_examples=warning_examples,
+                        error_examples=error_examples,
+                        critical_examples=critical_examples)
                 # if we have something like question
                 # we can skip check for promt or new line
                 if responses:
@@ -251,28 +308,23 @@ class connection(object):
                 self.buff = self.buff[code_position + 1:]
 
             if self.conn.closed:
-                return self._cleanup_response(message_from_server,
-                                              response_prefix,
-                                              error_examples)
-
-        return self._cleanup_response(message_from_server,
-                                      response_prefix,
-                                      error_examples)
-
-    def is_closed(self):
-        if self.conn:
-            return self.conn.closed
-        return True
+                return self._cleanup_response(
+                    text=message_from_server,
+                    prefix=response_prefix,
+                    warning_examples=warning_examples,
+                    error_examples=error_examples,
+                    critical_examples=critical_examples)
+        return self._cleanup_response(text=message_from_server,
+                                      prefix=response_prefix,
+                                      warning_examples=warning_examples,
+                                      error_examples=error_examples,
+                                      critical_examples=critical_examples)
 
     def close(self):
         """close connection"""
-        try:
-            if self.conn:
-                # sometime code can't close in time
-                self.conn.close()
-        finally:
-            if self.ssh:
-                self.ssh.close()
+        self._conn_close()
+        if self.ssh:
+            self.ssh.close()
 
     def __del__(self):
         """Close connections for sure"""

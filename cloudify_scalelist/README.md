@@ -22,6 +22,8 @@ Parameters:
 * `scale_transaction_field`: Place to save transaction id created in same
   transaction. Default: _transaction_id
 * `scale_transaction_value`: Optional, transaction value.
+* `node_sequence`: Optional, sequence of nodes for run for override
+  relationships.
 
 ### scaledownlist
 
@@ -51,6 +53,8 @@ Parameters:
   one transaction.
 * `all_results`: Get all instances for filter. Required 4.4+ manager.
   Default: `false`
+* `node_sequence`: Optional, sequence of nodes for run for override
+  relationships.
 
 ### update_operation_filtered
 

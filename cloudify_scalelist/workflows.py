@@ -261,18 +261,61 @@ def _get_scale_list(ctx, scalable_entity_properties, property_type):
     return scalable_entity_dict
 
 
-def _uninstall_instances(ctx, graph, removed, related, ignore_failure):
+def _process_node_instances(ctx, graph, node_instances, ignore_failure,
+                            node_instance_subgraph_func, node_sequence):
+    ctx.logger.info("Scale sequence: {}".format(repr(node_sequence)))
+    subgraphs = {}
+    node_graphs = {}
+    for node_instance in node_instances:
+        node_id = node_instance._node_instance.node_id
+        if node_id not in node_graphs:
+            node_graphs[node_id] = []
+        node_graphs[node_id].append(node_instance)
+        subgraphs[node_instance.id] = node_instance_subgraph_func(
+            node_instance, graph, ignore_failure=ignore_failure)
+
+    ctx.logger.info("Scale levels: {}".format(repr(node_graphs)))
+    previous_level = []
+    for node_id in node_sequence:
+        # use get for skip instances with unknow type
+        if not node_graphs.get(node_id, []):
+            continue
+        current_level_instances = node_graphs[node_id]
+        for target_instance in current_level_instances:
+            for source_instance in previous_level:
+                ctx.logger.info("Scale dependency: {}->{}"
+                                .format(source_instance.id,
+                                        target_instance.id))
+                graph.add_dependency(subgraphs[source_instance.id],
+                                     subgraphs[target_instance.id])
+        # replace previous with current instances
+        previous_level = current_level_instances
+    graph.execute()
+
+
+def _uninstall_instances(ctx, graph, removed, related, ignore_failure,
+                         node_sequence):
 
     # cleanup tasks
     for task in graph.tasks_iter():
         graph.remove_task(task)
 
     if removed:
-        lifecycle.uninstall_node_instances(
-            graph=graph,
-            node_instances=removed,
-            related_nodes=related,
-            ignore_failure=ignore_failure)
+        if node_sequence:
+            subgraph_func = lifecycle.uninstall_node_instance_subgraph
+            _process_node_instances(
+                ctx=ctx,
+                graph=graph,
+                node_instances=removed,
+                ignore_failure=ignore_failure,
+                node_instance_subgraph_func=subgraph_func,
+                node_sequence=node_sequence[::-1])
+        else:
+            lifecycle.uninstall_node_instances(
+                graph=graph,
+                node_instances=removed,
+                related_nodes=related,
+                ignore_failure=ignore_failure)
 
         # clean up properties
         instance_ids = [node_instance._node_instance.id
@@ -285,7 +328,8 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_value=None,
                         ignore_failure=False,
                         ignore_rollback_failure=True,
-                        instances_remove_ids=None):
+                        instances_remove_ids=None,
+                        node_sequence=None):
     modification = ctx.deployment.start_modification(scale_settings)
     graph = ctx.graph_mode()
     try:
@@ -331,15 +375,29 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                                 repr(properties)))
                         _update_runtime_properties(
                             ctx, node_instance._node_instance.id, properties)
-                lifecycle.install_node_instances(
-                    graph=graph,
-                    node_instances=added,
-                    related_nodes=related)
+                if node_sequence:
+                    subgraph_func = lifecycle.install_node_instance_subgraph
+                    _process_node_instances(
+                        ctx=ctx,
+                        graph=graph,
+                        node_instances=added,
+                        ignore_failure=ignore_failure,
+                        node_instance_subgraph_func=subgraph_func,
+                        node_sequence=node_sequence)
+                else:
+                    lifecycle.install_node_instances(
+                        graph=graph,
+                        node_instances=added,
+                        related_nodes=related)
             except Exception as ex:
                 ctx.logger.error('Scale out failed, scaling back in. {}'
                                  .format(repr(ex)))
-                _uninstall_instances(ctx, graph, added, related,
-                                     ignore_rollback_failure)
+                _uninstall_instances(ctx=ctx,
+                                     graph=graph,
+                                     removed=added,
+                                     related=related,
+                                     ignore_failure=ignore_rollback_failure,
+                                     node_sequence=node_sequence)
                 raise ex
 
         if len(set(modification.removed.node_instances)):
@@ -363,11 +421,12 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                             )
                         )
             related = removed_and_related - removed
-            lifecycle.uninstall_node_instances(
-                graph=graph,
-                node_instances=removed,
-                ignore_failure=ignore_failure,
-                related_nodes=related)
+            _uninstall_instances(ctx=ctx,
+                                 graph=graph,
+                                 removed=removed,
+                                 ignore_failure=ignore_failure,
+                                 related=related,
+                                 node_sequence=node_sequence)
     except Exception as ex:
         ctx.logger.warn('Rolling back deployment modification. '
                         '[modification_id={0}]: {1}'
@@ -428,6 +487,7 @@ def scaledownlist(ctx, scale_compute=False,
                   scale_node_field="",
                   scale_node_field_value="",
                   all_results=False,
+                  node_sequence=None,
                   **kwargs):
     if (
         not scale_node_field
@@ -470,7 +530,8 @@ def scaledownlist(ctx, scale_compute=False,
     try:
         _run_scale_settings(ctx, scale_settings, {},
                             instances_remove_ids=instance_ids,
-                            ignore_failure=ignore_failure)
+                            ignore_failure=ignore_failure,
+                            node_sequence=node_sequence)
     except Exception as e:
         ctx.logger.info('Scale down based on transaction failed: {}'
                         .format(repr(e)))
@@ -480,8 +541,12 @@ def scaledownlist(ctx, scale_compute=False,
             for instance in node.instances:
                 if instance.id in instance_ids:
                     removed.append(instance)
-        _uninstall_instances(ctx, ctx.graph_mode(), removed, [],
-                             ignore_failure)
+        _uninstall_instances(ctx=ctx,
+                             graph=ctx.graph_mode(),
+                             removed=removed,
+                             related=[],
+                             ignore_failure=ignore_failure,
+                             node_sequence=node_sequence)
 
         # remove from DB
         if force_db_cleanup:
@@ -537,6 +602,7 @@ def scaleuplist(ctx, scalable_entity_properties,
                 ignore_rollback_failure=True,
                 scale_transaction_field="",
                 scale_transaction_value="",
+                node_sequence=None,
                 **kwargs):
 
     if not scalable_entity_properties:
@@ -550,7 +616,8 @@ def scaleuplist(ctx, scalable_entity_properties,
 
     _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field, scale_transaction_value,
-                        ignore_failure, ignore_rollback_failure)
+                        ignore_failure, ignore_rollback_failure,
+                        node_sequence=node_sequence)
 
 
 def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,

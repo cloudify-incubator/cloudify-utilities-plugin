@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.8.zip
-    package_version: '1.9.8'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.10.0.zip
+    package_version: '1.10.0'
 
   cfy_files: *utilities_plugin
 
@@ -184,9 +184,17 @@ data_types:
         description: >
           optional, list of prompts accepted from device, default is "#/$"
         default: []
+      warnings:
+        description: >
+          optional, list of possible warnings without new line
+        default: []
       errors:
         description: >
           optional, list of possible errors without new line
+        default: []
+      criticals:
+        description: >
+          optional, list of possible criticals without new line
         default: []
       exit_command:
         description: >
@@ -609,6 +617,10 @@ workflows:
         default: ""
         description: >
            Optional, transaction value.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   scaledownlist:
     mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
@@ -656,6 +668,10 @@ workflows:
         default: false
         description: >
           Get all instances for filter. Required 4.3+ manager.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation

@@ -32,7 +32,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.8/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.10.0/plugin.yaml
 
 inputs:
 
@@ -85,6 +85,10 @@ workflows:
       ignore_rollback_failure:
         default: true
         type: boolean
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   tree_remove_branch:
     mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
@@ -128,6 +132,10 @@ workflows:
         default: false
         description: >
           Get all instances for filter. Required 4.3+ manager.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   tree_add_tree:
     mapping: scalelist.cloudify_scalelist.workflows.scaleuplist
@@ -159,6 +167,10 @@ workflows:
       ignore_rollback_failure:
         default: true
         type: boolean
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   tree_remove_tree:
     mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
@@ -202,6 +214,10 @@ workflows:
         default: false
         description: >
           Get all instances for filter. Required 4.3+ manager.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   tree_update_tree:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
@@ -261,6 +277,10 @@ workflows:
         description: >
          Node runtime properties field value for search. Can be provided as
          list of possible values.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   tree_update_branch:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
@@ -320,6 +340,10 @@ workflows:
         description: >
          Node runtime properties field value for search. Can be provided as
          list of possible values.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   tree_update_leaf:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
@@ -379,6 +403,10 @@ workflows:
         description: >
          Node runtime properties field value for search. Can be provided as
          list of possible values.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
 node_types:
 

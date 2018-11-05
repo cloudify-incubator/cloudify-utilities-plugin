@@ -208,6 +208,11 @@ def dep_workflow_in_state_pollster(_client,
         raise NonRecoverableError(
             'Executions get failed {0}.'.format(str(ex)))
 
+    if _log_redirect and _exec.get('id'):
+        ctx.logger.debug(
+            '_exec info for _log_redirect is {0}'.format(_exec))
+        dep_logs_redirect(_client, _exec.get('id'))
+
     if _exec.get('status') == _state:
         ctx.logger.debug(
             'The status for _exec info id'

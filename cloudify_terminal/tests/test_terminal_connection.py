@@ -14,7 +14,7 @@
 import unittest
 from mock import MagicMock, patch, mock_open, Mock, call
 
-from cloudify.exceptions import RecoverableError
+from cloudify.exceptions import RecoverableError, NonRecoverableError
 
 import cloudify_terminal.terminal_connection as terminal_connection
 
@@ -36,11 +36,11 @@ class TestTasks(unittest.TestCase):
         super(TestTasks, self).tearDown()
 
     def test_empty_send(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn._conn_send("")
 
     def test_send(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.conn = MagicMock()
         conn.conn.send = MagicMock(return_value=4)
         conn.conn.closed = False
@@ -51,7 +51,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.send.assert_called_with("abcd")
 
     def test_send_closed_connection(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.conn = MagicMock()
         conn.conn.send = MagicMock(return_value=3)
         conn.conn.closed = True
@@ -62,7 +62,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.send.assert_called_with("abcd")
 
     def test_send_troubles(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.conn = MagicMock()
         conn.logger = MagicMock()
         conn.conn.send = MagicMock(return_value=-1)
@@ -75,7 +75,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.send.assert_called_with("abcd")
 
     def test_send_byte_by_byte(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.conn = MagicMock()
         conn.logger = MagicMock()
         conn.conn.send = Mock(return_value=2)
@@ -87,7 +87,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.send.assert_has_calls([call('abcd'), call('cd')])
 
     def test_recv(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.conn = MagicMock()
         conn.logger = MagicMock()
         conn.conn.recv = MagicMock(return_value="AbCd")
@@ -98,7 +98,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.recv.assert_called_with(4)
 
     def test_recv_empty(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.conn = MagicMock()
         conn.logger = MagicMock()
         conn.conn.recv = MagicMock(return_value="")
@@ -106,17 +106,17 @@ class TestTasks(unittest.TestCase):
 
         self.assertEqual(conn._conn_recv(4), "")
 
-        conn.logger.info.assert_called_with('We have empty response.')
+        conn.logger.warn.assert_called_with('We have empty response.')
         conn.conn.recv.assert_called_with(4)
 
     def test_find_any_in(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
 
         self.assertEqual(conn._find_any_in("abcd\n$abc", ["$", "#"]), 5)
         self.assertEqual(conn._find_any_in("abcd\n>abc", ["$", "#"]), -1)
 
     def test_delete_backspace(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         # simple case
         self.assertEqual(conn._delete_backspace("abc\bd\n$a\bbc"), "abd\n$bc")
         # \b in begging of line
@@ -125,7 +125,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(conn._delete_backspace("abc\b\b\b\b\b"), "")
 
     def test_send_response(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         # no responses
         self.assertEqual(conn._send_response("abcd?", []), -1)
         # wrong question
@@ -163,7 +163,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.send.assert_has_calls([call("n"), call('\n')])
 
     def test_is_closed(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
 
         conn.conn = MagicMock()
 
@@ -177,7 +177,7 @@ class TestTasks(unittest.TestCase):
         self.assertTrue(conn.is_closed())
 
     def test_close(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
 
         conn.conn = MagicMock()
         conn.conn.close = MagicMock()
@@ -190,16 +190,29 @@ class TestTasks(unittest.TestCase):
         conn.ssh.close.assert_called_with()
 
     def test_write_to_log_no_logfile(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.log_file_name = None
         conn.logger = MagicMock()
 
         conn._write_to_log("Some_text")
+        conn.logger.debug.assert_not_called()
 
-        conn.logger.debug.assert_called_with("'Some_text'")
+    def test_write_to_log_write_file_output(self):
+        conn = terminal_connection.RawConnection()
+        conn.log_file_name = '/proc/read_only_file'
+        conn.logger = MagicMock()
 
-    def test_write_to_log_write_file(self):
-        conn = terminal_connection.connection()
+        with patch("os.path.isdir", MagicMock(return_value=True)):
+            fake_file = mock_open()
+            with patch(
+                    '__builtin__.open', fake_file
+            ):
+                conn._write_to_log("Some_text")
+            fake_file.assert_called_once_with('/proc/read_only_file', 'a+')
+            fake_file().write.assert_called_with('Some_text')
+
+    def test_write_to_log_write_file_input(self):
+        conn = terminal_connection.RawConnection()
         conn.log_file_name = '/proc/read_only_file'
         conn.logger = MagicMock()
 
@@ -212,9 +225,10 @@ class TestTasks(unittest.TestCase):
 
             fake_file.assert_called_once_with('/proc/read_only_file.in', 'a+')
             fake_file().write.assert_called_with('Some_text')
+            conn.logger.debug.assert_not_called()
 
     def test_write_to_log_cantcreate_dir(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.log_file_name = '/proc/read_only/file'
         conn.logger = MagicMock()
 
@@ -228,15 +242,14 @@ class TestTasks(unittest.TestCase):
         )
 
     def test_connect_with_password(self):
-        conn = terminal_connection.connection()
-
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
             with self.assertRaises(OSError):
+                conn = terminal_connection.RawConnection(
+                    logger="logger", log_file_name="log_file_name")
                 conn.connect("ip", "user", "password", None, port=44,
-                             prompt_check="prompt_check", logger="logger",
-                             log_file_name="log_file_name")
+                             prompt_check="prompt_check")
 
         ssh_mock.connect.assert_called_with(
             'ip', allow_agent=False, look_for_keys=False, password='password',
@@ -246,17 +259,16 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(conn.log_file_name, "log_file_name")
 
     def test_connect_with_key(self):
-        conn = terminal_connection.connection()
-
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock(side_effect=OSError("e"))
         with patch("paramiko.RSAKey.from_private_key",
                    MagicMock(return_value="key_value")):
             with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
                 with self.assertRaises(OSError):
+                    conn = terminal_connection.RawConnection(
+                        logger="logger", log_file_name="log_file_name")
                     conn.connect("ip", "user", None, "key",
-                                 prompt_check=None, logger="logger",
-                                 log_file_name="log_file_name")
+                                 prompt_check=None,)
 
         ssh_mock.connect.assert_called_with(
             'ip', allow_agent=False, pkey='key_value', port=22, timeout=5,
@@ -266,72 +278,100 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(conn.log_file_name, "log_file_name")
 
     def test_connect(self):
-        conn = terminal_connection.connection()
         conn_mock = MagicMock()
         conn_mock.recv = MagicMock(return_value="some_prompt#")
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock()
         ssh_mock.invoke_shell = MagicMock(return_value=conn_mock)
+        conn = terminal_connection.RawConnection(
+            logger=MagicMock(), log_file_name=None)
         with patch("paramiko.SSHClient", MagicMock(return_value=ssh_mock)):
             self.assertEqual(
                 conn.connect("ip", "user", "password", None, port=44,
-                             prompt_check=None, logger=MagicMock(),
-                             log_file_name=None),
+                             prompt_check=None),
                 "some_prompt"
             )
 
     def test_cleanup_response_empty(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
 
-        self.assertEqual(conn._cleanup_response(" text ", ":", []), "text")
+        self.assertEqual(
+            conn._cleanup_response(
+                text=" text ",
+                prefix=":",
+                warning_examples=[],
+                error_examples=[],
+                critical_examples=[]
+            ),
+            "text")
 
     def test_cleanup_response_with_prompt(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
 
         conn.logger = MagicMock()
 
         self.assertEqual(
-            conn._cleanup_response("prompt> text ", "prompt>", ['error']),
+            conn._cleanup_response(
+                text="prompt> text ",
+                prefix="prompt>",
+                warning_examples=[],
+                error_examples=['error'],
+                critical_examples=[]
+            ),
             "text"
         )
 
         conn.logger.info.assert_not_called()
 
     def test_cleanup_response_without_prompt(self):
-        conn = terminal_connection.connection()
-        conn.logger = MagicMock()
-
-        self.assertEqual(
-            conn._cleanup_response("prmpt> text ", "prompt>", ['error']),
-            "prmpt> text"
-        )
-
-        conn.logger.info.assert_called_with(
-            "Have not found 'prompt>' in response: ''prmpt> text ''")
-
-    def test_cleanup_response_mess_before_prompt(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.logger = MagicMock()
 
         self.assertEqual(
             conn._cleanup_response(
-                "..prompt> text\n some", "prompt>", ['error']
+                text="prmpt> text ",
+                prefix="prompt>",
+                warning_examples=[],
+                error_examples=['error'],
+                critical_examples=[]
+            ),
+            "prmpt> text"
+        )
+
+        conn.logger.debug.assert_called_with(
+            "Have not found 'prompt>' in response: ''prmpt> text ''")
+
+    def test_cleanup_response_mess_before_prompt(self):
+        conn = terminal_connection.RawConnection()
+        conn.logger = MagicMock()
+
+        self.assertEqual(
+            conn._cleanup_response(
+                text="..prompt> text\n some",
+                prefix="prompt>",
+                warning_examples=[],
+                error_examples=['error'],
+                critical_examples=[]
             ),
             "some"
         )
 
-        conn.logger.info.assert_called_with(
+        conn.logger.debug.assert_called_with(
             "Some mess before 'prompt>' in response: ''..prompt> "
             "text\\n some''")
 
     def test_cleanup_response_error(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.logger = MagicMock()
 
         # check with closed connection
         with self.assertRaises(RecoverableError) as error:
             conn._cleanup_response(
-                "prompt> text\n some\nerror", "prompt>", ['error']
+                text="prompt> text\n some\nerror",
+                prefix="prompt>",
+                warning_examples=[],
+                error_examples=['error'],
+                critical_examples=[]
             )
 
         conn.logger.info.assert_not_called()
@@ -344,14 +384,42 @@ class TestTasks(unittest.TestCase):
         # check with alive connection
         conn.conn = MagicMock()
         conn.conn.closed = False
+        # warnings?
+        with self.assertRaises(
+            terminal_connection.RecoverableWarning
+        ) as error:
+            conn._cleanup_response(
+                text="prompt> text\n some\nerror",
+                prefix="prompt>",
+                warning_examples=['error'],
+                error_examples=[],
+                critical_examples=[]
+            )
+        conn.conn.close.assert_not_called()
+        # errors?
         with self.assertRaises(RecoverableError) as error:
             conn._cleanup_response(
-                "prompt> text\n some\nerror", "prompt>", ['error']
+                text="prompt> text\n some\nerror",
+                prefix="prompt>",
+                warning_examples=[],
+                error_examples=['error'],
+                critical_examples=[]
+            )
+        conn.conn.close.assert_called_with()
+        # critical?
+        conn.conn.close = MagicMock()
+        with self.assertRaises(NonRecoverableError) as error:
+            conn._cleanup_response(
+                text="prompt> text\n some\nerror",
+                prefix="prompt>",
+                warning_examples=[],
+                error_examples=[],
+                critical_examples=['error']
             )
         conn.conn.close.assert_called_with()
 
     def test_run_with_closed_connection(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.logger = MagicMock()
         conn.conn = MagicMock()
         conn.conn.closed = True
@@ -362,7 +430,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.send.assert_called_with("test\n")
 
     def test_run_with_closed_connection_after_twice_check(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.logger = MagicMock()
         conn.conn = MagicMock()
         conn.conn.closed = False
@@ -386,7 +454,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.send.assert_called_with("test\n")
 
     def test_run_with_closed_connection_after_third_check(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.logger = MagicMock()
 
         class _fake_conn(object):
@@ -413,7 +481,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(conn.run("test"), "+")
 
     def test_run_return_without_delay(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.logger = MagicMock()
         conn.conn = MagicMock()
         conn.conn.closed = False
@@ -425,7 +493,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.send.assert_called_with("test\n")
 
     def test_run_return_without_delay_with_responses(self):
-        conn = terminal_connection.connection()
+        conn = terminal_connection.RawConnection()
         conn.logger = MagicMock()
         conn.conn = MagicMock()
         conn.conn.closed = False

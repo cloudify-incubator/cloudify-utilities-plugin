@@ -177,7 +177,9 @@ node_templates:
         ip: <optional, instance ip, plugin can get such ip from parent node>
         key_content: <optional, ssh key content for instance>
         port: <optional, by default 22>
+        warnings: <list strings that must rerun if contained in output>
         errors: <list strings that must raise error if contained in output>
+        criticals: <list strings that must raise non recoverable error if contained in output>
         promt_check: <optional, list of prompt's>
         exit_command: <optional, command for run if connection alive after all commands, by default: exit>
     interfaces:
@@ -200,9 +202,12 @@ node_templates:
                   - question: <sequence on chars that required some response>
                     answer: <response from plugin>
                     newline: <optional, send new line after response, by default false>
+                warnings: <optional, list strings that must rerun last operation if contained in output, will overwrite values from terminal_auth>
                 errors: <optional, list strings that must raise error if contained in output, will overwrite values from terminal_auth>
+                criticals: <optional, list strings that must raise NonRecoverableError if contained in output, will overwrite values from terminal_auth>
                 promt_check: <optional, list of prompt's, will overwrite values from terminal_auth>
-
+                retry_count: <optional, rerun count on warning, by default 10>
+                retry_sleep: <optional, sleep between rerun, by default 15>
 ```
 
 # Examples
