@@ -199,6 +199,14 @@ class TestUtilities(EcosystemTestBase):
                     'commit', rest_instance['result_properties']))
         utils.execute_uninstall(blueprint_id)
 
+    def _only_init_nodeinstances(self, nis):
+        initialized_node_instances = []
+        for ni in nis:
+            if ni['state'] == 'uninitialized':
+                continue
+            initialized_node_instances.append(ni)
+        return initialized_node_instances
+
     def test_scalelist(self):
         blueprint_id = 'scalelist-{0}'.format(self.application_prefix)
         utils.execute_command(
@@ -208,22 +216,17 @@ class TestUtilities(EcosystemTestBase):
         utils.create_deployment(blueprint_id)
         utils.execute_install(blueprint_id)
         node_one_instances = utils.get_node_instances('one', blueprint_id)
-        # self.assertEqual(len(node_one_instances), 1)
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_one_instances)), 1)
         node_two_instances = utils.get_node_instances('two', blueprint_id)
-        # self.assertEqual(len(node_two_instances), 1)
-        # self.assertIn(
-        #     'resource_id', node_two_instances[0]['runtime_properties'])
-        # self.assertIn(
-        #     'resource_name', node_two_instances[0]['runtime_properties'])
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_two_instances)), 1)
         node_three_instances = utils.get_node_instances('three', blueprint_id)
-        # self.assertEqual(len(node_three_instances), 1)
-        print "Node Instances: \n\n\n\n" \
-              "{0} \n\n" \
-              "{1} \n\n" \
-              "{2} \n\n".format(
-                  [ni for ni in node_one_instances],
-                  [ni for ni in node_two_instances],
-                  [ni for ni in node_three_instances])
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_three_instances)), 1)
+        node_four_instances = utils.get_node_instances('four', blueprint_id)
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_four_instances)), 1)
         # Scale Up 1:no change 2:2 3:3
         if utils.execute_command(
                 'cfy executions start scaleuplist -d {0} '
@@ -232,24 +235,17 @@ class TestUtilities(EcosystemTestBase):
             raise Exception(
                 '{0} scaleup failed.'.format(blueprint_id))
         node_one_instances = utils.get_node_instances('one', blueprint_id)
-        # self.assertEqual(len(node_one_instances), 1)
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_one_instances)), 1)
         node_two_instances = utils.get_node_instances('two', blueprint_id)
-        # self.assertEqual(len(node_two_instances), 3)
-        # self.assertIn(
-        #     'resource_id', node_two_instances[1]['runtime_properties'])
-        # self.assertIn(
-        #     'resource_name', node_two_instances[1]['runtime_properties'])
-        # self.assertIn(
-        #     '_transaction_id', node_two_instances[1]['runtime_properties'])
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_two_instances)), 3)
         node_three_instances = utils.get_node_instances('three', blueprint_id)
-        print "Node Instances: \n\n\n\n" \
-              "{0} \n\n" \
-              "{1} \n\n" \
-              "{2} \n\n".format(
-                  [ni for ni in node_one_instances],
-                  [ni for ni in node_two_instances],
-                  [ni for ni in node_three_instances])
-        # self.assertEqual(len(node_three_instances), 4)
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_three_instances)), 4)
+        node_four_instances = utils.get_node_instances('four', blueprint_id)
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_four_instances)), 4)
         # Undo Scaleup operations
         if utils.execute_command(
                 'cfy executions start scaledownlist -d {0} '
@@ -258,15 +254,13 @@ class TestUtilities(EcosystemTestBase):
             raise Exception(
                 '{0} scaleup failed.'.format(blueprint_id))
         node_one_instances = utils.get_node_instances('one', blueprint_id)
-        # self.assertEqual(len(node_one_instances), 1)
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_one_instances)), 1)
         node_two_instances = utils.get_node_instances('two', blueprint_id)
-        # self.assertEqual(len(node_two_instances), 3)
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_two_instances)), 1)
         node_three_instances = utils.get_node_instances('three', blueprint_id)
-        # self.assertEqual(len(node_three_instances), 4)
-        print "Node Instances: \n\n\n\n" \
-              "{0} \n\n" \
-              "{1} \n\n" \
-              "{2} \n\n".format(
-                  [ni for ni in node_one_instances],
-                  [ni for ni in node_two_instances],
-                  [ni for ni in node_three_instances])
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_three_instances)), 1)
+        self.assertEqual(
+            len(self._only_init_nodeinstances(node_four_instances)), 1)
