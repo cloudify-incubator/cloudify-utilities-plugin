@@ -1,6 +1,7 @@
 # Built-in Imports
 import os
 import sys
+from time import sleep
 
 # Cloudify Imports
 from ecosystem_tests import EcosystemTestBase, utils, PasswordFilter
@@ -234,6 +235,7 @@ class TestUtilities(EcosystemTestBase):
                     blueprint_id)):
             raise Exception(
                 '{0} scaleup failed.'.format(blueprint_id))
+        sleep(5)
         node_one_instances = utils.get_node_instances('one', blueprint_id)
         self.assertEqual(
             len(self._only_init_nodeinstances(node_one_instances)), 1)
@@ -253,6 +255,7 @@ class TestUtilities(EcosystemTestBase):
                     blueprint_id)):
             raise Exception(
                 '{0} scaleup failed.'.format(blueprint_id))
+        sleep(5)
         node_one_instances = utils.get_node_instances('one', blueprint_id)
         self.assertEqual(
             len(self._only_init_nodeinstances(node_one_instances)), 1)
@@ -263,4 +266,4 @@ class TestUtilities(EcosystemTestBase):
         self.assertEqual(
             len(self._only_init_nodeinstances(node_three_instances)), 1)
         self.assertEqual(
-            len(self._only_init_nodeinstances(node_four_instances)), 1)
+            len(self._only_init_nodeinstances(node_four_instances)), 4)
