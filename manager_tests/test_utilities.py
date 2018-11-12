@@ -247,9 +247,5 @@ class TestUtilities(EcosystemTestBase):
         self.assertEqual(len(node_one_instances), 1)
         node_two_instances = utils.get_node_instances('two', blueprint_id)
         self.assertEqual(len(node_two_instances), 3)
-        self.assertIn(
-            'resource_id', node_two_instances[0]['runtime_properties'])
-        self.assertIn(
-            'resource_name', node_two_instances[0]['runtime_properties'])
         node_three_instances = utils.get_node_instances('three', blueprint_id)
         self.assertEqual(len(node_three_instances), 4)
