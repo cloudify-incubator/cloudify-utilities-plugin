@@ -220,7 +220,10 @@ class TestUtilities(EcosystemTestBase):
         print "Node Instances: \n\n\n\n" \
               "{0} \n\n" \
               "{1} \n\n" \
-              "{2} \n\n".format(node_one_instances, node_two_instances, node_three_instances)
+              "{2} \n\n".format(
+                  [ni for ni in node_one_instances],
+                  [ni for ni in node_two_instances],
+                  [ni for ni in node_three_instances])
         # Scale Up 1:no change 2:2 3:3
         if utils.execute_command(
                 'cfy executions start scaleuplist -d {0} '
@@ -242,7 +245,10 @@ class TestUtilities(EcosystemTestBase):
         print "Node Instances: \n\n\n\n" \
               "{0} \n\n" \
               "{1} \n\n" \
-              "{2} \n\n".format(node_one_instances, node_two_instances, node_three_instances)
+              "{2} \n\n".format(
+                  [ni for ni in node_one_instances],
+                  [ni for ni in node_two_instances],
+                  [ni for ni in node_three_instances])
         # self.assertEqual(len(node_three_instances), 4)
         # Undo Scaleup operations
         if utils.execute_command(
@@ -260,4 +266,7 @@ class TestUtilities(EcosystemTestBase):
         print "Node Instances: \n\n\n\n" \
               "{0} \n\n" \
               "{1} \n\n" \
-              "{2} \n\n".format(node_one_instances, node_two_instances, node_three_instances)
+              "{2} \n\n".format(
+                  [ni for ni in node_one_instances],
+                  [ni for ni in node_two_instances],
+                  [ni for ni in node_three_instances])
