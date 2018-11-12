@@ -198,3 +198,58 @@ class TestUtilities(EcosystemTestBase):
                 '{0} not in {1}'.format(
                     'commit', rest_instance['result_properties']))
         utils.execute_uninstall(blueprint_id)
+
+    def test_scalelist(self):
+        blueprint_id = 'scalelist-{0}'.format(self.application_prefix)
+        utils.execute_command(
+            'cfy blueprints upload cloudify_scalelist/'
+            'examples/blueprint.yaml -b {0}'.format(
+                blueprint_id))
+        utils.create_deployment(blueprint_id)
+        utils.execute_install(blueprint_id)
+        node_one_instances = utils.get_node_instances('one', blueprint_id)
+        self.assertEqual(len(node_one_instances), 1)
+        node_two_instances = utils.get_node_instances('two', blueprint_id)
+        self.assertEqual(len(node_two_instances), 1)
+        self.assertIn(
+            'resource_id', node_two_instances[0]['runtime_properties'])
+        self.assertIn(
+            'resource_name', node_two_instances[0]['runtime_properties'])
+        node_three_instances = utils.get_node_instances('three', blueprint_id)
+        self.assertEqual(len(node_three_instances), 1)
+        # Scale Up 1:no change 2:2 3:3
+        if utils.execute_command(
+                'cfy executions start scaleuplist -d {0} '
+                '-p cloudify_scalelist/examples/scaleup_params.yaml'.format(
+                    blueprint_id)):
+            raise Exception(
+                '{0} scaleup failed.'.format(blueprint_id))
+        node_one_instances = utils.get_node_instances('one', blueprint_id)
+        self.assertEqual(len(node_one_instances), 1)
+        node_two_instances = utils.get_node_instances('two', blueprint_id)
+        self.assertEqual(len(node_two_instances), 3)
+        self.assertIn(
+            'resource_id', node_two_instances[1]['runtime_properties'])
+        self.assertIn(
+            'resource_name', node_two_instances[1]['runtime_properties'])
+        self.assertIn(
+            '_transaction_id', node_two_instances[1]['runtime_properties'])
+        node_three_instances = utils.get_node_instances('three', blueprint_id)
+        self.assertEqual(len(node_three_instances), 4)
+        # Undo Scaleup operations
+        if utils.execute_command(
+                'cfy executions start scaledownlist -d {0} '
+                '-p cloudify_scalelist/examples/scaledown_params.yaml'.format(
+                    blueprint_id)):
+            raise Exception(
+                '{0} scaleup failed.'.format(blueprint_id))
+        node_one_instances = utils.get_node_instances('one', blueprint_id)
+        self.assertEqual(len(node_one_instances), 1)
+        node_two_instances = utils.get_node_instances('two', blueprint_id)
+        self.assertEqual(len(node_two_instances), 3)
+        self.assertIn(
+            'resource_id', node_two_instances[0]['runtime_properties'])
+        self.assertIn(
+            'resource_name', node_two_instances[0]['runtime_properties'])
+        node_three_instances = utils.get_node_instances('three', blueprint_id)
+        self.assertEqual(len(node_three_instances), 4)
