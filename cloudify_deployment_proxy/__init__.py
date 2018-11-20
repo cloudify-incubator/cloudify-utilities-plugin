@@ -223,7 +223,14 @@ class DeploymentProxyBase(object):
             if 'plugins' not in ctx.instance.runtime_properties.keys():
                 ctx.instance.runtime_properties['plugins'] = []
 
-            for plugin in self.plugins:
+            if isinstance(self.plugins, list):
+                plugins_list = self.plugins
+            elif isinstance(self.plugins, dict):
+                plugins_list = self.plugins.values()
+            else:
+                raise NonRecoverableError(
+                    'Wrong type in plugins: {}'.format(repr(self.plugins)))
+            for plugin in plugins_list:
                 ctx.logger.info('Creating plugin zip archive..')
                 wagon_path = None
                 yaml_path = None
