@@ -31,7 +31,7 @@ description: >
   Scale Blueprint Check
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.10.0/plugin.yaml
 
 inputs:

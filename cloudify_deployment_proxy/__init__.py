@@ -225,6 +225,9 @@ class DeploymentProxyBase(object):
 
             for plugin in self.plugins:
                 ctx.logger.info('Creating plugin zip archive..')
+                wagon_path = None
+                yaml_path = None
+                zip_path = None
                 try:
                     wagon_path = get_local_path(plugin['wagon_path'],
                                                 create_temp=True)
@@ -238,9 +241,12 @@ class DeploymentProxyBase(object):
                         plugin.id)
                     ctx.logger.info('Uploaded {}'.format(repr(plugin.id)))
                 finally:
-                    os.remove(wagon_path)
-                    os.remove(yaml_path)
-                    os.remove(zip_path)
+                    if wagon_path:
+                        os.remove(wagon_path)
+                    if yaml_path:
+                        os.remove(yaml_path)
+                    if zip_path:
+                        os.remove(zip_path)
 
     def _set_secrets(self):
         # secrets set
