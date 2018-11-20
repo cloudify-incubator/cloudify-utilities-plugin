@@ -86,19 +86,19 @@ jobs:
           at: workspace
       - run:
           name: download manager docker image
-          command: wget http://repository.cloudifysource.org/cloudify/4.3.2/ga-release/cloudify-docker-manager-4.3.2ga.tar
+          command: wget http://repository.cloudifysource.org/cloudify/4.5.0/ga-release/cloudify-docker-manager-4.5ga.tar
       - run:
           name: load docker image
-          command: docker load -i cloudify-docker-manager-4.3.2ga.tar
+          command: docker load -i cloudify-docker-manager-4.5ga.tar
       - run:
           name: retain space by dumping the tar
-          command: rm cloudify-docker-manager-4.3.2ga.tar
+          command: rm cloudify-docker-manager-4.5ga.tar
       - run:
           name: start docker container
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host docker-cfy-manager:latest
       - run:
           name: install cloudify
-          command: pip install cloudify==4.3.2
+          command: pip install cloudify==4.5
       - run:
           name: install utilities plugin from branch
           command: pip install -e .
@@ -107,7 +107,7 @@ jobs:
           command: cfy profiles use localhost -u admin -p admin -t default_tenant
       - run:
           name: install test requirements
-          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.0.zip
+          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
       - run:
           name: execute test
           command: nosetests -s manager_tests/test_utilities.py
