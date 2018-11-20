@@ -170,3 +170,6 @@ releases:
   - Scalelist: Add `node_sequence` for override relationships.
   - Terminal: Hide debug messages.
   - Terminal: Filter warnings and critical errors.
+
+  v1.10.1:
+  - Deployment proxy: Remove only downloaded wagons
