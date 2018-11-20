@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.0/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.10.0/plugin.yaml
 
 inputs:
 
@@ -14,6 +14,9 @@ node_templates:
   deployment_proxy:
     type: cloudify.nodes.DeploymentProxy
     properties:
+      plugins:
+        - wagon_path: https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.9.0/cloudify_utilities_plugin-1.9.0-py27-none-linux_x86_64-centos-Core.wgn
+          plugin_yaml_path: http://www.getcloudify.org/spec/utilities-plugin/1.9.0/plugin.yaml
       resource_config:
         blueprint:
           id: deployment_proxy
