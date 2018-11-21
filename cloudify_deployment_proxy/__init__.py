@@ -236,6 +236,15 @@ class DeploymentProxyBase(object):
                 yaml_path = None
                 zip_path = None
                 try:
+                    if (
+                        not plugin.get('wagon_path') or
+                        not plugin.get('plugin_yaml_path')
+                    ):
+                        raise NonRecoverableError(
+                            'You should provide both values wagon_path: {}'
+                            ' and plugin_yaml_path: {}'
+                            .format(repr(plugin.get('wagon_path')),
+                                    repr(plugin.get('plugin_yaml_path'))))
                     wagon_path = get_local_path(plugin['wagon_path'],
                                                 create_temp=True)
                     yaml_path = get_local_path(plugin['plugin_yaml_path'],

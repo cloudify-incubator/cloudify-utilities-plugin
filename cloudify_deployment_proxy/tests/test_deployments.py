@@ -160,6 +160,15 @@ class TestDeployment(DeploymentProxyTestBase):
             self.assertIn('Wrong type in plugins: True',
                           error.message)
 
+            # raise error if wrong wagon/yaml values
+            deployment = DeploymentProxyBase({'plugins': [{
+                'wagon_path': '',
+                'plugin_yaml_path': ''}]})
+            error = self.assertRaises(NonRecoverableError,
+                                      deployment._upload_plugins)
+            self.assertIn("You should provide both values wagon_path: '' "
+                          "and plugin_yaml_path: ''", error.message)
+
     def test_delete_deployment_success(self):
         # Tests that deployments delete succeeds
 
