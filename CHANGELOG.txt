@@ -173,3 +173,6 @@ releases:
 
   v1.10.1:
   - Deployment proxy: Remove only downloaded wagons
+
+  v1.10.2:
+  - Deployment proxy: Support dict as list of plugins.

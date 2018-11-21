@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,9 +8,9 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import sys
 import time
@@ -223,12 +223,28 @@ class DeploymentProxyBase(object):
             if 'plugins' not in ctx.instance.runtime_properties.keys():
                 ctx.instance.runtime_properties['plugins'] = []
 
-            for plugin in self.plugins:
+            if isinstance(self.plugins, list):
+                plugins_list = self.plugins
+            elif isinstance(self.plugins, dict):
+                plugins_list = self.plugins.values()
+            else:
+                raise NonRecoverableError(
+                    'Wrong type in plugins: {}'.format(repr(self.plugins)))
+            for plugin in plugins_list:
                 ctx.logger.info('Creating plugin zip archive..')
                 wagon_path = None
                 yaml_path = None
                 zip_path = None
                 try:
+                    if (
+                        not plugin.get('wagon_path') or
+                        not plugin.get('plugin_yaml_path')
+                    ):
+                        raise NonRecoverableError(
+                            'You should provide both values wagon_path: {}'
+                            ' and plugin_yaml_path: {}'
+                            .format(repr(plugin.get('wagon_path')),
+                                    repr(plugin.get('plugin_yaml_path'))))
                     wagon_path = get_local_path(plugin['wagon_path'],
                                                 create_temp=True)
                     yaml_path = get_local_path(plugin['plugin_yaml_path'],

@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,9 +8,9 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import mock
 
@@ -21,6 +21,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .client_mock import MockCloudifyRestClient
 from .base import DeploymentProxyTestBase
 from ..tasks import create_deployment, delete_deployment
+from cloudify_deployment_proxy import DeploymentProxyBase
 
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
@@ -76,6 +77,97 @@ class TestDeployment(DeploymentProxyTestBase):
                                       timeout=.01)
             self.assertIn('action delete failed',
                           error.message)
+
+    def test_upload_plugins(self):
+        # Tests that deployments upload plugins
+
+        test_name = 'test_delete_deployment_success'
+        _ctx = self.get_mock_ctx(test_name)
+        current_ctx.set(_ctx)
+
+        get_local_path = mock.Mock(return_value="some_path")
+
+        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
+            plugin = mock.Mock()
+            plugin.id = "CustomPlugin"
+
+            cfy_mock_client = MockCloudifyRestClient()
+            cfy_mock_client.plugins.upload = mock.Mock(return_value=plugin)
+            mock_client.return_value = cfy_mock_client
+            with mock.patch(
+                'cloudify_deployment_proxy.get_local_path',
+                get_local_path
+            ):
+                zip_files = mock.Mock(return_value="_zip")
+                with mock.patch(
+                    'cloudify_deployment_proxy.zip_files',
+                    zip_files
+                ):
+                    # empty plugins
+                    deployment = DeploymentProxyBase({'plugins': []})
+                    deployment._upload_plugins()
+                    zip_files.assert_not_called()
+                    get_local_path.assert_not_called()
+
+                    # dist of plugins
+                    deployment = DeploymentProxyBase({'plugins': {
+                        'base_plugin': {
+                            'wagon_path': '_wagon_path',
+                            'plugin_yaml_path': '_plugin_yaml_path'}}})
+                    os_mock = mock.Mock()
+                    with mock.patch('cloudify_deployment_proxy.os', os_mock):
+                        deployment._upload_plugins()
+                    zip_files.assert_called_with(["some_path", "some_path"])
+                    get_local_path.assert_has_calls([
+                        mock.call('_wagon_path', create_temp=True),
+                        mock.call('_plugin_yaml_path', create_temp=True)])
+                    os_mock.remove.assert_has_calls([
+                        mock.call('some_path'),
+                        mock.call('some_path'),
+                        mock.call('_zip')])
+
+            get_local_path = mock.Mock(return_value="some_path")
+            zip_files = mock.Mock(return_value="_zip")
+            with mock.patch(
+                'cloudify_deployment_proxy.get_local_path',
+                get_local_path
+            ):
+                zip_files = mock.Mock(return_value="_zip")
+                with mock.patch(
+                    'cloudify_deployment_proxy.zip_files',
+                    zip_files
+                ):
+                    # list of plugins
+                    deployment = DeploymentProxyBase({'plugins': [{
+                            'wagon_path': '_wagon_path',
+                            'plugin_yaml_path': '_plugin_yaml_path'}]})
+                    os_mock = mock.Mock()
+                    with mock.patch('cloudify_deployment_proxy.os', os_mock):
+                        deployment._upload_plugins()
+                    zip_files.assert_called_with(["some_path", "some_path"])
+                    get_local_path.assert_has_calls([
+                        mock.call('_wagon_path', create_temp=True),
+                        mock.call('_plugin_yaml_path', create_temp=True)])
+                    os_mock.remove.assert_has_calls([
+                        mock.call('some_path'),
+                        mock.call('some_path'),
+                        mock.call('_zip')])
+
+            # raise error if wrong plugins list
+            deployment = DeploymentProxyBase({'plugins': True})
+            error = self.assertRaises(NonRecoverableError,
+                                      deployment._upload_plugins)
+            self.assertIn('Wrong type in plugins: True',
+                          error.message)
+
+            # raise error if wrong wagon/yaml values
+            deployment = DeploymentProxyBase({'plugins': [{
+                'wagon_path': '',
+                'plugin_yaml_path': ''}]})
+            error = self.assertRaises(NonRecoverableError,
+                                      deployment._upload_plugins)
+            self.assertIn("You should provide both values wagon_path: '' "
+                          "and plugin_yaml_path: ''", error.message)
 
     def test_delete_deployment_success(self):
         # Tests that deployments delete succeeds

@@ -72,7 +72,7 @@ In runtime properties will be provided outputs from deployment.
     * `state`: Optional, final state for workflow, by default `terminated`.
     * `pagination_offset`: Optional, pagination offset, by default `0`.
     * `pagination_size`: Optional, pagination size, by default `1000`.
-    
+
 **Runtime properties:**
 
 * `blueprint`:
@@ -97,6 +97,9 @@ In runtime properties will be provided outputs from deployment.
         username: admin
         password: admin
         tenant: default_tenant
+      plugins:
+        - wagon_path: https://github.com/cloudify-incubator/cloudify-utilities-plugin/releases/download/1.10.0/cloudify_utilities_plugin-1.9.0-py27-none-linux_x86_64-centos-Core.wgn
+          plugin_yaml_path: http://www.getcloudify.org/spec/utilities-plugin/1.10.0/plugin.yaml
       resource_config:
         blueprint:
           external_resource: true
