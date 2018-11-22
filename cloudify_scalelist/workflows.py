@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import subprocess
+import time
 
 from cloudify.decorators import workflow
-from cloudify.plugins import lifecycle
 from cloudify.manager import get_rest_client
+from cloudify.plugins import lifecycle
+from cloudify.workflows import api
+from cloudify.workflows import tasks
 
 
 def _execute_command(ctx, command):
@@ -431,6 +434,17 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
         ctx.logger.warn('Rolling back deployment modification. '
                         '[modification_id={0}]: {1}'
                         .format(modification.id, repr(ex)))
+        deadline = time.time()
+        while deadline > time.time():
+            if graph._is_execution_cancelled():
+                raise api.ExecutionCancelled()
+            for task in graph._terminated_tasks():
+                graph._handle_terminated_task(task)
+            if not any(task.get_state() == tasks.TASK_SENT
+                       for task in graph.tasks_iter()):
+                break
+            else:
+                time.sleep(0.1)
         modification.rollback()
         raise ex
     else:
