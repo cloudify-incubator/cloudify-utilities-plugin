@@ -434,7 +434,10 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
         ctx.logger.warn('Rolling back deployment modification. '
                         '[modification_id={0}]: {1}'
                         .format(modification.id, repr(ex)))
-        deadline = time.time()
+        try:
+            deadline = time.time() + ctx.wait_after_fail
+        except AttributeError:
+            deadline = time.time() + 1800
         while deadline > time.time():
             if graph._is_execution_cancelled():
                 raise api.ExecutionCancelled()

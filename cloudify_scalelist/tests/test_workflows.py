@@ -16,6 +16,7 @@ from mock import Mock, patch, call
 
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
+from cloudify.workflows.workflow_api import ExecutionCancelled
 
 import cloudify_scalelist.workflows as workflows
 
@@ -105,6 +106,7 @@ class TestScaleList(unittest.TestCase):
         _ctx.nodes = []
         _ctx.graph_mode = Mock(return_value=_graph)
         _ctx._graph = _graph
+        _ctx.wait_after_fail = 5
         _ctx.deployment.scaling_groups = {
             'one_scale': {
                 'members': ['one'],
@@ -397,6 +399,7 @@ class TestScaleList(unittest.TestCase):
         delete_instance._node_instance.id = "a"
         delete_instance.modification = 'removed'
         _ctx._get_modification.removed.node_instances = [delete_instance]
+        _ctx.wait_after_fail = 0
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
@@ -436,6 +439,7 @@ class TestScaleList(unittest.TestCase):
         related_instance.modification = 'related'
         _ctx._get_modification.added.node_instances = [added_instance,
                                                        related_instance]
+        _ctx.wait_after_fail = 0
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
@@ -476,6 +480,51 @@ class TestScaleList(unittest.TestCase):
             scale_settings
         )
         _ctx._get_modification.rollback.assert_called_with()
+        _ctx._get_modification.finish.assert_not_called()
+
+    def test_run_scale_settings_install_failed_checking_cancelled(self):
+        _ctx = self._gen_ctx()
+
+        client = self._gen_rest_client()
+
+        added_instance = Mock()
+        added_instance._node_instance.id = "a"
+        added_instance.modification = 'added'
+        related_instance = Mock()
+        related_instance._node_instance.id = "f"
+        related_instance.modification = 'related'
+        _ctx._get_modification.added.node_instances = [added_instance,
+                                                       related_instance]
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            scale_settings = {'a': {'instances': 1}}
+            fake_install_node_instances = Mock(
+                side_effect=Exception('Failed install'))
+            with patch(
+                "cloudify_scalelist.workflows.lifecycle."
+                "install_node_instances",
+                fake_install_node_instances
+            ):
+                fake_uninstall_instances = Mock(return_value=None)
+                with patch(
+                    "cloudify_scalelist.workflows._uninstall_instances",
+                    fake_uninstall_instances
+                ):
+                    with patch(
+                        "cloudify.workflows.tasks_graph."
+                        "TaskDependencyGraph._is_execution_cancelled",
+                        return_value=True
+                    ):
+                        with self.assertRaises(ExecutionCancelled):
+                            workflows._run_scale_settings(
+                                _ctx, scale_settings, {},
+                                ignore_rollback_failure=False)
+        _ctx.deployment.start_modification.assert_called_with(
+            scale_settings
+        )
+        _ctx._get_modification.rollback.assert_not_called()
         _ctx._get_modification.finish.assert_not_called()
 
     def test_run_scale_settings_install(self):
