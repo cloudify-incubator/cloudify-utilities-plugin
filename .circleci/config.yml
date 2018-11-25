@@ -80,10 +80,21 @@ jobs:
       enabled: true
       python:
         version: pypy-2.2.1
+    environment:
+      CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
       - attach_workspace:
           at: workspace
+      - run:
+          name: install cloudify
+          command: pip install -U cloudify==4.3.2
+      - run:
+          name: install utilities plugin from branch
+          command: pip install -e .
+      - run:
+          name: install test requirements
+          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
       - run:
           name: download manager docker image
           command: wget http://repository.cloudifysource.org/cloudify/4.5.0/ga-release/cloudify-docker-manager-4.5ga.tar
@@ -97,17 +108,15 @@ jobs:
           name: start docker container
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host docker-cfy-manager:latest
       - run:
-          name: install cloudify
-          command: pip install cloudify==4.5
-      - run:
-          name: install utilities plugin from branch
-          command: pip install -e .
-      - run:
           name: init CLI profile
-          command: cfy profiles use localhost -u admin -p admin -t default_tenant
-      - run:
-          name: install test requirements
-          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
+          command: |
+            counter=0
+            until [ $counter -ge 10 ]
+            do
+                cfy profiles use localhost -u admin -p admin -t default_tenant && break
+                counter=$[$counter+1]
+                sleep 2
+            done
       - run:
           name: execute test
           command: nosetests -s manager_tests/test_utilities.py
