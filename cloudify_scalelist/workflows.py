@@ -567,11 +567,7 @@ def scaledownlist(ctx, scale_compute=False,
 
         # remove from DB
         if force_db_cleanup:
-            ctx.logger.info('Force cleanup in DB.')
-            _execute_command(ctx, [
-                "sudo", "/opt/manager/env/bin/python",
-                '/opt/manager/scripts/cleanup_deployments.py',
-                ctx.deployment.id, 'all' if all_results else 'page'])
+            ctx.logger.warn('Ignoring force_db_cleanup. Deprecated feature.')
 
 
 def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):

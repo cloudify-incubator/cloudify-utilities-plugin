@@ -176,3 +176,7 @@ releases:
 
   v1.10.2:
   - Deployment proxy: Support dict as list of plugins.
+
+  v1.11.0:
+  - Scalelist: add wait for tasks to finish in failed workflow.
+  - Remove force_db_cleanup functionality.
