@@ -915,12 +915,6 @@ class TestScaleList(unittest.TestCase):
                             scale_node_field_value="value",
                             force_db_cleanup=True
                         )
-                    uninstall_command.assert_called_with(args=[
-                        'sudo', '/opt/manager/env/bin/python',
-                        '/opt/manager/scripts/cleanup_deployments.py',
-                        'deployment_id', 'page'],
-                        stderr=-1, stdout=-1)
-                    uninstall_process.communicate.assert_called_with()
                 fake_uninstall_instances.assert_called_with(
                     ctx=_ctx,
                     graph=_ctx.graph_mode(),
