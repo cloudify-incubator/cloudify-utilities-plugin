@@ -436,7 +436,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
         ctx.logger.warn('Rolling back deployment modification. '
                         '[modification_id={0}]: {1}'
                         .format(modification.id, repr(ex)))
-        _wait_for_sent_tasks()
+        _wait_for_sent_tasks(ctx, graph)
         modification.rollback()
         raise ex
     else:
