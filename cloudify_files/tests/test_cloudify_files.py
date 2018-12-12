@@ -43,8 +43,6 @@ class CloudifyFilesTestBase(testtools.TestCase):
         _user = os.environ.get('USER', 'circleci')
         _group = os.environ.get('GROUP', 'circleci')
         # Toggle these for local testing.
-        # _user = os.environ.get('USER', '_')
-        # _group = os.environ.get('GROUP', '_')
         return ':'.join([_user, _group])
 
     @property

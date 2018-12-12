@@ -180,3 +180,6 @@ releases:
   v1.11.0:
   - Scalelist: add wait for tasks to finish in failed workflow.
   - Remove force_db_cleanup functionality.
+
+  v1.11.2:
+  - Scalelist: Fix wait so that it doesn't fail on unhandled runtime errors.

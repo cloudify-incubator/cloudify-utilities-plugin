@@ -102,9 +102,12 @@ class TestScaleList(unittest.TestCase):
         _graph.id = 'i_am_graph'
         if not task_string:
             _task_mock = Mock()
+            _task_mock.id = 'id'
             _task_mock.get_state.return_value = 'task_sent'
         else:
-            _task_mock = 'task1'
+            _task_mock = Mock()
+            _task_mock.id = 'task1'
+            _task_mock.get_state.return_value = 'task_sent'
         _graph.tasks_iter = Mock(return_value=[_task_mock])
         _graph.remove_task = Mock(return_value=None)
         _graph.subgraph = _subgraph
@@ -385,12 +388,12 @@ class TestScaleList(unittest.TestCase):
                 fake_uninstall_node_instances
             ):
                 workflows._run_scale_settings(_ctx, scale_settings, {})
-            fake_uninstall_node_instances.assert_called_with(
-                graph=_ctx.graph_mode(),
-                node_instances=set([delete_instance]),
-                ignore_failure=False,
-                related_nodes=set([related_instance])
-            )
+        fake_uninstall_node_instances.assert_called_with(
+            graph=_ctx.graph_mode(),
+            node_instances=set([delete_instance]),
+            ignore_failure=False,
+            related_nodes=set([related_instance])
+        )
         _ctx.deployment.start_modification.assert_called_with(
             scale_settings
         )
@@ -1284,7 +1287,8 @@ class TestScaleList(unittest.TestCase):
             ignore_failure=True,
             related_nodes=[c_instance]
         )
-        _ctx.graph_mode().remove_task.assert_called_with('task1')
+        _ctx.graph_mode().remove_task.assert_called_with(
+            _ctx.graph_mode().tasks_iter()[0])
 
     def test_uninstall_instances_sequence_calls(self):
         _ctx = self._gen_ctx()
@@ -1327,7 +1331,8 @@ class TestScaleList(unittest.TestCase):
             node_instances=[a_instance, b_instance],
             node_sequence=['b', 'a']
         )
-        _ctx.graph_mode().remove_task.assert_called_with('task1')
+        _ctx.graph_mode().remove_task.assert_called_with(
+            _ctx.graph_mode().tasks_iter()[0])
 
     def test_get_field_value_recursive(self):
         _ctx = self._gen_ctx()
