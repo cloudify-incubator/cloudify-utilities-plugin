@@ -395,6 +395,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
             except Exception as ex:
                 ctx.logger.error('Scale out failed, scaling back in. {}'
                                  .format(repr(ex)))
+                _wait_for_sent_tasks(ctx, graph)
                 _uninstall_instances(ctx=ctx,
                                      graph=graph,
                                      removed=added,
@@ -434,24 +435,37 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
         ctx.logger.warn('Rolling back deployment modification. '
                         '[modification_id={0}]: {1}'
                         .format(modification.id, repr(ex)))
-        try:
-            deadline = time.time() + ctx.wait_after_fail
-        except AttributeError:
-            deadline = time.time() + 1800
-        while deadline > time.time():
-            if graph._is_execution_cancelled():
-                raise api.ExecutionCancelled()
-            for task in graph._terminated_tasks():
-                graph._handle_terminated_task(task)
-            if not any(task.get_state() == tasks.TASK_SENT
-                       for task in graph.tasks_iter()):
-                break
-            else:
-                time.sleep(0.1)
+        _wait_for_sent_tasks(ctx, graph)
         modification.rollback()
         raise ex
     else:
         modification.finish()
+
+
+def _wait_for_sent_tasks(ctx, graph):
+    """Wait for tasks that are in the SENT state to return"""
+    for task in graph.tasks_iter():
+        # Check type.
+        ctx.logger.debug(
+            'Parallel task to failed task: {0}. State: {1}'.format(
+                task.id, task.get_state()))
+    try:
+        deadline = time.time() + ctx.wait_after_fail
+    except AttributeError:
+        deadline = time.time() + 1800
+    while deadline > time.time():
+        if graph._is_execution_cancelled():
+            raise api.ExecutionCancelled()
+        for task in graph._terminated_tasks():
+            try:
+                graph._handle_terminated_task(task)
+            except RuntimeError:
+                ctx.logger.error('Unhandled Failed task: {0}'.format(task))
+        if not any(task.get_state() == tasks.TASK_SENT
+                   for task in graph.tasks_iter()):
+            break
+        else:
+            time.sleep(0.1)
 
 
 def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):

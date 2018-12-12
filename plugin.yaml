@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.11.0.zip
-    package_version: '1.11.0'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.11.2.zip
+    package_version: '1.11.2'
 
   cfy_files: *utilities_plugin
 
