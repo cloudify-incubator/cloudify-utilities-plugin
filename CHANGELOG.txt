@@ -183,3 +183,7 @@ releases:
 
   v1.11.2:
   - Scalelist: Fix wait so that it doesn't fail on unhandled runtime errors.
+
+  v1.12.0:
+  - Rest: Support send bunch request groups in one action.
+  - Move terminal and connection logic to separate package.

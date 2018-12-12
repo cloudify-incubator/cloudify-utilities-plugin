@@ -26,6 +26,65 @@ import logging
 
 
 class TestPlugin(unittest.TestCase):
+
+    def test_execute_bunch_http_no_exception(self):
+        _ctx = MockCloudifyContext('node_name',
+                                   properties={'hosts': ['--fake.cake--',
+                                                         'test123.test'],
+                                               'port': -1,
+                                               'ssl': False,
+                                               'verify': False},
+                                   runtime_properties={'b': {'c': 'd'}})
+        __location__ = os.path.realpath(
+            os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        with open(os.path.join(__location__, 'template1.yaml'), 'r') as f:
+            template = f.read()
+        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.logger.setLevel(logging.DEBUG)
+        current_ctx.set(_ctx)
+        with requests_mock.mock(
+                real_http=True) as m:  # real_http to check fake uri and get ex
+            # call 1
+            m.get('http://test123.test:80/testuser/test_rest/get',
+                  json=json.load(
+                      file(os.path.join(__location__, 'get_response1.json'),
+                           'r')),
+                  status_code=200)
+
+            def _match_request_text(request):
+                return '101' in (request.text or '')
+
+            # call 2
+            m.post('http://test123.test:80/test_rest/posts',
+                   additional_matcher=_match_request_text,
+                   request_headers={'Content-type': 'test/type'},
+                   text='resp')
+
+            # call 1
+            m.get('http://test123.test:80/get',
+                  json=json.load(
+                      file(os.path.join(__location__, 'get_response2.json'),
+                           'r')),
+                  status_code=200)
+
+            tasks.bunch_execute(templates=[{
+                'params': {'USER': 'testuser'},
+                'template_file': 'mock_param',
+                'save_to': 'saved_params',
+                'params_attributes': {
+                    'a': ['b', 'c']}}])
+
+            self.assertDictEqual(
+                _ctx.instance.runtime_properties.get(
+                    'saved_params', {}).get('result_properties', {}),
+                {'nested_key0': u'nested_value1',
+                 'nested_key1': u'nested_value2',
+                 'id0': u'1',
+                 'id1': u'101',
+                 'owner1': {'id': 'Bob'},
+                 'owner2': {'colour': 'red', 'name': 'bed', 'id': 'Carol'},
+                 'owner0': {'colour': 'black', 'name': 'book'}})
+
     def test_execute_http_no_exception(self):
         _ctx = MockCloudifyContext('node_name',
                                    properties={'hosts': ['--fake.cake--',
@@ -67,7 +126,7 @@ class TestPlugin(unittest.TestCase):
                            'r')),
                   status_code=200)
 
-            tasks.execute(params, 'mock_param')
+            tasks.execute(params=params, template_file='mock_param')
             # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
                 _ctx.instance.runtime_properties.get('result_properties'),
@@ -97,7 +156,7 @@ class TestPlugin(unittest.TestCase):
                      text='resp',
                      status_code=477)
             with self.assertRaises(RecoverableError) as context:
-                tasks.execute({}, 'mock_param')
+                tasks.execute(params={}, template_file='mock_param')
             self.assertTrue(
                 'Response code 477 '
                 'defined as recoverable' in context.exception.message)
@@ -123,7 +182,7 @@ class TestPlugin(unittest.TestCase):
                            'r')),
                   status_code=200)
             with self.assertRaises(RecoverableError) as context:
-                tasks.execute({}, 'mock_param')
+                tasks.execute(params={}, template_file='mock_param')
             self.assertSequenceEqual(
                 'Trying one more time...\n'
                 "Response value:wrong_value "
@@ -152,7 +211,7 @@ class TestPlugin(unittest.TestCase):
                            'r')),
                   status_code=200)
             with self.assertRaises(NonRecoverableError) as context:
-                tasks.execute({}, 'mock_param')
+                tasks.execute(params={}, template_file='mock_param')
             self.assertSequenceEqual(
                 'Giving up... \n'
                 "Response value: active matches "
@@ -179,7 +238,7 @@ class TestPlugin(unittest.TestCase):
                             'r').read(),
                   status_code=200)
 
-            tasks.execute({}, 'mock_param')
+            tasks.execute(params={}, template_file='mock_param')
             # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
                 _ctx.instance.runtime_properties.get('result_properties'),
@@ -211,7 +270,7 @@ class TestPlugin(unittest.TestCase):
             m.post('http://test123.test:80/v1/post_jinja_block',
                    text="resp")
 
-            tasks.execute(params, 'mock_param')
+            tasks.execute(params=params, template_file='mock_param')
             parsed_list = _ctx.instance.runtime_properties.get(
                 'calls')[0].get('payload').get('jinja_block')
             self.assertListEqual(parsed_list, custom_list)

@@ -1,3 +1,5 @@
+# Should be removed after full split code to cloudify-utilities-plugins-sdk
+
 # Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +16,7 @@
 import unittest
 from mock import MagicMock, patch, mock_open, Mock, call
 
-from cloudify.exceptions import RecoverableError, NonRecoverableError
-
-import cloudify_terminal.terminal_connection as terminal_connection
+import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
 
 class TestTasks(unittest.TestCase):
@@ -365,7 +365,7 @@ class TestTasks(unittest.TestCase):
         conn.logger = MagicMock()
 
         # check with closed connection
-        with self.assertRaises(RecoverableError) as error:
+        with self.assertRaises(terminal_connection.RecoverableError) as error:
             conn._cleanup_response(
                 text="prompt> text\n some\nerror",
                 prefix="prompt>",
@@ -397,7 +397,7 @@ class TestTasks(unittest.TestCase):
             )
         conn.conn.close.assert_not_called()
         # errors?
-        with self.assertRaises(RecoverableError) as error:
+        with self.assertRaises(terminal_connection.RecoverableError) as error:
             conn._cleanup_response(
                 text="prompt> text\n some\nerror",
                 prefix="prompt>",
@@ -408,7 +408,9 @@ class TestTasks(unittest.TestCase):
         conn.conn.close.assert_called_with()
         # critical?
         conn.conn.close = MagicMock()
-        with self.assertRaises(NonRecoverableError) as error:
+        with self.assertRaises(
+            terminal_connection.NonRecoverableError
+        ) as error:
             conn._cleanup_response(
                 text="prompt> text\n some\nerror",
                 prefix="prompt>",
