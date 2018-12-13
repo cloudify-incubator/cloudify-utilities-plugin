@@ -16,16 +16,19 @@
 import traceback
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
-from rest_sdk import utility, exceptions
+from cloudify.decorators import operation
+
+from cloudify_rest_sdk import utility, exceptions
 
 
+@operation
 def execute(params=None, template_file=None, **kwargs):
 
     params = params or {}
     template_file = template_file or ''
 
-    ctx.logger.debug(
-        'execute \n params {} \n template \n {}'.format(params, template_file))
+    ctx.logger.debug("Execute params: {} template: {}"
+                     .format(repr(params), repr(template_file)))
     runtime_properties = ctx.instance.runtime_properties.copy()
     if not params:
         params = {}
@@ -33,10 +36,10 @@ def execute(params=None, template_file=None, **kwargs):
     _execute(runtime_properties, template_file, ctx.instance, ctx.node)
 
 
+@operation
 def execute_as_relationship(params, template_file, **kwargs):
-    ctx.logger.debug(
-        'execute_as_relationship \n '
-        'params {} \n template {}\n'.format(params, template_file))
+    ctx.logger.debug("Execute as relationship params: {} template: {}"
+                     .format(repr(params), repr(template_file)))
     if not params:
         params = {}
     runtime_properties = ctx.target.instance.runtime_properties.copy()
@@ -48,8 +51,7 @@ def execute_as_relationship(params, template_file, **kwargs):
 
 def _execute(params, template_file, instance, node):
     if not template_file:
-        ctx.logger.info(
-            'Processing finished. No template file provided.')
+        ctx.logger.info('Processing finished. No template file provided.')
         return
     template = ctx.get_resource(template_file)
     try:
@@ -63,6 +65,6 @@ def _execute(params, template_file, instance, node):
             exceptions.ExpectationException)as e:
         raise RecoverableError(e)
     except Exception as e:
-        ctx.logger.info(
-            'Exception traceback : {}'.format(traceback.format_exc()))
+        ctx.logger.info('Exception traceback : {}'
+                        .format(traceback.format_exc()))
         raise NonRecoverableError(e)

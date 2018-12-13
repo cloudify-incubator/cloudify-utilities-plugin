@@ -28,15 +28,14 @@ setuptools.setup(
               'cloudify_custom_workflow',
               'cloudify_suspend',
               'cloudify_cloudinit',
-              'cloudify_rest', 'cloudify_rest/rest_sdk',
+              'cloudify_rest',
               'cloudify_scalelist'],
     license='LICENSE',
     install_requires=[
         'cloudify-plugins-common>=3.4.2',
         'cloudify-rest-client>=4.0',  # deployment_proxy
-        'paramiko',  # terminal
-        "Jinja2>=2.7.2",  # terminal
+        'cloudify-utilities-plugins-sdk==0.0.1',  # terminal
+        "Jinja2>=2.7.2",  # terminal, rest, configuration
         'pycrypto',  # ssh_key
-        'pyyaml',  # cloudinit and rest
-        'xmltodict']  # rest
+        'pyyaml']  # cloudinit and rest
 )

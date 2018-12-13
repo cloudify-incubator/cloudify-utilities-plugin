@@ -1,3 +1,5 @@
+# Should be removed after full split code to cloudify-utilities-plugins-sdk
+
 ########
 # Copyright (c) 2014-2018 Cloudify Platform Ltd. All rights reserved
 #
@@ -13,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import unittest
-from cloudify_rest.rest_sdk import utility
+from cloudify_rest_sdk import utility
 import json
 
 

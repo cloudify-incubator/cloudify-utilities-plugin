@@ -19,6 +19,8 @@ from cloudify.state import current_ctx
 from cloudify.workflows.workflow_api import ExecutionCancelled
 
 import cloudify_scalelist.workflows as workflows
+# add filter check
+import cloudify_common_sdk.filters as filters
 
 
 class TestScaleList(unittest.TestCase):
@@ -1335,42 +1337,42 @@ class TestScaleList(unittest.TestCase):
             _ctx.graph_mode().tasks_iter()[0])
 
     def test_get_field_value_recursive(self):
-        _ctx = self._gen_ctx()
+        logger = Mock()
         # check list
         self.assertEqual(
             'a',
-            workflows._get_field_value_recursive(
-                _ctx, ['a'], ['0'])
+            filters.get_field_value_recursive(
+                logger, ['a'], ['0'])
         )
         # not in list
         self.assertEqual(
             None,
-            workflows._get_field_value_recursive(
-                _ctx, ['a'], ['1'])
+            filters.get_field_value_recursive(
+                logger, ['a'], ['1'])
         )
         # check dict
         self.assertEqual(
             'a',
-            workflows._get_field_value_recursive(
-                _ctx, {'0': 'a'}, ['0'])
+            filters.get_field_value_recursive(
+                logger, {'0': 'a'}, ['0'])
         )
         # not in dict
         self.assertEqual(
             None,
-            workflows._get_field_value_recursive(
-                _ctx, {'0': 'a'}, ['1'])
+            filters.get_field_value_recursive(
+                logger, {'0': 'a'}, ['1'])
         )
         # check dict in list
         self.assertEqual(
             'b',
-            workflows._get_field_value_recursive(
-                _ctx, [{'a': 'b'}], ['0', 'a'])
+            filters.get_field_value_recursive(
+                logger, [{'a': 'b'}], ['0', 'a'])
         )
         # check dict in list
         self.assertEqual(
             None,
-            workflows._get_field_value_recursive(
-                _ctx, 'a', ['1', 'a'])
+            filters.get_field_value_recursive(
+                logger, 'a', ['1', 'a'])
         )
 
     def test_filter_node_instances(self):
