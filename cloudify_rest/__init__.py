@@ -15,7 +15,7 @@
 
 import logging
 from cloudify import ctx as imported_ctx
-from cloudify_rest.rest_sdk import LOGGER_NAME as SDK_LOGGER_NAME
+from cloudify_rest_sdk import LOGGER_NAME as SDK_LOGGER_NAME
 
 
 class CfyLogHandler(logging.Handler):

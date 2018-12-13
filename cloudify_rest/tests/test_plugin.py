@@ -67,7 +67,7 @@ class TestPlugin(unittest.TestCase):
                            'r')),
                   status_code=200)
 
-            tasks.execute(params, 'mock_param')
+            tasks.execute(params=params, template_file='mock_param')
             # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
                 _ctx.instance.runtime_properties.get('result_properties'),
@@ -97,7 +97,7 @@ class TestPlugin(unittest.TestCase):
                      text='resp',
                      status_code=477)
             with self.assertRaises(RecoverableError) as context:
-                tasks.execute({}, 'mock_param')
+                tasks.execute(params={}, template_file='mock_param')
             self.assertTrue(
                 'Response code 477 '
                 'defined as recoverable' in context.exception.message)
@@ -123,7 +123,7 @@ class TestPlugin(unittest.TestCase):
                            'r')),
                   status_code=200)
             with self.assertRaises(RecoverableError) as context:
-                tasks.execute({}, 'mock_param')
+                tasks.execute(params={}, template_file='mock_param')
             self.assertSequenceEqual(
                 'Trying one more time...\n'
                 "Response value:wrong_value "
@@ -152,7 +152,7 @@ class TestPlugin(unittest.TestCase):
                            'r')),
                   status_code=200)
             with self.assertRaises(NonRecoverableError) as context:
-                tasks.execute({}, 'mock_param')
+                tasks.execute(params={}, template_file='mock_param')
             self.assertSequenceEqual(
                 'Giving up... \n'
                 "Response value: active matches "
@@ -179,7 +179,7 @@ class TestPlugin(unittest.TestCase):
                             'r').read(),
                   status_code=200)
 
-            tasks.execute({}, 'mock_param')
+            tasks.execute(params={}, template_file='mock_param')
             # _ctx = current_ctx.get_ctx()
             self.assertDictEqual(
                 _ctx.instance.runtime_properties.get('result_properties'),
@@ -211,7 +211,7 @@ class TestPlugin(unittest.TestCase):
             m.post('http://test123.test:80/v1/post_jinja_block',
                    text="resp")
 
-            tasks.execute(params, 'mock_param')
+            tasks.execute(params=params, template_file='mock_param')
             parsed_list = _ctx.instance.runtime_properties.get(
                 'calls')[0].get('payload').get('jinja_block')
             self.assertListEqual(parsed_list, custom_list)

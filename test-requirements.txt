@@ -8,7 +8,6 @@ pylint
 flake8
 requests-mock
 PyYAML
-xmltodict
 # for blueprints validate
 cloudify>=3.4.2
 nose-exclude
