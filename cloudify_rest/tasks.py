@@ -19,6 +19,41 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
 
 from cloudify_rest_sdk import utility, exceptions
+from cloudify_common_sdk.filters import get_field_value_recursive
+
+
+def get_params_attributes(ctx, instance, params_list):
+    params = {}
+    for param_name in params_list:
+        params[param_name] = get_field_value_recursive(
+            ctx.logger, instance.runtime_properties, params_list[param_name])
+    return params
+
+
+@operation
+def bunch_execute(templates=None, **kwargs):
+    for template in templates or []:
+        params = template.get('params')
+        template_file = template.get('template_file')
+        save_to = template.get('save_to')
+        params_attributes = template.get('params_attributes')
+
+        ctx.logger.info('Processing: {template_file}'
+                        .format(template_file=repr(template_file)))
+        runtime_properties = {}
+        if params:
+            runtime_properties.update(params)
+        if params_attributes:
+            runtime_properties.update(get_params_attributes(ctx,
+                                                            ctx.instance,
+                                                            params_attributes))
+        ctx.logger.debug('Params: {params}'
+                         .format(params=repr(runtime_properties)))
+        runtime_properties["ctx"] = ctx
+        _execute(runtime_properties, template_file, ctx.instance, ctx.node,
+                 save_to)
+    else:
+        ctx.logger.debug('No calls.')
 
 
 @operation
@@ -49,14 +84,17 @@ def execute_as_relationship(params, template_file, **kwargs):
              ctx.source.node)
 
 
-def _execute(params, template_file, instance, node):
+def _execute(params, template_file, instance, node, save_path=None):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
     template = ctx.get_resource(template_file)
     try:
-        instance.runtime_properties.update(
-            utility.process(params, template, node.properties.copy()))
+        result = utility.process(params, template, node.properties.copy())
+        if save_path:
+            instance.runtime_properties[save_path] = result
+        else:
+            instance.runtime_properties.update(result)
     except exceptions.NonRecoverableResponseException as e:
         raise NonRecoverableError(e)
 
