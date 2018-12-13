@@ -21,7 +21,7 @@ from cloudify.exceptions import (
 )
 
 import cloudify_terminal.tasks as tasks
-import cloudify_terminal.terminal_connection as terminal_connection
+import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
 
 class TestTasks(unittest.TestCase):
@@ -142,7 +142,7 @@ class TestTasks(unittest.TestCase):
         self._gen_ctx()
         connection_mock = Mock()
         connection_mock.connect = Mock(side_effect=OSError("e"))
-        with patch("cloudify_terminal.terminal_connection.RawConnection",
+        with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
@@ -160,7 +160,7 @@ class TestTasks(unittest.TestCase):
         connection_mock.connect = Mock(return_value="")
         connection_mock.run = Mock(return_value="")
 
-        with patch("cloudify_terminal.terminal_connection.RawConnection",
+        with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{}],
@@ -177,7 +177,7 @@ class TestTasks(unittest.TestCase):
         connection_mock.connect = Mock(return_value="")
         connection_mock.run = Mock(return_value="localhost")
 
-        with patch("cloudify_terminal.terminal_connection.RawConnection",
+        with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'action': 'hostname'}],
@@ -204,7 +204,7 @@ class TestTasks(unittest.TestCase):
         connection_mock.run = Mock(return_value="localhost")
         _ctx.get_resource = Mock(side_effect=[False, "bb", "{{ aa }}"])
 
-        with patch("cloudify_terminal.terminal_connection.RawConnection",
+        with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'template': '1.txt'},
@@ -230,7 +230,7 @@ class TestTasks(unittest.TestCase):
         connection_mock.connect = Mock(return_value="")
         connection_mock.run = Mock(return_value="localhost")
 
-        with patch("cloudify_terminal.terminal_connection.RawConnection",
+        with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'template_text': ""},
@@ -256,7 +256,7 @@ class TestTasks(unittest.TestCase):
         connection_mock.connect = Mock(return_value="")
         connection_mock.run = Mock(return_value="localhost")
 
-        with patch("cloudify_terminal.terminal_connection.RawConnection",
+        with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'action': 'hostname\n \nls',
@@ -281,7 +281,7 @@ class TestTasks(unittest.TestCase):
         connection_mock.connect = Mock(return_value="")
         connection_mock.run = Mock(return_value="localhost")
 
-        with patch("cloudify_terminal.terminal_connection.RawConnection",
+        with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{'action': 'hostname', 'save_to': 'place_for_save',
@@ -311,7 +311,7 @@ class TestTasks(unittest.TestCase):
         connection_mock.run = Mock(return_value="localhost")
         connection_mock.is_closed = Mock(side_effect=[False, True])
 
-        with patch("cloudify_terminal.terminal_connection.RawConnection",
+        with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
                 calls=[{}],
@@ -347,6 +347,34 @@ class TestTasks(unittest.TestCase):
 
         # code always return NonRecoverable and call once
         func_call = Mock(side_effect=NonRecoverableError('A'))
+        with self.assertRaises(
+            NonRecoverableError
+        ) as error:
+            tasks._rerun(
+                ctx=_ctx,
+                func=func_call,
+                args=[],
+                kwargs={})
+        func_call.assert_has_calls([call()])
+        self.assertEqual(str(error.exception), 'A')
+
+        # code always return RecoverableError and call once
+        func_call = Mock(
+            side_effect=terminal_connection.RecoverableError('A'))
+        with self.assertRaises(
+            RecoverableError
+        ) as error:
+            tasks._rerun(
+                ctx=_ctx,
+                func=func_call,
+                args=[],
+                kwargs={})
+        func_call.assert_has_calls([call()])
+        self.assertEqual(str(error.exception), 'A')
+
+        # code always return NonRecoverableError and call once
+        func_call = Mock(
+            side_effect=terminal_connection.NonRecoverableError('A'))
         with self.assertRaises(
             NonRecoverableError
         ) as error:
