@@ -22,9 +22,9 @@ node_templates:
       ssl: true
       verify: false
     interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    inputs:
-                        template_file: templates/git-get-commit.yaml
-                        params:
-                          COMMIT: { get_input: commit }
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            template_file: templates/git-get-commit.yaml
+            params:
+              COMMIT: { get_input: commit }
