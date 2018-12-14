@@ -30,38 +30,34 @@ class TestSdk(unittest.TestCase):
         response_translation = \
             [[['id'], ['params', 'id']], [['payload', 'pages'], ['pages']]]
         jl = json.loads('''{
-                "id": "6857017661",
-                "payload": {
-                    "pages": [
+            "id": "6857017661",
+            "payload": {
+                "pages": [
+                    {
+                        "page_name": "marvin",
+                        "action": "edited",
+                        "properties" :
                         {
-                            "page_name": "marvin",
-                            "action": "edited",
-                            "properties" :
-                            {
-                                "color" : "blue"
-                            }
-                        },
-                        {
-                            "page_name": "cool_wool",
-                            "action": "saved",
-                            "properties" :
-                            {
-                                "color" : "red"
-                            }
+                            "color" : "blue"
                         }
-                    ]
-                }
-            }''')
-
-        print(jl)
-        print type(jl)
+                    },
+                    {
+                        "page_name": "cool_wool",
+                        "action": "saved",
+                        "properties" :
+                        {
+                            "color" : "red"
+                        }
+                    }
+                ]
+            }
+        }''')
         runtime_props = {}
-        print(runtime_props)
-        runtime_props = {}
-        response_translation = \
-            [[['payload', 'pages', ['page_name']], ['pages', ['page_name']]]]
+        response_translation = [[
+            ['payload', 'pages', ['page_name']],
+            ['pages', ['page_name']]
+        ]]
         utility._translate_and_save_v2(jl, response_translation, runtime_props)
-        print(runtime_props)
 
     def test_prepare_runtime_props_path_for_list(self):
         self.assertListEqual(
