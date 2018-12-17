@@ -47,7 +47,7 @@ Template parameters:
 - **headers** - REST headers
 - **payload** - YAML representation of data that is to be sent as payload in
   REST call
-- **response_format** - JSON/XML
+- **response_format** - JSON/XML/TEXT
 - **recoverable_codes** - recoverable codes allow to triger operation retry
 - **response_translation** - translates response into runtime properties
   (please see example)
