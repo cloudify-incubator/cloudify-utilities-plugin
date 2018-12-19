@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.10.0/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.12.0/plugin.yaml
 
 inputs:
 
@@ -10,7 +10,6 @@ inputs:
     description: >
       REST API endpoint
     default: "jsonplaceholder.typicode.com"
-
 
 node_templates:
 
@@ -22,11 +21,10 @@ node_templates:
       ssl: true
       verify: false
     interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    inputs:
-                        template_file: templates/get-user-all-properties-template.yaml
-
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            template_file: templates/get-user-all-properties-template.yaml
 
   user10-some-properties:
     type: cloudify.rest.Requests
@@ -36,10 +34,7 @@ node_templates:
       ssl: true
       verify: false
     interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    inputs:
-                        template_file: templates/get-user-some-properties-template.yaml
-
-
-outputs:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            template_file: templates/get-user-some-properties-template.yaml

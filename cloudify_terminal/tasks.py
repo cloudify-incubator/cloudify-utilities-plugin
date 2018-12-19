@@ -18,7 +18,7 @@ from cloudify import ctx
 from cloudify import exceptions as cfy_exc
 from cloudify.decorators import operation
 
-import terminal_connection
+import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
 
 def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
@@ -30,6 +30,10 @@ def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
             ctx.logger.info("Need for rerun: {}".format(repr(e)))
             retry_count -= 1
             time.sleep(retry_sleep)
+        except terminal_connection.RecoverableError as e:
+            raise cfy_exc.RecoverableError(str(e))
+        except terminal_connection.NonRecoverableError as e:
+            raise cfy_exc.NonRecoverableError(str(e))
 
     raise cfy_exc.RecoverableError(
         "Failed to rerun: {}:{}".format(repr(args), repr(kwargs)))
@@ -190,11 +194,17 @@ def run(**kwargs):
 
     while not connection.is_closed() and exit_command:
         ctx.logger.info("Execute close")
-        result = connection.run(command=exit_command,
-                                prompt_check=promt_check,
-                                warning_examples=global_warning_examples,
-                                error_examples=global_error_examples,
-                                critical_examples=global_error_examples)
+        result = _rerun(
+            ctx=ctx,
+            func=connection.run,
+            args=[],
+            kwargs={
+                "command": exit_command,
+                "prompt_check": promt_check,
+                "warning_examples": global_warning_examples,
+                "error_examples": global_error_examples,
+                "critical_examples": global_error_examples
+            })
         ctx.logger.info("Result of close: " + repr(result))
         time.sleep(1)
 

@@ -18,7 +18,7 @@ Features:
 
 ### Blueprint
 
-**Example Node Template:**
+**Example Node Template single call:**
 
 ```yaml
   user:
@@ -34,6 +34,25 @@ Features:
         start:
           inputs:
             template_file: templates/get-user-all-properties-template.yaml
+```
+
+**Example Node Template bunch calls:**
+
+```yaml
+  user:
+    cloudify.rest.BunchRequests
+    properties:
+      hosts:
+      - { get_input: rest_endpoint }
+      port: 443
+      ssl: true
+      verify: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            templates:
+            - template_file: templates/get-user-all-properties-template.yaml
 ```
 
 ### Templates
@@ -198,3 +217,10 @@ details in order to create user post with POST method.
 blueprint: [example-2-blueprint.yaml](examples/example-2-blueprint.yaml)
 
 Real life example how F5 BigIP can be provisioned with REST API
+
+### Example 4
+
+blueprint: [example-5-blueprint.yaml](examples/example-5-blueprint.yaml)
+
+Example for get users list, create new user based on first result and than
+remove new created user.
