@@ -90,9 +90,6 @@ jobs:
           name: install cloudify
           command: pip install -U cloudify==4.3.2
       - run:
-          name: install utilities plugin from branch
-          command: pip install -e .
-      - run:
           name: install test requirements
           command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
       - run:
