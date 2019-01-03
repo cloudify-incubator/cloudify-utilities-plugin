@@ -19,6 +19,7 @@ from cloudify import exceptions as cfy_exc
 from cloudify.decorators import operation
 
 import cloudify_terminal_sdk.terminal_connection as terminal_connection
+from cloudify_common_sdk import exceptions
 
 
 def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
@@ -26,13 +27,13 @@ def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
     while retry_count > 0:
         try:
             return func(*args, **kwargs)
-        except terminal_connection.RecoverableWarning as e:
+        except exceptions.RecoverableWarning as e:
             ctx.logger.info("Need for rerun: {}".format(repr(e)))
             retry_count -= 1
             time.sleep(retry_sleep)
-        except terminal_connection.RecoverableError as e:
+        except exceptions.RecoverableError as e:
             raise cfy_exc.RecoverableError(str(e))
-        except terminal_connection.NonRecoverableError as e:
+        except exceptions.NonRecoverableError as e:
             raise cfy_exc.NonRecoverableError(str(e))
 
     raise cfy_exc.RecoverableError(

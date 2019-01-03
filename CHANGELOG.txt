@@ -187,3 +187,7 @@ releases:
   v1.12.0:
   - Rest: Support send bunch request groups in one action.
   - Move terminal and connection logic to separate package.
+
+  v1.12.1:
+  - Rest: Update SDK and support save headers/cookies to runtime properties.
+  - Rest: Autodetext content type by default
