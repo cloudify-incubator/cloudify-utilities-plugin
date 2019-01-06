@@ -65,6 +65,7 @@ class TestPlugin(unittest.TestCase):
                   json=json.load(
                       file(os.path.join(__location__, 'get_response2.json'),
                            'r')),
+                  headers={'Content-Type': 'application/json'},
                   status_code=200)
 
             tasks.bunch_execute(templates=[{
@@ -124,6 +125,7 @@ class TestPlugin(unittest.TestCase):
                   json=json.load(
                       file(os.path.join(__location__, 'get_response2.json'),
                            'r')),
+                  headers={'Content-Type': 'application/json'},
                   status_code=200)
 
             tasks.execute(params=params, template_file='mock_param')

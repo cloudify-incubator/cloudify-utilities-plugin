@@ -17,6 +17,7 @@ import unittest
 from mock import MagicMock, patch, mock_open, Mock, call
 
 import cloudify_terminal_sdk.terminal_connection as terminal_connection
+from cloudify_common_sdk import exceptions
 
 
 class TestTasks(unittest.TestCase):
@@ -365,7 +366,7 @@ class TestTasks(unittest.TestCase):
         conn.logger = MagicMock()
 
         # check with closed connection
-        with self.assertRaises(terminal_connection.RecoverableError) as error:
+        with self.assertRaises(exceptions.RecoverableError) as error:
             conn._cleanup_response(
                 text="prompt> text\n some\nerror",
                 prefix="prompt>",
@@ -386,7 +387,7 @@ class TestTasks(unittest.TestCase):
         conn.conn.closed = False
         # warnings?
         with self.assertRaises(
-            terminal_connection.RecoverableWarning
+            exceptions.RecoverableWarning
         ) as error:
             conn._cleanup_response(
                 text="prompt> text\n some\nerror",
@@ -397,7 +398,7 @@ class TestTasks(unittest.TestCase):
             )
         conn.conn.close.assert_not_called()
         # errors?
-        with self.assertRaises(terminal_connection.RecoverableError) as error:
+        with self.assertRaises(exceptions.RecoverableError) as error:
             conn._cleanup_response(
                 text="prompt> text\n some\nerror",
                 prefix="prompt>",
@@ -409,7 +410,7 @@ class TestTasks(unittest.TestCase):
         # critical?
         conn.conn.close = MagicMock()
         with self.assertRaises(
-            terminal_connection.NonRecoverableError
+            exceptions.NonRecoverableError
         ) as error:
             conn._cleanup_response(
                 text="prompt> text\n some\nerror",

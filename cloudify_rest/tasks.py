@@ -18,7 +18,8 @@ from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import operation
 
-from cloudify_rest_sdk import utility, exceptions
+from cloudify_rest_sdk import utility
+from cloudify_common_sdk import exceptions
 from cloudify_common_sdk.filters import get_field_value_recursive
 
 

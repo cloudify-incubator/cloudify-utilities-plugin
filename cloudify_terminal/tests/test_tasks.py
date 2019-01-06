@@ -21,7 +21,7 @@ from cloudify.exceptions import (
 )
 
 import cloudify_terminal.tasks as tasks
-import cloudify_terminal_sdk.terminal_connection as terminal_connection
+from cloudify_common_sdk import exceptions
 
 
 class TestTasks(unittest.TestCase):
@@ -338,7 +338,7 @@ class TestTasks(unittest.TestCase):
             tasks._rerun(
                 ctx=_ctx,
                 func=Mock(
-                    side_effect=terminal_connection.RecoverableWarning('A')
+                    side_effect=exceptions.RecoverableWarning('A')
                 ),
                 args=[],
                 kwargs={})
@@ -360,7 +360,7 @@ class TestTasks(unittest.TestCase):
 
         # code always return RecoverableError and call once
         func_call = Mock(
-            side_effect=terminal_connection.RecoverableError('A'))
+            side_effect=exceptions.RecoverableError('A'))
         with self.assertRaises(
             RecoverableError
         ) as error:
@@ -374,7 +374,7 @@ class TestTasks(unittest.TestCase):
 
         # code always return NonRecoverableError and call once
         func_call = Mock(
-            side_effect=terminal_connection.NonRecoverableError('A'))
+            side_effect=exceptions.NonRecoverableError('A'))
         with self.assertRaises(
             NonRecoverableError
         ) as error:
