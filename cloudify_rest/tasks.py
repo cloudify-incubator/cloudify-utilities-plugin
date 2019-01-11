@@ -36,6 +36,7 @@ def bunch_execute(templates=None, **kwargs):
     for template in templates or []:
         params = template.get('params')
         template_file = template.get('template_file')
+        prerender = template.get('prerender')
         save_to = template.get('save_to')
         params_attributes = template.get('params_attributes')
 
@@ -52,13 +53,13 @@ def bunch_execute(templates=None, **kwargs):
                          .format(params=repr(runtime_properties)))
         runtime_properties["ctx"] = ctx
         _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-                 save_to)
+                 save_to, prerender=prerender)
     else:
         ctx.logger.debug('No calls.')
 
 
 @operation
-def execute(params=None, template_file=None, **kwargs):
+def execute(params=None, template_file=None, prerender=False, **kwargs):
 
     params = params or {}
     template_file = template_file or ''
@@ -69,11 +70,12 @@ def execute(params=None, template_file=None, **kwargs):
     if not params:
         params = {}
     runtime_properties.update(params)
-    _execute(runtime_properties, template_file, ctx.instance, ctx.node)
+    _execute(runtime_properties, template_file, ctx.instance, ctx.node,
+             prerender=prerender)
 
 
 @operation
-def execute_as_relationship(params, template_file, **kwargs):
+def execute_as_relationship(params, template_file, prerender, **kwargs):
     ctx.logger.debug("Execute as relationship params: {} template: {}"
                      .format(repr(params), repr(template_file)))
     if not params:
@@ -82,16 +84,19 @@ def execute_as_relationship(params, template_file, **kwargs):
     runtime_properties.update(ctx.source.instance.runtime_properties)
     runtime_properties.update(params)
     _execute(runtime_properties, template_file, ctx.source.instance,
-             ctx.source.node)
+             ctx.source.node, prerender=prerender)
 
 
-def _execute(params, template_file, instance, node, save_path=None):
+def _execute(params, template_file, instance, node, save_path=None,
+             prerender=False):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
     template = ctx.get_resource(template_file)
     try:
-        result = utility.process(params, template, node.properties.copy())
+        result = utility.process(params, template, node.properties.copy(),
+                                 prerender=prerender,
+                                 resource_callback=ctx.get_resource)
         if save_path:
             instance.runtime_properties[save_path] = result
         else:

@@ -191,3 +191,8 @@ releases:
   v1.12.1:
   - Rest: Update SDK and support save headers/cookies to runtime properties.
   - Rest: Autodetext content type by default
+
+  v1.12.2:
+  - Rest: Support raw_payload in rest sdk
+  - Rest: Support hardcoded translation_format version in rest sdk
+  - Rest: Support prerender template in rest sdk
