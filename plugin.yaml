@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.12.1.zip
-    package_version: '1.12.1'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.12.2.zip
+    package_version: '1.12.2'
 
   cfy_files: *utilities_plugin
 
@@ -469,6 +469,8 @@ node_types:
               default: {}
             template_file:
               default: ''
+            prerender:
+              default: false
         configure:
           implementation: rest.cloudify_rest.tasks.execute
           inputs:
@@ -476,6 +478,8 @@ node_types:
               default: {}
             template_file:
               default: ''
+            prerender:
+              default: false
         start:
           implementation: rest.cloudify_rest.tasks.execute
           inputs:
@@ -483,6 +487,8 @@ node_types:
               default: {}
             template_file:
               default: ''
+            prerender:
+              default: false
         stop:
           implementation: rest.cloudify_rest.tasks.execute
           inputs:
@@ -490,6 +496,8 @@ node_types:
               default: {}
             template_file:
               default: ''
+            prerender:
+              default: false
         delete:
           implementation: rest.cloudify_rest.tasks.execute
           inputs:
@@ -497,6 +505,8 @@ node_types:
               default: {}
             template_file:
               default: ''
+            prerender:
+              default: false
 
   cloudify.rest.BunchRequests:
     derived_from: cloudify.nodes.Root
