@@ -59,7 +59,8 @@ def bunch_execute(templates=None, **kwargs):
 
 
 @operation
-def execute(params=None, template_file=None, prerender=False, **kwargs):
+def execute(params=None, template_file=None, save_path=None, prerender=False,
+            **kwargs):
 
     params = params or {}
     template_file = template_file or ''
@@ -71,11 +72,12 @@ def execute(params=None, template_file=None, prerender=False, **kwargs):
         params = {}
     runtime_properties.update(params)
     _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-             prerender=prerender)
+             save_path=save_path, prerender=prerender)
 
 
 @operation
-def execute_as_relationship(params, template_file, prerender, **kwargs):
+def execute_as_relationship(params=None, template_file=None, save_path=None,
+                            prerender=False, **kwargs):
     ctx.logger.debug("Execute as relationship params: {} template: {}"
                      .format(repr(params), repr(template_file)))
     if not params:

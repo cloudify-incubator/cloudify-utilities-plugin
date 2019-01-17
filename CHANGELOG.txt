@@ -196,3 +196,7 @@ releases:
   - Rest: Support raw_payload in rest sdk
   - Rest: Support hardcoded translation_format version in rest sdk
   - Rest: Support prerender template in rest sdk
+
+  v1.12.3:
+  - Rest: Support auth headers
+  - Rest: Add 'save_path' to cloudify.rest.Requests
