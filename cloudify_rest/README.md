@@ -15,6 +15,29 @@ Features:
 - configurable recoverable errors
 - context sensitive "response expectation"
 
+Action inputs in `cloudify.rest.Requests`:
+* `params`: Template parameters. Default is empty dictionary.
+* `template_file`: Template path in blueprint directory. Default is ''.
+* `save_path`: Save result to runtime properties key. Default is directly
+  save to runtime properties.
+* `prerender`: Prerender template before run calls `jinja render` =>
+  `yaml parse`. Default is `yaml parse` => `jinja render`.
+* `remove_calls`: Remove calls list from results. Default: save calls in
+  runtime properties.
+
+Action inputs in `cloudify.rest.BunchRequests` is list of inputs from
+`cloudify.rest.Requests`.
+
+Node properties for `cloudify.rest.Requests` and `cloudify.rest.BunchRequests`:
+* `hosts`: list of hosts name or IP addresses of Rest Servers
+* `host`: host name or IP addresses of Rest Servers if list of hosts is not
+  needed single host can be provided by this property. NOTE: the 'hosts'
+  property overwirte the 'host' property
+* `port`: port number. When -1 default ports are used (80 for ssl = false
+  and 443 for ssl = true). Default: -1
+* `ssl`: http or https. Default: `false`
+* `verify`: A boolean which controls whether we verify the server's TLS
+  certificate. Default: `true`
 
 ### Blueprint
 

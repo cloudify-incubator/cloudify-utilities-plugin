@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.12.3.zip
-    package_version: '1.12.3'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.12.4.zip
+    package_version: '1.12.4'
 
   cfy_files: *utilities_plugin
 
@@ -464,59 +464,42 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
+          inputs: &rest_template_inputs
             params:
+              description: >
+                Template parameters. Default is empty dictionary.
               default: {}
             template_file:
+              description: >
+                Template path in blueprint directory
               default: ''
             save_path:
+              description: >
+                Save result to runtime properties key. Default is directly
+                save to runtime properties.
               default: false
             prerender:
+              description: >
+                Prerender template before run calls jinja render=>yaml parse.
+                Default is yaml parse=>jinja render.
+              default: false
+            remove_calls:
+              description: >
+                Remove calls list from results. Default: save calls in
+                runtime properties.
               default: false
         configure:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
-            params:
-              default: {}
-            template_file:
-              default: ''
-            save_path:
-              default: false
-            prerender:
-              default: false
+          inputs: *rest_template_inputs
         start:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
-            params:
-              default: {}
-            template_file:
-              default: ''
-            save_path:
-              default: false
-            prerender:
-              default: false
+          inputs: *rest_template_inputs
         stop:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
-            params:
-              default: {}
-            template_file:
-              default: ''
-            save_path:
-              default: false
-            prerender:
-              default: false
+          inputs: *rest_template_inputs
         delete:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
-            params:
-              default: {}
-            template_file:
-              default: ''
-            save_path:
-              default: false
-            prerender:
-              default: false
+          inputs: *rest_template_inputs
 
   cloudify.rest.BunchRequests:
     derived_from: cloudify.nodes.Root

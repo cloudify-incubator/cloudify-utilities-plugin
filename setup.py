@@ -16,7 +16,7 @@ import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.12.3',
+    version='1.12.4',
     author='Cloudify Platform Ltd.',
     author_email='hello@cloudify.co',
     description='Utilities for extending Cloudify',
@@ -34,7 +34,7 @@ setuptools.setup(
     install_requires=[
         'cloudify-plugins-common>=3.4.2',
         'cloudify-rest-client>=4.0',  # deployment_proxy
-        'cloudify-utilities-plugins-sdk==0.0.5',  # terminal
+        'cloudify-utilities-plugins-sdk==0.0.6',  # terminal
         "Jinja2>=2.7.2",  # terminal, rest, configuration
         'pycrypto',  # ssh_key
         'pyyaml']  # cloudinit and rest

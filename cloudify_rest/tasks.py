@@ -23,7 +23,7 @@ from cloudify_common_sdk import exceptions
 from cloudify_common_sdk.filters import get_field_value_recursive
 
 
-def get_params_attributes(ctx, instance, params_list):
+def _get_params_attributes(ctx, instance, params_list):
     params = {}
     for param_name in params_list:
         params[param_name] = get_field_value_recursive(
@@ -39,6 +39,7 @@ def bunch_execute(templates=None, **kwargs):
         prerender = template.get('prerender')
         save_to = template.get('save_to')
         params_attributes = template.get('params_attributes')
+        remove_calls = template.get('remove_calls')
 
         ctx.logger.info('Processing: {template_file}'
                         .format(template_file=repr(template_file)))
@@ -46,21 +47,22 @@ def bunch_execute(templates=None, **kwargs):
         if params:
             runtime_properties.update(params)
         if params_attributes:
-            runtime_properties.update(get_params_attributes(ctx,
-                                                            ctx.instance,
-                                                            params_attributes))
+            runtime_properties.update(
+                _get_params_attributes(ctx,
+                                       ctx.instance,
+                                       params_attributes))
         ctx.logger.debug('Params: {params}'
                          .format(params=repr(runtime_properties)))
         runtime_properties["ctx"] = ctx
         _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-                 save_to, prerender=prerender)
+                 save_to, prerender=prerender, remove_calls=remove_calls)
     else:
         ctx.logger.debug('No calls.')
 
 
 @operation
 def execute(params=None, template_file=None, save_path=None, prerender=False,
-            **kwargs):
+            remove_calls=False, **kwargs):
 
     params = params or {}
     template_file = template_file or ''
@@ -72,12 +74,13 @@ def execute(params=None, template_file=None, save_path=None, prerender=False,
         params = {}
     runtime_properties.update(params)
     _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-             save_path=save_path, prerender=prerender)
+             save_path=save_path, prerender=prerender,
+             remove_calls=remove_calls)
 
 
 @operation
 def execute_as_relationship(params=None, template_file=None, save_path=None,
-                            prerender=False, **kwargs):
+                            prerender=False, remove_calls=False, **kwargs):
     ctx.logger.debug("Execute as relationship params: {} template: {}"
                      .format(repr(params), repr(template_file)))
     if not params:
@@ -86,11 +89,11 @@ def execute_as_relationship(params=None, template_file=None, save_path=None,
     runtime_properties.update(ctx.source.instance.runtime_properties)
     runtime_properties.update(params)
     _execute(runtime_properties, template_file, ctx.source.instance,
-             ctx.source.node, prerender=prerender)
+             ctx.source.node, prerender=prerender, remove_calls=remove_calls)
 
 
 def _execute(params, template_file, instance, node, save_path=None,
-             prerender=False):
+             prerender=False, remove_calls=False):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
@@ -99,6 +102,8 @@ def _execute(params, template_file, instance, node, save_path=None,
         result = utility.process(params, template, node.properties.copy(),
                                  prerender=prerender,
                                  resource_callback=ctx.get_resource)
+        if remove_calls and result:
+            result = result.get('result_properties', {})
         if save_path:
             instance.runtime_properties[save_path] = result
         else:

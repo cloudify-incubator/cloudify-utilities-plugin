@@ -904,22 +904,13 @@ class TestScaleList(unittest.TestCase):
                     "cloudify_scalelist.workflows._uninstall_instances",
                     fake_uninstall_instances
                 ):
-                    uninstall_process = Mock()
-                    uninstall_process.returncode = 1
-                    uninstall_process.communicate = Mock(
-                        return_value=('output', 'error'))
-                    uninstall_command = Mock(return_value=uninstall_process)
-                    with patch(
-                        "cloudify_scalelist.workflows.subprocess.Popen",
-                        uninstall_command
-                    ):
-                        workflows.scaledownlist(
-                            ctx=_ctx,
-                            scale_transaction_field='_transaction',
-                            scale_node_name="a_type", scale_node_field="name",
-                            scale_node_field_value="value",
-                            force_db_cleanup=True
-                        )
+                    workflows.scaledownlist(
+                        ctx=_ctx,
+                        scale_transaction_field='_transaction',
+                        scale_node_name="a_type", scale_node_field="name",
+                        scale_node_field_value="value",
+                        force_db_cleanup=True
+                    )
                 fake_uninstall_instances.assert_called_with(
                     ctx=_ctx,
                     graph=_ctx.graph_mode(),
