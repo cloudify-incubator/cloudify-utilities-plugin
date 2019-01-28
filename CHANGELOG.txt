@@ -200,3 +200,7 @@ releases:
   v1.12.3:
   - Rest: Support auth headers
   - Rest: Add 'save_path' to cloudify.rest.Requests
+
+  v1.12.4:
+  - Rest: Update SDK==0.0.6
+  - Rest: Hide calls from response
