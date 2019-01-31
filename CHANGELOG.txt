@@ -204,3 +204,8 @@ releases:
   v1.12.4:
   - Rest: Update SDK==0.0.6
   - Rest: Hide calls from response
+
+  v1.12.5:
+  - Rest: Update SDK==0.0.7
+  - Rest: Add toxml filter
+  - Rest: Failback to json if can't detect content type
