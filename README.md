@@ -14,6 +14,7 @@ Utilities for extending Cloudify features.
 - [Cloudify Files](cloudify_files/README.md)
 - [Cloudify REST plugin](cloudify_rest/README.md)
 - [Cloudify Scale List Workflow](cloudify_scalelist/README.md)
+- [Cloudify Secrets](cloudify_secrets/README.md)
 - [Cloudify SSH Key](cloudify_ssh_key/README.md)
 - [Cloudify Suspend/Backup Workflows](cloudify_suspend/README.md)
 - [Cloudify Terminal](cloudify_terminal/README.md)
