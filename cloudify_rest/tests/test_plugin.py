@@ -21,11 +21,45 @@ import json
 import os
 
 from cloudify_rest import tasks
-from mock import MagicMock
+from mock import MagicMock, patch
 import logging
 
 
 class TestPlugin(unittest.TestCase):
+
+    def test_execute_mock_sdk(self):
+        _ctx = MockCloudifyContext('node_name',
+                                   properties={'hosts': ['--fake.cake--',
+                                                         'test123.test'],
+                                               'port': -1,
+                                               'ssl': False,
+                                               'verify': False,
+                                               'params': {'f': 'e'}},
+                                   runtime_properties={'b': {'c': 'd'}})
+        __location__ = os.path.realpath(
+            os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        with open(os.path.join(__location__, 'template1.yaml'), 'r') as f:
+            template = f.read()
+        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.logger.setLevel(logging.DEBUG)
+        current_ctx.set(_ctx)
+
+        check_mock = MagicMock(return_value={})
+        with patch(
+            "cloudify_rest.tasks.utility.process", check_mock
+        ):
+            tasks.bunch_execute(templates=[{
+                'params': {'USER': 'testuser'},
+                'template_file': 'mock_param',
+                'save_to': 'saved_params',
+                'params_attributes': {
+                    'a': ['b', 'c']}}])
+        check_mock.assert_called_with(
+            {'f': 'e', 'ctx': _ctx, 'a': 'd', 'USER': 'testuser'},
+            template,
+            {'params': {'f': 'e'}, 'verify': False, 'ssl': False,
+             'port': -1, 'hosts': ['--fake.cake--', 'test123.test']},
+            prerender=None, resource_callback=_ctx.get_resource)
 
     def test_execute_bunch_http_no_exception(self):
         _ctx = MockCloudifyContext('node_name',

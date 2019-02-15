@@ -462,6 +462,10 @@ node_types:
           certificate.
         type: boolean
         default: true
+      params:
+        description: >
+          Template parameters. Default is empty dictionary.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -469,7 +473,9 @@ node_types:
           inputs: &rest_template_inputs
             params:
               description: >
-                Template parameters. Default is empty dictionary.
+                Template parameters. Default is empty dictionary. Merged
+                with params from node properties and has 'ctx' key for
+                current action context.
               default: {}
             template_file:
               description: >
@@ -533,6 +539,10 @@ node_types:
           certificate.
         type: boolean
         default: true
+      params:
+        description: >
+          Template parameters. Default is empty dictionary.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:

@@ -99,7 +99,11 @@ def _execute(params, template_file, instance, node, save_path=None,
         return
     template = ctx.get_resource(template_file)
     try:
-        result = utility.process(params, template, node.properties.copy(),
+        merged_params = {}
+        merged_params.update(node.properties.get("params", {}))
+        merged_params.update(params)
+        result = utility.process(merged_params, template,
+                                 node.properties.copy(),
                                  prerender=prerender,
                                  resource_callback=ctx.get_resource)
         if remove_calls and result:
