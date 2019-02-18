@@ -209,3 +209,6 @@ releases:
   - Rest: Update SDK==0.0.7
   - Rest: Add toxml filter
   - Rest: Failback to json if can't detect content type
+
+  v1.13.0:
+  - Fix Issue in File type when using use_sudo.
