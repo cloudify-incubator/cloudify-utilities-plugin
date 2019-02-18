@@ -26,6 +26,8 @@ from cloudify.exceptions import (
 
 def execute_command(_command, extra_args=None):
 
+    extra_args = extra_args or {}
+
     ctx.logger.debug('_command {0}.'.format(_command))
 
     subprocess_args = {
@@ -33,6 +35,10 @@ def execute_command(_command, extra_args=None):
         'stdout': subprocess.PIPE,
         'stderr': subprocess.PIPE
     }
+
+    if 'sudo' in subprocess_args['args'] and not extra_args.get('shell'):
+        return subprocess.call(subprocess_args['args'])
+
     if extra_args is not None and isinstance(extra_args, dict):
         subprocess_args.update(extra_args)
 
@@ -95,14 +101,11 @@ class CloudifyFile(object):
 
         if self.use_sudo:
             cp_out = execute_command('sudo cp {0} {1}'.format(
-                downloaded_file_path, self.file_path),
-                extra_args={'shell': True})
+                downloaded_file_path, self.file_path))
             chown_out = execute_command('sudo chown {0} {1}'.format(
-                self.owner, self.file_path),
-                extra_args={'shell': True})
+                self.owner, self.file_path))
             chmod_out = execute_command('sudo chmod {0} {1}'.format(
-                self.mode, self.file_path),
-                extra_args={'shell': True})
+                self.mode, self.file_path))
             if cp_out is False or chown_out is False or chmod_out is False:
                 raise NonRecoverableError(
                     'Failed, see previous ERROR log message.')
