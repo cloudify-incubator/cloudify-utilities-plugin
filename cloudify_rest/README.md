@@ -38,6 +38,8 @@ Node properties for `cloudify.rest.Requests` and `cloudify.rest.BunchRequests`:
 * `ssl`: http or https. Default: `false`
 * `verify`: A boolean which controls whether we verify the server's TLS
   certificate. Default: `true`
+* `params`: Common params for all calls, will be merged with params from
+each call/action.
 
 ### Blueprint
 
