@@ -32,9 +32,9 @@ def _get_params_attributes(ctx, instance, params_list):
 
 
 @operation
-def bunch_execute(templates=None, **kwargs):
+def bunch_execute(templates=None, auth=None, **kwargs):
     for template in templates or []:
-        params = template.get('params')
+        params = template.get('params', {})
         template_file = template.get('template_file')
         prerender = template.get('prerender')
         save_to = template.get('save_to')
@@ -55,7 +55,8 @@ def bunch_execute(templates=None, **kwargs):
                          .format(params=repr(runtime_properties)))
         runtime_properties["ctx"] = ctx
         _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-                 save_to, prerender=prerender, remove_calls=remove_calls)
+                 save_to, prerender=prerender, remove_calls=remove_calls,
+                 auth=auth)
     else:
         ctx.logger.debug('No calls.')
 
@@ -93,7 +94,7 @@ def execute_as_relationship(params=None, template_file=None, save_path=None,
 
 
 def _execute(params, template_file, instance, node, save_path=None,
-             prerender=False, remove_calls=False):
+             prerender=False, remove_calls=False, auth=False):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
@@ -102,8 +103,11 @@ def _execute(params, template_file, instance, node, save_path=None,
         merged_params = {}
         merged_params.update(node.properties.get("params", {}))
         merged_params.update(params)
+        merged_auth = node.properties.copy()
+        if auth:
+            merged_auth.update(auth)
         result = utility.process(merged_params, template,
-                                 node.properties.copy(),
+                                 merged_auth,
                                  prerender=prerender,
                                  resource_callback=ctx.get_resource)
         if remove_calls and result:

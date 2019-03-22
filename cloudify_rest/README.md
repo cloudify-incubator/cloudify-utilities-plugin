@@ -67,8 +67,8 @@ each call/action.
   user:
     cloudify.rest.BunchRequests
     properties:
-      hosts:
-      - { get_input: rest_endpoint }
+      # hosts:
+      # - { get_input: rest_endpoint }
       port: 443
       ssl: true
       verify: false
@@ -76,6 +76,9 @@ each call/action.
       cloudify.interfaces.lifecycle:
         start:
           inputs:
+            auth: # combine with properties
+              hosts:
+                - { get_input: rest_endpoint }
             templates:
             - template_file: templates/get-user-all-properties-template.yaml
 ```
