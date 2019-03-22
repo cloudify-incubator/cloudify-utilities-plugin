@@ -94,7 +94,7 @@ def execute_as_relationship(params=None, template_file=None, save_path=None,
 
 
 def _execute(params, template_file, instance, node, save_path=None,
-             prerender=False, remove_calls=False, auth=False):
+             prerender=False, remove_calls=False, auth=None):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
@@ -104,6 +104,7 @@ def _execute(params, template_file, instance, node, save_path=None,
         merged_params.update(node.properties.get("params", {}))
         merged_params.update(params)
         merged_auth = node.properties.copy()
+        # we have something additional to node properties for merge
         if auth:
             merged_auth.update(auth)
         result = utility.process(merged_params, template,
