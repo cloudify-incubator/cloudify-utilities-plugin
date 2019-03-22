@@ -14,6 +14,7 @@
 
 import testtools
 import base64
+import yaml
 from cloudify.mocks import MockCloudifyContext
 from cloudify_cloudinit import CloudInit
 from cloudify.state import current_ctx
@@ -80,17 +81,21 @@ class CloudifyCloudInitTestBase(testtools.TestCase):
         # Test that Operation inputs override the current ctx.
         CloudInit(operation_inputs=update_inputs).update()
         self.assertEquals(
-            MINIMUM_CLOUD_CONFIG.format("packages: [package1, package2]"),
-            _ctx._runtime_properties.get('cloud_config'))
+            # Need to covert before compare as we can have different syntax
+            yaml.load(
+                MINIMUM_CLOUD_CONFIG.format("packages: [package1, package2]")),
+            yaml.load(
+                _ctx._runtime_properties.get('cloud_config')))
 
         # Test that base64 version of inputs are equivalent.
         _ctx.node.properties['encode_base64'] = True
         CloudInit(operation_inputs={}).update()
         self.assertEquals(
-            base64.encodestring(
-                MINIMUM_CLOUD_CONFIG.format(
-                    "packages: [package1, package2]")),
-            _ctx._runtime_properties.get('cloud_config'))
+            # Need to covert before compare as we can have different syntax
+            yaml.load(
+                MINIMUM_CLOUD_CONFIG.format("packages: [package1, package2]")),
+            yaml.load(base64.decodestring(
+                _ctx._runtime_properties.get('cloud_config'))))
 
         # Test that even if we run Base64 on the string
         # the resource_config is not touched.
@@ -102,6 +107,8 @@ class CloudifyCloudInitTestBase(testtools.TestCase):
         _ctx.node.properties['encode_base64'] = False
         CloudInit(operation_inputs={}).update()
         self.assertEquals(
-            MINIMUM_CLOUD_CONFIG.format(
-                "packages: [package1, package2]"),
-            _ctx._runtime_properties.get('cloud_config'))
+            # Need to covert before compare as we can have different syntax
+            yaml.load(
+                MINIMUM_CLOUD_CONFIG.format("packages: [package1, package2]")),
+            yaml.load(
+                _ctx._runtime_properties.get('cloud_config')))
