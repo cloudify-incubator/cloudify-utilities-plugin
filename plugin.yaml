@@ -548,26 +548,37 @@ node_types:
         create:
           implementation: rest.cloudify_rest.tasks.bunch_execute
           inputs:
+            auth:
+              default: {}
             templates:
               default: {}
         configure:
           implementation: rest.cloudify_rest.tasks.bunch_execute
           inputs:
+            auth:
+              default: {}
             templates:
               default: {}
         start:
           implementation: rest.cloudify_rest.tasks.bunch_execute
           inputs:
+            auth:
+              default: {}
             templates:
               default: {}
         stop:
           implementation: rest.cloudify_rest.tasks.bunch_execute
           inputs:
             templates:
+            auth:
+              default: {}
+            templates:
               default: {}
         delete:
           implementation: rest.cloudify_rest.tasks.bunch_execute
           inputs:
+            auth:
+              default: {}
             templates:
               default: {}
 

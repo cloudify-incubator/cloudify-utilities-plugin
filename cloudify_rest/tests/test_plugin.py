@@ -61,6 +61,27 @@ class TestPlugin(unittest.TestCase):
              'port': -1, 'hosts': ['--fake.cake--', 'test123.test']},
             prerender=None, resource_callback=_ctx.get_resource)
 
+        # overwrite hosts
+        check_mock = MagicMock(return_value={})
+        with patch(
+            "cloudify_rest.tasks.utility.process", check_mock
+        ):
+            tasks.bunch_execute(
+                templates=[{
+                    'params': {'USER': 'testuser'},
+                    'template_file': 'mock_param',
+                    'save_to': 'saved_params',
+                    'params_attributes': {
+                        'a': ['b', 'c']}}],
+                # new hosts
+                auth={'hosts': ['over_write']})
+        check_mock.assert_called_with(
+            {'f': 'e', 'ctx': _ctx, 'a': 'd', 'USER': 'testuser'},
+            template,
+            {'params': {'f': 'e'}, 'verify': False, 'ssl': False,
+             'port': -1, 'hosts': ['over_write']},
+            prerender=None, resource_callback=_ctx.get_resource)
+
     def test_execute_bunch_http_no_exception(self):
         _ctx = MockCloudifyContext('node_name',
                                    properties={'hosts': ['--fake.cake--',

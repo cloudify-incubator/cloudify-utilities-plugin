@@ -214,3 +214,6 @@ releases:
   - Rest: merge parameters in property and in call
   - Secrets: Add support manage secrets from blueprint
   - Fix Issue in File type when using use_sudo.
+
+  v1.x.x:
+  - Rest: use auth parameters from action inputs
