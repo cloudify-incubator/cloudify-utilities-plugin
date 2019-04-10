@@ -215,5 +215,6 @@ releases:
   - Secrets: Add support manage secrets from blueprint
   - Fix Issue in File type when using use_sudo.
 
-  v1.x.x:
+  v1.14.0:
   - Rest: use auth parameters from action inputs
+  - Rest: support `files_raw`/`raw_files` and `payload_raw`/`raw_payload`
