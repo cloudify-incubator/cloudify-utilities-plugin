@@ -17,6 +17,8 @@ Features:
 
 Action inputs in `cloudify.rest.Requests`:
 * `params`: Template parameters. Default is empty dictionary.
+* `params_attributes`: dictionary with list based path to values in
+  `runtime_prioperties`.
 * `template_file`: Template path in blueprint directory. Default is ''.
 * `save_path`: Save result to runtime properties key. Default is directly
   save to runtime properties.
@@ -233,4 +235,5 @@ Real life example how F5 BigIP can be provisioned with REST API
 blueprint: [example-5-blueprint.yaml](examples/example-5-blueprint.yaml)
 
 Example for get users list, create new user based on first result and than
-remove new created user.
+remove new created user. Have used `cloudify.rest.BunchRequests` with
+`params_attributes`.
