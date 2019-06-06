@@ -5,4 +5,4 @@ rest_calls:
       Any [payload
     response_format: json
     response_expectation: ['list',0,'key','proper_value|good']
-    hosts: ['hostFrom Template.test']
+    hosts: ['hostFrom_Template.test']

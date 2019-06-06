@@ -1,6 +1,20 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.10.0/plugin.yaml
+
 node_templates:
+
+  fake_node:
+    type: cloudify.nodes.Compute
+
   router:
     type: cloudify.nodes.ApplicationModule
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: fake_node
     interfaces:
       custom:
         sync_config:
@@ -10,6 +24,9 @@ node_templates:
 
   CPE_A:
     type: cloudify.nodes.ApplicationModule
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: fake_node
     interfaces:
       custom:
         sync_config:

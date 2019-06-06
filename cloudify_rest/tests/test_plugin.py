@@ -233,7 +233,7 @@ class TestPlugin(unittest.TestCase):
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
-            m.put('https://hostfrom%20template.test:12345/v1/put_%20response3',
+            m.put('https://hostfrom_template.test:12345/v1/put_%20response3',
                   json=json.load(
                       file(os.path.join(__location__, 'put_response3.json'),
                            'r')),
