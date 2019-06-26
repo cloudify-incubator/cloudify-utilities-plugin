@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from jinja2 import Template
+from cloudify_common_sdk import filters
 import time
 
 from cloudify import ctx
@@ -28,7 +28,7 @@ def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
         try:
             return func(*args, **kwargs)
         except exceptions.RecoverableWarning as e:
-            ctx.logger.info("Need for rerun: {}".format(repr(e)))
+            ctx.logger.info("Need for rerun: {e}".format(e=repr(e)))
             retry_count -= 1
             time.sleep(retry_sleep)
         except exceptions.RecoverableError as e:
@@ -37,10 +37,11 @@ def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
             raise cfy_exc.NonRecoverableError(str(e))
 
     raise cfy_exc.RecoverableError(
-        "Failed to rerun: {}:{}".format(repr(args), repr(kwargs)))
+        "Failed to rerun: {args}:{kwargs}"
+        .format(args=repr(args), kwargs=repr(kwargs)))
 
 
-@operation
+@operation(resumable=True)
 def run(**kwargs):
     """main entry point for all calls"""
 
@@ -66,7 +67,8 @@ def run(**kwargs):
     # if node contained in some other node, try to overwrite ip
     if not ip_list:
         ip_list = [ctx_instance.host_ip]
-        ctx.logger.info("Used host from container: %s" % str(ip_list))
+        ctx.logger.info("Used host from container: {ip_list}"
+                        .format(ip_list=repr(ip_list)))
 
     if isinstance(ip_list, basestring):
         ip_list = [ip_list]
@@ -112,7 +114,8 @@ def run(**kwargs):
     else:
         raise cfy_exc.OperationRetry(message="Let's try one more time?")
 
-    ctx.logger.info("Device prompt: " + prompt)
+    ctx.logger.info("Device prompt: {prompt}"
+                    .format(prompt=filters.shorted_text(prompt)))
 
     for call in calls:
         responses = call.get('responses', [])
@@ -130,12 +133,11 @@ def run(**kwargs):
             if not template:
                 ctx.logger.info("Empty template.")
                 continue
-            template_engine = Template(template)
             if not template_params:
                 template_params = {}
             # save context for reuse in template
             template_params['ctx'] = ctx
-            operation = template_engine.render(template_params)
+            operation = filters.render_template(template, template_params)
 
         # incase of template_text
         if not operation and 'template_text' in call:
@@ -144,20 +146,21 @@ def run(**kwargs):
             if not template:
                 ctx.logger.info("Empty template_text.")
                 continue
-            template_engine = Template(template)
             if not template_params:
                 template_params = {}
             # save context for reuse in template
             template_params['ctx'] = ctx
-            operation = template_engine.render(template_params)
+            operation = filters.render_template(template, template_params)
 
         if not operation:
             continue
 
         if responses:
-            ctx.logger.info("We have predefined responses: " + str(responses))
+            ctx.logger.info("We have predefined responses: {responses}"
+                            .format(responses=filters.shorted_text(responses)))
 
-        ctx.logger.debug("Template: \n" + str(operation))
+        ctx.logger.debug("Template: \n{operation}"
+                         .format(operation=filters.shorted_text(operation)))
 
         result = ""
         for op_line in operation.split("\n"):
@@ -166,7 +169,8 @@ def run(**kwargs):
                 continue
 
             ctx.logger.info("Executing template...")
-            ctx.logger.debug("Execute: " + op_line)
+            ctx.logger.debug("Execute: {opline}"
+                             .format(opline=filters.shorted_text(op_line)))
 
             result_part = _rerun(
                 ctx=ctx,
@@ -184,13 +188,14 @@ def run(**kwargs):
                 retry_sleep=call.get('retry_sleep', 15))
 
             if result_part.strip():
-                ctx.logger.info(result_part.strip())
+                ctx.logger.info(filters.shorted_text(result_part))
 
             result += (result_part + "\n")
         # save results to runtime properties
         save_to = call.get('save_to')
         if save_to:
-            ctx.logger.info("For save: " + result.strip())
+            ctx.logger.info("For save: {result}"
+                            .format(result=filters.shorted_text(result)))
             ctx_instance.runtime_properties[save_to] = result.strip()
 
     while not connection.is_closed() and exit_command:
@@ -206,7 +211,8 @@ def run(**kwargs):
                 "error_examples": global_error_examples,
                 "critical_examples": global_error_examples
             })
-        ctx.logger.info("Result of close: " + repr(result))
+        ctx.logger.info("Result of close: {result}"
+                        .format(result=filters.shorted_text(result)))
         time.sleep(1)
 
     connection.close()
