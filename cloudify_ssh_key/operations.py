@@ -114,8 +114,8 @@ def delete(**_):
             _delete_secret(key_name)
     if private_key_path:
         _remove_path(private_key_path)
-
-    _remove_path(public_key_path)
+    if public_key_path:
+        _remove_path(public_key_path)
 
     # cleanup runtime properties
     keys = ctx.instance.runtime_properties.keys()
@@ -176,6 +176,8 @@ def _write_key_file(_key_file_path,
 def _remove_path(key_path):
 
     try:
-        os.remove(os.path.expanduser(key_path))
+        path = os.path.expanduser(key_path)
+        if os.path.exists(path):
+            os.remove(path)
     except OSError as e:
         raise NonRecoverableError(str(e))
