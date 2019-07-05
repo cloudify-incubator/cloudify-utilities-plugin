@@ -29,7 +29,7 @@ PRIVATE_KEY_EXPORT_TYPE = 'PEM'
 ALGORITHM = 'RSA'
 
 
-@operation
+@operation(resumable=True)
 def create(**_):
 
     config = get_desired_value(
@@ -94,7 +94,7 @@ def create(**_):
             private_key_export
 
 
-@operation
+@operation(resumable=True)
 def delete(**_):
 
     config = get_desired_value(

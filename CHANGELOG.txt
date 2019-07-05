@@ -218,3 +218,6 @@ releases:
   v1.14.0:
   - Rest: use auth parameters from action inputs
   - Rest: support `files_raw`/`raw_files` and `payload_raw`/`raw_payload`
+
+  v1.15.0:
+  - Add resumable flag for all operations.

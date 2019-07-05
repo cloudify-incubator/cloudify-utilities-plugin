@@ -16,11 +16,11 @@ from cloudify.decorators import operation
 from . import CloudifyFile
 
 
-@operation
+@operation(resumable=True)
 def create(**_):
     return CloudifyFile(_).create()
 
 
-@operation
+@operation(resumable=True)
 def delete(**_):
     return CloudifyFile(_).delete()
