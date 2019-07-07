@@ -156,8 +156,9 @@ class TestKey(testtools.TestCase):
 
     def test_remove_path_Error(self):
         mock_client = mock.MagicMock(side_effect=OSError("e"))
-        with mock.patch('os.remove', mock_client):
-            self.assertRaises(NonRecoverableError, _remove_path, 'k')
+        with mock.patch('os.path.exists', mock.Mock(return_value=True)):
+            with mock.patch('os.remove', mock_client):
+                self.assertRaises(NonRecoverableError, _remove_path, 'k')
 
     def test__write_key_file_Error(self):
         mock_client = mock.MagicMock(side_effect=OSError("e"))

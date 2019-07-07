@@ -19,25 +19,25 @@ from . import utils
 from . import DeploymentProxyBase
 
 
-@operation
+@operation(resumable=True)
 @utils.proxy_operation('upload_blueprint')
 def upload_blueprint(operation, **_):
     return getattr(DeploymentProxyBase(_), operation)()
 
 
-@operation
+@operation(resumable=True)
 @utils.proxy_operation('create_deployment')
 def create_deployment(operation, **_):
     return getattr(DeploymentProxyBase(_), operation)()
 
 
-@operation
+@operation(resumable=True)
 @utils.proxy_operation('delete_deployment')
 def delete_deployment(operation, **_):
     return getattr(DeploymentProxyBase(_), operation)()
 
 
-@operation
+@operation(resumable=True)
 @utils.proxy_operation('execute_workflow')
 def execute_start(operation, **_):
     return getattr(DeploymentProxyBase(_), operation)()

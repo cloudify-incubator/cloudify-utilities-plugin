@@ -32,7 +32,7 @@ def _get_parameters(properties, kwargs):
     return kwargs
 
 
-@operation
+@operation(resumable=True)
 def create(ctx, **kwargs):
     parameters = _get_parameters(ctx.node.properties, kwargs)
 
@@ -47,7 +47,7 @@ def create(ctx, **kwargs):
     ctx.instance.runtime_properties[DATA_RUNTIME_PROPERTY] = result
 
 
-@operation
+@operation(resumable=True)
 def update(ctx, **kwargs):
     parameters = _get_parameters(ctx.node.properties, kwargs)
 
@@ -62,7 +62,7 @@ def update(ctx, **kwargs):
     ctx.instance.runtime_properties[DATA_RUNTIME_PROPERTY] = result
 
 
-@operation
+@operation(resumable=True)
 def delete(ctx, **kwargs):
     if ctx.instance.runtime_properties.get(DO_NOT_DELETE_PROPERTY, False):
         ctx.logger.info(
@@ -81,7 +81,7 @@ def delete(ctx, **kwargs):
     ctx.instance.runtime_properties.pop(DO_NOT_DELETE_PROPERTY, None)
 
 
-@operation
+@operation(resumable=True)
 def read(ctx, **kwargs):
     parameters = _get_parameters(ctx.node.properties, kwargs)
 

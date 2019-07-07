@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.14.0.zip
-    package_version: '1.14.0'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.15.0.zip
+    package_version: '1.15.0'
 
   cfy_files: *utilities_plugin
 
@@ -344,7 +344,7 @@ node_types:
         stop:
           implementation: cloudinit.cloudify_cloudinit.tasks.update
         delete:
-          implementation: cloudinit.cloudify_cloudinit.tasks.update
+          implementation: cloudinit.cloudify_cloudinit.tasks.delete
 
   configuration_loader:
     derived_from: cloudify.nodes.ApplicationServer

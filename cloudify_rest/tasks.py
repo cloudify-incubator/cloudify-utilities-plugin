@@ -31,7 +31,7 @@ def _get_params_attributes(ctx, instance, params_list):
     return params
 
 
-@operation
+@operation(resumable=True)
 def bunch_execute(templates=None, auth=None, **kwargs):
     for template in templates or []:
         params = template.get('params', {})
@@ -61,7 +61,7 @@ def bunch_execute(templates=None, auth=None, **kwargs):
         ctx.logger.debug('No calls.')
 
 
-@operation
+@operation(resumable=True)
 def execute(params=None, template_file=None, save_path=None, prerender=False,
             remove_calls=False, **kwargs):
 
@@ -79,7 +79,7 @@ def execute(params=None, template_file=None, save_path=None, prerender=False,
              remove_calls=remove_calls)
 
 
-@operation
+@operation(resumable=True)
 def execute_as_relationship(params=None, template_file=None, save_path=None,
                             prerender=False, remove_calls=False, **kwargs):
     ctx.logger.debug("Execute as relationship params: {} template: {}"

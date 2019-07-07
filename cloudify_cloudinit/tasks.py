@@ -16,6 +16,11 @@ from cloudify.decorators import operation
 from . import CloudInit
 
 
-@operation
+@operation(resumable=True)
 def update(**_):
     return CloudInit(_).update()
+
+
+@operation(resumable=True)
+def delete(**_):
+    return CloudInit(_).delete()

@@ -29,7 +29,7 @@ PRIVATE_KEY_EXPORT_TYPE = 'PEM'
 ALGORITHM = 'RSA'
 
 
-@operation
+@operation(resumable=True)
 def create(**_):
 
     config = get_desired_value(
@@ -46,6 +46,7 @@ def create(**_):
         or ctx.node.properties.get('use_secret_store')
     key_name = config.get('key_name') \
         or '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
+    store_private_key_material = _.get('store_private_key_material', False)
 
     if config.get('comment'):
         ctx.logger.error('Property "comment" not implemented.')
@@ -70,7 +71,11 @@ def create(**_):
         _create_secret('{0}_private'.format(key_name), private_key_export)
         _create_secret('{0}_public'.format(key_name), public_key_export)
 
-    if not private_key_path and not use_secret_store:
+    if (
+        not private_key_path and
+        not use_secret_store and
+        not store_private_key_material
+    ):
         raise NonRecoverableError(
             'Must provide private_key_path when use_secret_store is false')
 
@@ -84,14 +89,12 @@ def create(**_):
     if _.get('store_public_key_material', True):
         ctx.instance.runtime_properties['public_key_export'] = \
             public_key_export
-    if _.get('store_private_key_material', False):
+    if store_private_key_material:
         ctx.instance.runtime_properties['private_key_export'] = \
             private_key_export
 
-    return
 
-
-@operation
+@operation(resumable=True)
 def delete(**_):
 
     config = get_desired_value(
@@ -109,12 +112,15 @@ def delete(**_):
     if use_secret_store:
         if _get_secret(key_name):
             _delete_secret(key_name)
-    else:
+    if private_key_path:
         _remove_path(private_key_path)
+    if public_key_path:
+        _remove_path(public_key_path)
 
-    _remove_path(public_key_path)
-
-    return
+    # cleanup runtime properties
+    keys = ctx.instance.runtime_properties.keys()
+    for key in keys:
+        del ctx.instance.runtime_properties[key]
 
 
 def _create_secret(key, value):
@@ -166,12 +172,12 @@ def _write_key_file(_key_file_path,
     if _private_key_permissions:
         os.chmod(os.path.expanduser(_key_file_path), 0600)
 
-    return
-
 
 def _remove_path(key_path):
 
     try:
-        os.remove(os.path.expanduser(key_path))
+        path = os.path.expanduser(key_path)
+        if os.path.exists(path):
+            os.remove(path)
     except OSError as e:
         raise NonRecoverableError(str(e))
