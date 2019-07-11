@@ -180,15 +180,18 @@ class TestTasks(unittest.TestCase):
     def test_close(self):
         conn = terminal_connection.RawConnection()
 
-        conn.conn = MagicMock()
-        conn.conn.close = MagicMock()
-        conn.ssh = MagicMock()
-        conn.ssh.close = MagicMock()
+        conn_conn = MagicMock()
+        conn_conn.close = MagicMock()
+        conn.conn = conn_conn
+
+        conn_ssh = MagicMock()
+        conn_ssh.close = MagicMock()
+        conn.ssh = conn_ssh
 
         conn.close()
 
-        conn.conn.close.assert_called_with()
-        conn.ssh.close.assert_called_with()
+        conn_conn.close.assert_called_with()
+        conn_ssh.close.assert_called_with()
 
     def test_write_to_log_no_logfile(self):
         conn = terminal_connection.RawConnection()
@@ -379,12 +382,16 @@ class TestTasks(unittest.TestCase):
 
         self.assertEqual(
             str(error.exception),
-            'Looks as we have error in response: prompt> text\n some\nerror'
+            'Looks as we have error in response:  text\n some\nerror'
         )
 
         # check with alive connection
         conn.conn = MagicMock()
         conn.conn.closed = False
+
+        # save mocks
+        _conn_mock = conn.conn
+
         # warnings?
         with self.assertRaises(
             exceptions.RecoverableWarning
@@ -396,7 +403,8 @@ class TestTasks(unittest.TestCase):
                 error_examples=[],
                 critical_examples=[]
             )
-        conn.conn.close.assert_not_called()
+        _conn_mock.close.assert_not_called()
+
         # errors?
         with self.assertRaises(exceptions.RecoverableError) as error:
             conn._cleanup_response(
@@ -406,9 +414,15 @@ class TestTasks(unittest.TestCase):
                 error_examples=['error'],
                 critical_examples=[]
             )
-        conn.conn.close.assert_called_with()
+        _conn_mock.close.assert_called_with()
+        self.assertFalse(conn.conn)
+        conn.conn = _conn_mock
+
         # critical?
         conn.conn.close = MagicMock()
+        # save mocks
+        _conn_mock = conn.conn
+        # check with close
         with self.assertRaises(
             exceptions.NonRecoverableError
         ) as error:
@@ -419,7 +433,7 @@ class TestTasks(unittest.TestCase):
                 error_examples=[],
                 critical_examples=['error']
             )
-        conn.conn.close.assert_called_with()
+        _conn_mock.close.assert_called_with()
 
     def test_run_with_closed_connection(self):
         conn = terminal_connection.RawConnection()

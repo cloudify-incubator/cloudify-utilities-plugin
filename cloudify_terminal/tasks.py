@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2017 Cloudify Platform Ltd. All rights reserved
+# Copyright (c) 2016-2019 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ def run(**kwargs):
     global_error_examples = terminal_auth.get('errors', [])
     global_critical_examples = terminal_auth.get('criticals', [])
     exit_command = terminal_auth.get('exit_command', 'exit')
+    smart_device = terminal_auth.get('smart_device')
     # save logs to debug file
     log_file_name = None
     if terminal_auth.get('store_logs'):
@@ -98,8 +99,14 @@ def run(**kwargs):
             "Communication logs will be saved to %s" % log_file_name
         )
 
-    connection = terminal_connection.RawConnection(logger=ctx.logger,
-                                                   log_file_name=log_file_name)
+    if smart_device:
+        ctx.logger.info("Used ssh shell extension.")
+        connection = terminal_connection.SmartConnection(
+            logger=ctx.logger, log_file_name=log_file_name)
+    else:
+        ctx.logger.info("Used raw stream connection.")
+        connection = terminal_connection.RawConnection(
+            logger=ctx.logger, log_file_name=log_file_name)
 
     for ip in ip_list:
         try:

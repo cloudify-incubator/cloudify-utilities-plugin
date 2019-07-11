@@ -221,3 +221,7 @@ releases:
 
   v1.15.0:
   - Add resumable flag for all operations.
+  - CloudInit: cleanup runtime properties on delete.
+  - Terminal: Add experimental support for smart devices with shell extension
+    support.
+  - SSH Key: cleanup runtime properties on delete.

@@ -182,6 +182,7 @@ node_templates:
         criticals: <list strings that must raise non recoverable error if contained in output>
         promt_check: <optional, list of prompt's>
         exit_command: <optional, command for run if connection alive after all commands, by default: exit>
+        smart_device: <optional, use shell extension in ssh, by default: false>
     interfaces:
       cloudify.interfaces.lifecycle:
         start: # can be create/configure/start/stop/delete
