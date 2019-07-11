@@ -33,8 +33,8 @@ setuptools.setup(
               'cloudify_secrets'],
     license='LICENSE',
     install_requires=[
-        'cloudify-plugins-common>=3.4.2',
-        'cloudify-rest-client>=4.0',  # deployment_proxy
+        'cloudify-plugins-common>=4.2',
+        'cloudify-rest-client>=4.2',  # deployment_proxy
         'cloudify-utilities-plugins-sdk==0.0.10',  # terminal, rest
         'pycrypto',  # ssh_key
         'pyyaml']  # cloudinit and rest
