@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
+# Copyright (c) 2017-2019 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -183,6 +183,33 @@ class TestTasks(unittest.TestCase):
                 calls=[{'action': 'hostname'}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
                                'password': 'password', 'store_logs': True}
+            )
+
+        connection_mock.run.assert_called_with(
+            command='hostname',
+            prompt_check=None,
+            warning_examples=[],
+            error_examples=[],
+            critical_examples=[],
+            responses=[])
+
+        self.assertIsNone(
+            _ctx.instance.runtime_properties.get('place_for_save'))
+
+    @patch('time.sleep', Mock())
+    def test_run_run_without_save_smart(self):
+        _ctx = self._gen_ctx()
+        connection_mock = Mock()
+        connection_mock.connect = Mock(return_value="")
+        connection_mock.run = Mock(return_value="localhost")
+
+        with patch("cloudify_terminal_sdk.terminal_connection.SmartConnection",
+                   Mock(return_value=connection_mock)):
+            tasks.run(
+                calls=[{'action': 'hostname'}],
+                terminal_auth={'ip': 'ip', 'user': 'user',
+                               'password': 'password', 'store_logs': True,
+                               'smart_device': True}
             )
 
         connection_mock.run.assert_called_with(

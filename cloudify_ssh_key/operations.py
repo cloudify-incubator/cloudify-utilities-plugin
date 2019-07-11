@@ -28,9 +28,22 @@ OPENSSH_FORMAT_STRING = 'OpenSSH'
 PRIVATE_KEY_EXPORT_TYPE = 'PEM'
 ALGORITHM = 'RSA'
 
+# runtime names
+SECRETS_KEY_NAME = 'secret_key_name'
+PUBLIC_KEY_PATH = 'public_key_path'
+PRIVATE_KEY_PATH = 'private_key_path'
+PUBLIC_KEY_EXPORT = 'public_key_export'
+PRIVATE_KEY_EXPORT = 'private_key_export'
+
 
 @operation(resumable=True)
 def create(**_):
+
+    for key in [SECRETS_KEY_NAME, PUBLIC_KEY_PATH, PRIVATE_KEY_PATH,
+                PUBLIC_KEY_EXPORT, PRIVATE_KEY_EXPORT]:
+        if key in ctx.instance.runtime_properties:
+            ctx.logger.error("You should run delete before run create")
+            return
 
     config = get_desired_value(
         'resource_config', _,
@@ -47,6 +60,7 @@ def create(**_):
     key_name = config.get('key_name') \
         or '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
     store_private_key_material = _.get('store_private_key_material', False)
+    store_public_key_material = _.get('store_public_key_material', True)
 
     if config.get('comment'):
         ctx.logger.error('Property "comment" not implemented.')
@@ -70,6 +84,7 @@ def create(**_):
     if use_secret_store:
         _create_secret('{0}_private'.format(key_name), private_key_export)
         _create_secret('{0}_public'.format(key_name), public_key_export)
+        ctx.instance.runtime_properties[SECRETS_KEY_NAME] = key_name
 
     if (
         not private_key_path and
@@ -83,39 +98,44 @@ def create(**_):
         _write_key_file(private_key_path,
                         private_key_export,
                         _private_key_permissions=True)
+        ctx.instance.runtime_properties[PRIVATE_KEY_PATH] = private_key_path
 
     if public_key_path:
         _write_key_file(public_key_path, public_key_export)
-    if _.get('store_public_key_material', True):
-        ctx.instance.runtime_properties['public_key_export'] = \
+        ctx.instance.runtime_properties[PUBLIC_KEY_PATH] = public_key_path
+
+    if store_public_key_material:
+        ctx.instance.runtime_properties[PUBLIC_KEY_EXPORT] = \
             public_key_export
     if store_private_key_material:
-        ctx.instance.runtime_properties['private_key_export'] = \
+        ctx.instance.runtime_properties[PRIVATE_KEY_EXPORT] = \
             private_key_export
 
 
 @operation(resumable=True)
 def delete(**_):
 
-    config = get_desired_value(
-        'resource_config', _,
-        ctx.instance.runtime_properties,
-        ctx.node.properties)
+    # remove keys only if created on previous step
+    key_name = ctx.instance.runtime_properties.get(SECRETS_KEY_NAME)
+    if key_name:
+        private_name = '{0}_private'.format(key_name)
+        if _get_secret(private_name):
+            _delete_secret(private_name)
+        public_name = '{0}_public'.format(key_name)
+        if _get_secret(public_name):
+            _delete_secret(public_name)
+        del ctx.instance.runtime_properties[SECRETS_KEY_NAME]
 
-    private_key_path = config.get('private_key_path')
-    public_key_path = config.get('public_key_path')
-    use_secret_store = config.get('use_secret_store') \
-        or ctx.node.properties.get('use_secret_store')
-    key_name = config.get('key_name') \
-        or '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
-
-    if use_secret_store:
-        if _get_secret(key_name):
-            _delete_secret(key_name)
+    # remove stored to filesystem keys
+    private_key_path = ctx.instance.runtime_properties.get(PRIVATE_KEY_PATH)
+    public_key_path = ctx.instance.runtime_properties.get(PUBLIC_KEY_PATH)
     if private_key_path:
         _remove_path(private_key_path)
+        del ctx.instance.runtime_properties[PRIVATE_KEY_PATH]
+
     if public_key_path:
         _remove_path(public_key_path)
+        del ctx.instance.runtime_properties[PUBLIC_KEY_PATH]
 
     # cleanup runtime properties
     keys = ctx.instance.runtime_properties.keys()
