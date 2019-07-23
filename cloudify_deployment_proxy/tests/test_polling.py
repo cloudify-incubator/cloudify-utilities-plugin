@@ -516,4 +516,4 @@ class TestPolling(DeploymentProxyTestBase):
         dep_logs_redirect(cfy_mock_client, 'some_execution_id')
         _ctx.logger.log.assert_called_with(
             20,
-            "Returned nothing, let's get logs next time.")
+            "Waiting for log messages (execution: some_execution_id)...")

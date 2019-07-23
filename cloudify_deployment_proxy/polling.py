@@ -14,6 +14,7 @@
 
 from os import getenv
 import time
+import logging
 
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
@@ -123,18 +124,21 @@ def dep_logs_redirect(_client, execution_id):
                 'Message {0} for Event {1} for execution_id {1}'.format(
                     message, event))
 
-            level = event.get('level')
-            predefined_levels = {
-                'critical': 50,
-                'error': 40,
-                'warning': 30,
-                'info': 20,
-                'debug': 10
-            }
-            if level in predefined_levels:
-                ctx.logger.log(predefined_levels[level], message)
-            else:
-                ctx.logger.log(20, message)
+            level = event.get('level', logging.INFO)
+
+            # If the event dict had a 'level' key, then the value is
+            # a string. In that case, convert it to uppercase and get
+            # the matching Python logging constant.
+            if isinstance(level, basestring):
+                level = logging.getLevelName(level.upper())
+
+            # In the (very) odd case that the level is still not an int
+            # (can happen if the original level value wasn't recognized
+            # by Python's logging library), then use 'INFO'.
+            if not isinstance(level, int):
+                level = logging.INFO
+
+            ctx.logger.log(level, message)
 
         last_event += len(events)
         # returned infinite count
@@ -142,7 +146,8 @@ def dep_logs_redirect(_client, execution_id):
             full_count = last_event + 100
         # returned nothing, let's do it next time
         if len(events) == 0:
-            ctx.logger.log(20, "Returned nothing, let's get logs next time.")
+            ctx.logger.log(20, "Waiting for log messages "
+                               "(execution: {0})...".format(execution_id))
             break
 
     ctx.instance.runtime_properties[COUNT_EVENTS][execution_id] = last_event
