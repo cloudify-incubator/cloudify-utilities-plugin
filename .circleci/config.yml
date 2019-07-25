@@ -32,7 +32,11 @@ jobs:
           name: install tox
           command: pip install --user tox
       - run: /home/circleci/.local/bin/tox -e flake8
-      - run: /home/circleci/.local/bin/tox -e py27
+      - run:
+          name: Python 2.7 tests
+          command: /home/circleci/.local/bin/tox -e py27
+          environment:
+            NO_SUDO_ACCESS: True
       - run: /home/circleci/.local/bin/tox -e validate
 
   wagon:

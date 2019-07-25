@@ -18,6 +18,8 @@ import mock
 import copy
 import tempfile
 import testtools
+import subprocess
+import shutil
 
 # Third Party Imports
 from cloudify.state import current_ctx
@@ -168,3 +170,20 @@ class TestKey(testtools.TestCase):
                 with mock.patch('__builtin__.open', fake_file):
                     self.assertRaises(NonRecoverableError, _write_key_file,
                                       'k', 'content')
+
+    # Skip this under CircleCI because we have no permissions
+    # to sudo there.
+    @testtools.skipIf('NO_SUDO_ACCESS' in os.environ,
+                      "No sudo access")
+    def test_target_different_filesystem(self):
+        tempdir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tempdir)
+        self.addCleanup(subprocess.call, ['sudo', 'umount', tempdir])
+
+        subprocess.check_call(['sudo', 'mount', '-t', 'tmpfs', '-o',
+                               'size=2K', 'tmpfs', tempdir])
+        target_file = os.path.join(tempdir, 'test.key')
+        _write_key_file(target_file, 'hello')
+        with open(target_file, 'r') as f:
+            contents = f.read()
+            self.assertEqual(contents, 'hello')

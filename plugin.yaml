@@ -4,7 +4,7 @@ plugins:
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
     source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.15.0.zip
-    package_version: '1.15.0'
+    package_version: '1.15.1'
 
   cfy_files: *utilities_plugin
 

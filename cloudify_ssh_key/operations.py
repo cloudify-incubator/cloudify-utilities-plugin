@@ -15,12 +15,15 @@
 
 from . import get_desired_value
 
+import sys
 import os
 import tempfile
+import shutil
 from Crypto.PublicKey import RSA
 
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
+from cloudify.utils import exception_to_error_cause
 from cloudify import ctx, manager
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -173,21 +176,23 @@ def _delete_secret(key):
 def _write_key_file(_key_file_path,
                     _key_file_material,
                     _private_key_permissions=False):
-
-    temporary_file = \
-        tempfile.NamedTemporaryFile(delete=False)
-
     expanded_key_path = os.path.expanduser(_key_file_path)
-    with open(temporary_file.name, 'w') as outfile:
-        outfile.write(_key_file_material)
-    try:
-        directory = os.path.dirname(expanded_key_path)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        os.rename(temporary_file.name,
-                  expanded_key_path)
-    except OSError as e:
-        raise NonRecoverableError(str(e))
+    with tempfile.NamedTemporaryFile('w', delete=False) as temporary_file:
+        temporary_file.write(_key_file_material)
+        temporary_file.close()
+        try:
+            directory = os.path.dirname(expanded_key_path)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            shutil.move(temporary_file.name, expanded_key_path)
+        except Exception:
+            _, last_ex, last_tb = sys.exc_info()
+            raise NonRecoverableError(
+                "Failed moving private key", causes=[
+                    exception_to_error_cause(last_ex, last_tb)])
+        finally:
+            if os.path.exists(temporary_file.name):
+                os.remove(temporary_file.name)
 
     if _private_key_permissions:
         os.chmod(os.path.expanduser(_key_file_path), 0600)
