@@ -116,7 +116,8 @@ class DeploymentProxyBase(object):
         self.deployment = self.config.get('deployment', {})
         self.deployment_id = self.deployment.get('id') or ctx.instance.id
         self.deployment_inputs = self.deployment.get('inputs', {})
-        self.deployment_outputs = self.deployment.get('outputs', {})
+        self.deployment_outputs = self.deployment.get('outputs')
+        self.deployment_all_outputs = self.deployment.get('all_outputs', True)
         self.deployment_logs = self.deployment.get('logs', {})
 
         # Node-instance-related properties
@@ -508,29 +509,33 @@ class DeploymentProxyBase(object):
     def post_execute_deployment_proxy(self):
         runtime_prop = ctx.instance.runtime_properties['deployment']
         ctx.logger.debug(
-            'Runtime  deployment properties {0}'.format(runtime_prop))
+            'Runtime deployment properties: {0}'.format(runtime_prop))
 
-        if 'outputs' \
-                not in ctx.instance.runtime_properties['deployment'].keys():
+        if 'outputs' not in runtime_prop.keys():
             update_attributes('deployment', 'outputs', dict())
             ctx.logger.debug('No deployment proxy outputs exist.')
 
         try:
-            ctx.logger.debug('Deployment Id is {0}'.format(self.deployment_id))
+            ctx.logger.debug('Deployment ID is {0}'.format(self.deployment_id))
             response = self.client.deployments.outputs.get(self.deployment_id)
             ctx.logger.debug(
-                'Deployment outputs response {0}'.format(response))
-
+                'Deployment outputs response: {0}'.format(response))
         except CloudifyClientError as ex:
             _, _, tb = sys.exc_info()
             raise NonRecoverableError(
                 'Failed to query deployment outputs: {0}'
-                ''.format(self.deployment_id),
+                .format(self.deployment_id),
                 causes=[exception_to_error_cause(ex, tb)])
         else:
             dep_outputs = response.get('outputs')
             ctx.logger.debug('Deployment outputs: {0}'.format(dep_outputs))
-            for key, val in self.deployment_outputs.items():
+            if self.deployment_outputs:
+                output_mapping = self.deployment_outputs
+            elif self.deployment_all_outputs:
+                output_mapping = {key: key for key, _ in dep_outputs.items()}
+            else:
+                output_mapping = {}
+            for key, val in output_mapping.items():
                 ctx.instance.runtime_properties[
                     'deployment']['outputs'][val] = \
                     dep_outputs.get(key, '')
