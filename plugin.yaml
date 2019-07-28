@@ -70,6 +70,14 @@ data_types:
           Get "key" the deployment.
           Set "value" runtime property to the value of the output.
         required: false
+      all_outputs:
+        description: >
+          Ignored if "outputs" is specified.
+          Otherwise, if true (the default), then all outputs from the remote
+          deployment are exposed. If false, then no output is exposed.
+        type: boolean
+        required: false
+        default: true
       logs:
         description: >
           Logs redirect settings, by default {redirect: true}

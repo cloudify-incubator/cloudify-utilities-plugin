@@ -23,6 +23,8 @@ from .base import DeploymentProxyTestBase
 from ..tasks import execute_start
 from ..constants import EXTERNAL_RESOURCE, NIP_TYPE, DEP_TYPE
 
+from .. import DeploymentProxyBase
+
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
 
@@ -272,3 +274,68 @@ class TestExecute(DeploymentProxyTestBase):
                                        timeout=.001)
                 self.assertTrue(output)
         del _ctx, mock_client
+
+    def _test_output_mapping(self, all_outputs, output_mapping,
+                             deployment_outputs, expected_outputs):
+        _ctx = self.get_mock_ctx('test_post_execute_deployment_proxy',
+                                 node_type=NIP_TYPE)
+        _ctx.node.properties['resource_config']['deployment']['outputs'] = \
+            output_mapping
+        _ctx.node.properties['resource_config']['deployment']['all_outputs'] =\
+            all_outputs
+        _ctx.instance.runtime_properties['deployment'] = {}
+
+        cfy_mock_client = MockCloudifyRestClient()
+        cfy_mock_client.deployments.outputs.get = \
+            mock.MagicMock(return_value={'outputs': deployment_outputs})
+
+        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
+            mock_client.return_value = cfy_mock_client
+            current_ctx.set(_ctx)
+            self.addCleanup(current_ctx.clear)
+            d = DeploymentProxyBase({})
+            d.post_execute_deployment_proxy()
+            self.assertEqual(
+                expected_outputs,
+                _ctx.instance.runtime_properties['deployment']['outputs'])
+
+    def test_post_execute_deployment_proxy_with_mapping_full(self):
+        self._test_output_mapping(
+            all_outputs=False,
+            output_mapping={
+                'key1': 'key1',
+                'key2': 'key2'
+                }, deployment_outputs={
+                'key1': 'value1',
+                'key2': 'value2'},
+            expected_outputs={
+                'key1': 'value1',
+                'key2': 'value2'
+            }
+        )
+
+    def test_post_execute_deployment_proxy_with_mapping_partial(self):
+        self._test_output_mapping(
+            all_outputs=False,
+            output_mapping={
+                'key1': 'key1'
+                }, deployment_outputs={
+                'key1': 'value1',
+                'key2': 'value2'},
+            expected_outputs={
+                'key1': 'value1'
+            }
+        )
+
+    def test_post_execute_deployment_proxy_all_outputs(self):
+        self._test_output_mapping(
+            all_outputs=True,
+            output_mapping={},
+            deployment_outputs={
+                'key1': 'value1',
+                'key2': 'value2'},
+            expected_outputs={
+                'key1': 'value1',
+                'key2': 'value2'
+            }
+        )

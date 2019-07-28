@@ -7,7 +7,7 @@ nose-cov
 pylint
 flake8
 requests-mock
-PyYAML
+PyYAML==5.1.1
 # for blueprints validate
 cloudify>=3.4.2
 nose-exclude
