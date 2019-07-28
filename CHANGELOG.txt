@@ -1,5 +1,9 @@
 releases:
 
+  v1.15.2:
+  - Improved logging of deployment proxy's waiting for upstream events.
+  - Added option to expose all upstream deployment's outputs at once.
+
   v1.15.1:
   - Fixed issue around creating SSH key in a different file system.
 
