@@ -33,6 +33,8 @@ class CloudInit(object):
             if not isinstance(f, dict):
                 break
             try:
+                if 'content' not in f:
+                    continue
                 resource_type = f['content'].get('resource_type', '')
                 resource_name = f['content'].get('resource_name', '')
                 template_variables = f['content'].get('template_variables', {})
