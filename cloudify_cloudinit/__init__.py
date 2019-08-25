@@ -33,14 +33,14 @@ class CloudInit(object):
             if not isinstance(f, dict):
                 break
             try:
-                if 'content' not in f:
-                    continue
-                resource_type = f['content'].get('resource_type', '')
-                resource_name = f['content'].get('resource_name', '')
-                template_variables = f['content'].get('template_variables', {})
-                if 'file_resource' == resource_type:
-                    f['content'] = ctx.get_resource_and_render(
-                        resource_name, template_variables)
+                content = f.get('content')
+                if isinstance(content, dict):
+                    resource_type = content.get('resource_type', '')
+                    resource_name = content.get('resource_name', '')
+                    template_variables = content.get('template_variables', {})
+                    if 'file_resource' == resource_type:
+                        f['content'] = ctx.get_resource_and_render(
+                            resource_name, template_variables)
             except ValueError:
                 ctx.logger.debug('No external resource recognized.')
                 pass
