@@ -28,12 +28,29 @@ class CloudInit(object):
         self.config = self.get_config(operation_inputs)
 
     @staticmethod
-    def get_config(inputs):
+    def get_external_resource(config):
+        for f in config.get('write_files', []):
+            if not isinstance(f, dict):
+                break
+            try:
+                resource_type = f['content'].get('resource_type', '')
+                resource_name = f['content'].get('resource_name', '')
+                template_variables = f['content'].get('template_variables', {})
+                if 'file_resource' == resource_type:
+                    f['content'] = ctx.get_resource_and_render(
+                        resource_name, template_variables)
+            except ValueError:
+                ctx.logger.debug('No external resource recognized.')
+                pass
+        return config
+
+    def get_config(self, inputs):
 
         config = ctx.node.properties.get('resource_config', {})
         config.update(
             ctx.instance.runtime_properties.get('resource_config', {}))
         config.update(inputs.get('resource_config', {}))
+        config.update(self.get_external_resource(config.copy()))
 
         return config
 
