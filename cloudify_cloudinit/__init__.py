@@ -14,6 +14,7 @@
 
 import yaml
 import base64
+import ruamel
 from cloudify import ctx
 
 
@@ -39,8 +40,12 @@ class CloudInit(object):
                     resource_name = content.get('resource_name', '')
                     template_variables = content.get('template_variables', {})
                     if 'file_resource' == resource_type:
-                        f['content'] = ctx.get_resource_and_render(
-                            resource_name, template_variables)
+                        if template_variables:
+                            new_content = ctx.get_resource_and_render(
+                                resource_name, template_variables)
+                        else:
+                            new_content = ctx.get_resource(resource_name)
+                        f['content'] = '|\n' + new_content
             except ValueError:
                 ctx.logger.debug('No external resource recognized.')
                 pass
@@ -60,7 +65,7 @@ class CloudInit(object):
     def __str__(self):
         """Override the string implementation of object."""
 
-        cloud_init = yaml.dump(self.config)
+        cloud_init = yaml.dump(self.config, Dumper=ruamel.RoundTripDumper)
         cloud_init_string = str(cloud_init).replace('!!python/unicode ', '')
         header = ctx.node.properties.get('header')
         if header:
