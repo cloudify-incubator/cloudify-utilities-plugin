@@ -37,6 +37,5 @@ setuptools.setup(
         'cloudify-rest-client>=4.2',  # deployment_proxy
         'cloudify-utilities-plugins-sdk==0.0.10',  # terminal, rest
         'pycrypto==2.6.1',  # ssh_key
-        'pyyaml==5.1.1',
-        'ruamel']  # cloudinit and rest
+        'ruamel.yaml']  # cloudinit
 )

@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaml
 import base64
-import ruamel
+import ruamel.yaml
 from cloudify import ctx
 
 
@@ -65,7 +64,8 @@ class CloudInit(object):
     def __str__(self):
         """Override the string implementation of object."""
 
-        cloud_init = yaml.dump(self.config, Dumper=ruamel.RoundTripDumper)
+        cloud_init = ruamel.yaml.dump(
+            self.config, Dumper=ruamel.yaml.RoundTripDumper)
         cloud_init_string = str(cloud_init).replace('!!python/unicode ', '')
         header = ctx.node.properties.get('header')
         if header:
