@@ -1,5 +1,8 @@
 releases:
 
+  v1.15.3:
+  - Support external resource in files.
+
   v1.15.2:
   - Improved logging of deployment proxy's waiting for upstream events.
   - Added option to expose all upstream deployment's outputs at once.

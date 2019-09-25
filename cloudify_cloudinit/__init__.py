@@ -14,6 +14,7 @@
 
 import yaml
 import base64
+import ruamel
 from cloudify import ctx
 
 
@@ -28,12 +29,35 @@ class CloudInit(object):
         self.config = self.get_config(operation_inputs)
 
     @staticmethod
-    def get_config(inputs):
+    def get_external_resource(config):
+        for f in config.get('write_files', []):
+            if not isinstance(f, dict):
+                break
+            try:
+                content = f.get('content')
+                if isinstance(content, dict):
+                    resource_type = content.get('resource_type', '')
+                    resource_name = content.get('resource_name', '')
+                    template_variables = content.get('template_variables', {})
+                    if 'file_resource' == resource_type:
+                        if template_variables:
+                            new_content = ctx.get_resource_and_render(
+                                resource_name, template_variables)
+                        else:
+                            new_content = ctx.get_resource(resource_name)
+                        f['content'] = '|\n' + new_content
+            except ValueError:
+                ctx.logger.debug('No external resource recognized.')
+                pass
+        return config
+
+    def get_config(self, inputs):
 
         config = ctx.node.properties.get('resource_config', {})
         config.update(
             ctx.instance.runtime_properties.get('resource_config', {}))
         config.update(inputs.get('resource_config', {}))
+        config.update(self.get_external_resource(config.copy()))
 
         return config
 
@@ -41,7 +65,7 @@ class CloudInit(object):
     def __str__(self):
         """Override the string implementation of object."""
 
-        cloud_init = yaml.dump(self.config)
+        cloud_init = yaml.dump(self.config, Dumper=ruamel.RoundTripDumper)
         cloud_init_string = str(cloud_init).replace('!!python/unicode ', '')
         header = ctx.node.properties.get('header')
         if header:
