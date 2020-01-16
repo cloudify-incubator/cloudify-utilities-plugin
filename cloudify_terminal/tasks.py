@@ -87,6 +87,7 @@ def run(**kwargs):
     global_warning_examples = terminal_auth.get('warnings', [])
     global_error_examples = terminal_auth.get('errors', [])
     global_critical_examples = terminal_auth.get('criticals', [])
+    global_responses = terminal_auth.get('responses', [])
     exit_command = terminal_auth.get('exit_command', 'exit')
     smart_device = terminal_auth.get('smart_device')
     # save logs to debug file
@@ -111,7 +112,8 @@ def run(**kwargs):
     for ip in ip_list:
         try:
             prompt = connection.connect(ip, user, password, key_content, port,
-                                        global_promt_check)
+                                        prompt_check=global_promt_check,
+                                        responses=global_responses)
             ctx.logger.info("Will be used: " + ip)
             break
 
@@ -125,7 +127,7 @@ def run(**kwargs):
                     .format(prompt=filters.shorted_text(prompt)))
 
     for call in calls:
-        responses = call.get('responses', [])
+        responses = call.get('responses', global_responses)
         promt_check = call.get('promt_check', global_promt_check)
         error_examples = call.get('errors', global_error_examples)
         warning_examples = call.get('warnings', global_warning_examples)

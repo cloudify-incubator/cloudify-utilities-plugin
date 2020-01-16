@@ -9,5 +9,6 @@ flake8
 requests-mock
 PyYAML==5.1.1
 # for blueprints validate
-cloudify>=3.4.2
+cloudify-common==4.4.0
+cloudify==4.4.0
 nose-exclude

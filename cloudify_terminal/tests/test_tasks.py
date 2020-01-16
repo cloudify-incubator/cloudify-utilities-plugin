@@ -151,7 +151,8 @@ class TestTasks(unittest.TestCase):
                                    'password': 'password', 'store_logs': True}
                 )
         connection_mock.connect.assert_called_with(
-            'ip', 'user', 'password', None, 22, None)
+            'ip', 'user', 'password', None, 22,
+            prompt_check=None, responses=[])
 
     @patch('time.sleep', Mock())
     def test_run_without_any_real_calls(self):
