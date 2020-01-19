@@ -180,6 +180,10 @@ node_templates:
         warnings: <list strings that must rerun if contained in output>
         errors: <list strings that must raise error if contained in output>
         criticals: <list strings that must raise non recoverable error if contained in output>
+        responses: <optional, list for possible question that required action after login from user with answers on>
+        - question: <sequence on chars that required some response>
+          answer: <response from plugin>
+          newline: <optional, send new line after response, by default false>
         promt_check: <optional, list of prompt's>
         exit_command: <optional, command for run if connection alive after all commands, by default: exit>
         smart_device: <optional, use shell extension in ssh, by default: false>

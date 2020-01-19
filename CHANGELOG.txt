@@ -1,5 +1,9 @@
 releases:
 
+  v1.16.0:
+  - Terminal: support questions after login before promt
+  - EOL: Cloudify 4.3.x
+
   v1.15.3:
   - Support external resource in files.
 
