@@ -13,7 +13,13 @@
 # limitations under the License.
 
 import base64
-import ruamel.yaml
+try:
+    import ruamel.yaml
+except ImportError:
+    # hack for import namespaced modules
+    import cloudify_importer  # noqa
+    import ruamel.yaml
+
 from cloudify import ctx
 
 

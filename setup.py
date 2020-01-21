@@ -36,5 +36,6 @@ setuptools.setup(
         'cloudify-common>=4.4.0',  # deployment_proxy
         'cloudify-utilities-plugins-sdk==0.0.11',  # terminal, rest
         'pycrypto==2.6.1',  # ssh_key
+        'cloudify-python-importer==0.1', # fix import for ruamel.yaml
         'ruamel.yaml']  # cloudinit
 )
