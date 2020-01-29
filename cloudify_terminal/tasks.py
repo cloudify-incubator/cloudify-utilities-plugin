@@ -13,6 +13,7 @@
 # limitations under the License.
 from cloudify_common_sdk import filters
 import time
+from six import string_types
 
 from cloudify import ctx
 from cloudify import exceptions as cfy_exc
@@ -70,7 +71,7 @@ def run(**kwargs):
         ctx.logger.info("Used host from container: {ip_list}"
                         .format(ip_list=repr(ip_list)))
 
-    if isinstance(ip_list, basestring):
+    if isinstance(ip_list, string_types):
         ip_list = [ip_list]
     user = terminal_auth.get('user')
     password = terminal_auth.get('password')

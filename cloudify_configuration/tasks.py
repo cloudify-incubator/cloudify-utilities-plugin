@@ -17,6 +17,7 @@
 from cloudify import ctx
 from cloudify.workflows import ctx as workflow_ctx
 from cloudify.decorators import workflow
+import six
 
 from cloudify import manager
 
@@ -37,7 +38,7 @@ DIFF_PARAMS = 'diff_params'
 
 def _merge_dicts(d1, d2):
     result = d1.copy()
-    for key, new_val in d2.iteritems():
+    for key, new_val in six.iteritems(d2):
         current_val = result.get(key)
         if isinstance(current_val, dict) and isinstance(new_val, dict):
             result[key] = _merge_dicts(current_val, new_val)
@@ -84,7 +85,8 @@ def load_configuration_to_runtime_properties(source_config=None, **kwargs):
     params_list = ctx.source.node.properties['params_list']
 
     # populate params from main configuration with only relevant values
-    params = {k: v for k, v in source_config.iteritems() if k in params_list}
+    params = {
+        k: v for k, v in six.iteritems(source_config) if k in params_list}
     # override params with HARD coded node params
     params.update(ctx.source.node.properties['params'])
 
@@ -93,7 +95,8 @@ def load_configuration_to_runtime_properties(source_config=None, **kwargs):
     params[OLD_PARAMS] = {}
 
     # find changed params between old params and populated params
-    diff_params = [k for k, v in params.iteritems() if v != old_params.get(k)]
+    diff_params = [
+        k for k, v in six.iteritems(params) if v != old_params.get(k)]
 
     # populate the old params into params
     params[OLD_PARAMS] = old_params

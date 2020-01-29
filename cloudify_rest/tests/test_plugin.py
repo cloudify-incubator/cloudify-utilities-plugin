@@ -100,11 +100,12 @@ class TestPlugin(unittest.TestCase):
         with requests_mock.mock(
                 real_http=True) as m:  # real_http to check fake uri and get ex
             # call 1
-            m.get('http://test123.test:80/testuser/test_rest/get',
-                  json=json.load(
-                      file(os.path.join(__location__, 'get_response1.json'),
-                           'r')),
-                  status_code=200)
+            with open(
+                os.path.join(__location__, 'get_response1.json'), 'r'
+            ) as f:
+                m.get('http://test123.test:80/testuser/test_rest/get',
+                      json=json.load(f),
+                      status_code=200)
 
             def _match_request_text(request):
                 return '101' in (request.text or '')
@@ -116,12 +117,13 @@ class TestPlugin(unittest.TestCase):
                    text='resp')
 
             # call 1
-            m.get('http://test123.test:80/get',
-                  json=json.load(
-                      file(os.path.join(__location__, 'get_response2.json'),
-                           'r')),
-                  headers={'Content-Type': 'application/json'},
-                  status_code=200)
+            with open(
+                os.path.join(__location__, 'get_response2.json'), 'r'
+            ) as f:
+                m.get('http://test123.test:80/get',
+                      json=json.load(f),
+                      headers={'Content-Type': 'application/json'},
+                      status_code=200)
 
             tasks.bunch_execute(templates=[{
                 'params': {'USER': 'testuser'},
@@ -160,11 +162,12 @@ class TestPlugin(unittest.TestCase):
         with requests_mock.mock(
                 real_http=True) as m:  # real_http to check fake uri and get ex
             # call 1
-            m.get('http://test123.test:80/testuser/test_rest/get',
-                  json=json.load(
-                      file(os.path.join(__location__, 'get_response1.json'),
-                           'r')),
-                  status_code=200)
+            with open(
+                os.path.join(__location__, 'get_response1.json'), 'r'
+            ) as f:
+                m.get('http://test123.test:80/testuser/test_rest/get',
+                      json=json.load(f),
+                      status_code=200)
 
             def _match_request_text(request):
                 return '101' in (request.text or '')
@@ -176,12 +179,13 @@ class TestPlugin(unittest.TestCase):
                    text='resp')
 
             # call 1
-            m.get('http://test123.test:80/get',
-                  json=json.load(
-                      file(os.path.join(__location__, 'get_response2.json'),
-                           'r')),
-                  headers={'Content-Type': 'application/json'},
-                  status_code=200)
+            with open(
+                os.path.join(__location__, 'get_response2.json'), 'r'
+            ) as f:
+                m.get('http://test123.test:80/get',
+                      json=json.load(f),
+                      headers={'Content-Type': 'application/json'},
+                      status_code=200)
 
             tasks.execute(params=params, template_file='mock_param')
             # _ctx = current_ctx.get_ctx()
@@ -216,7 +220,7 @@ class TestPlugin(unittest.TestCase):
                 tasks.execute(params={}, template_file='mock_param')
             self.assertTrue(
                 'Response code 477 '
-                'defined as recoverable' in context.exception.message)
+                'defined as recoverable' in str(context.exception))
 
     def test_execute_overwrite_host_response_expecation(self):
         _ctx = MockCloudifyContext('node_name',
@@ -233,11 +237,13 @@ class TestPlugin(unittest.TestCase):
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
-            m.put('https://hostfrom_template.test:12345/v1/put_%20response3',
-                  json=json.load(
-                      file(os.path.join(__location__, 'put_response3.json'),
-                           'r')),
-                  status_code=200)
+            with open(
+                os.path.join(__location__, 'put_response3.json'), 'r'
+            ) as f:
+                m.put(
+                    'https://hostfrom_template.test:12345/v1/put_%20response3',
+                    json=json.load(f),
+                    status_code=200)
             with self.assertRaises(RecoverableError) as context:
                 tasks.execute(params={}, template_file='mock_param')
             self.assertSequenceEqual(
@@ -245,7 +251,7 @@ class TestPlugin(unittest.TestCase):
                 "Response value:wrong_value "
                 "does not match regexp: proper_value|good"
                 " from response_expectation",
-                str(context.exception.message))
+                str(context.exception))
 
     def test_execute_nonrecoverable_response(self):
         _ctx = MockCloudifyContext('node_name',
@@ -262,18 +268,19 @@ class TestPlugin(unittest.TestCase):
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
-            m.get('https://test123.test:12345/v1/get_response1',
-                  json=json.load(
-                      file(os.path.join(__location__, 'get_response1.json'),
-                           'r')),
-                  status_code=200)
+            with open(
+                os.path.join(__location__, 'get_response1.json'), 'r'
+            ) as f:
+                m.get('https://test123.test:12345/v1/get_response1',
+                      json=json.load(f),
+                      status_code=200)
             with self.assertRaises(NonRecoverableError) as context:
                 tasks.execute(params={}, template_file='mock_param')
             self.assertSequenceEqual(
                 'Giving up... \n'
                 "Response value: active matches "
                 "regexp:active from nonrecoverable_response. ",
-                str(context.exception.message))
+                str(context.exception))
 
     def test_execute_http_xml(self):
         _ctx = MockCloudifyContext('node_name',
@@ -290,10 +297,12 @@ class TestPlugin(unittest.TestCase):
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
-            m.get('http://test123.test:80/v1/get_response5',
-                  text=file(os.path.join(__location__, 'get_response5.xml'),
-                            'r').read(),
-                  status_code=200)
+            with open(
+                os.path.join(__location__, 'get_response5.xml'), 'r'
+            ) as f:
+                m.get('http://test123.test:80/v1/get_response5',
+                      text=f.read(),
+                      status_code=200)
 
             tasks.execute(params={}, template_file='mock_param')
             # _ctx = current_ctx.get_ctx()

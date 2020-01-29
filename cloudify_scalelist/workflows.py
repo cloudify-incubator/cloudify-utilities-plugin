@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import time
+from six import string_types
 
 from cloudify.decorators import workflow
 from cloudify.manager import get_rest_client
@@ -473,7 +474,7 @@ def scaledownlist(ctx, scale_compute=False,
         raise ValueError('You should provide `scale_node_field` for correct'
                          'downscale.')
 
-    if isinstance(scale_node_field_value, basestring):
+    if isinstance(scale_node_field_value, string_types):
         scale_node_field_value = [scale_node_field_value]
 
     ctx.logger.debug("Filter by values list: {}."
@@ -483,10 +484,10 @@ def scaledownlist(ctx, scale_compute=False,
         scale_node_name = None
         ctx.logger.debug("Will be searched by all instances.")
 
-    if isinstance(scale_node_name, basestring):
+    if isinstance(scale_node_name, string_types):
         scale_node_name = [scale_node_name]
 
-    if isinstance(scale_node_field, basestring):
+    if isinstance(scale_node_field, string_types):
         scale_node_field = [scale_node_field]
 
     instances, instance_ids = _get_transaction_instances(
@@ -635,7 +636,7 @@ def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
                       **kwargs):
     """ A generic workflow for executing arbitrary operations on nodes """
 
-    if isinstance(node_field_value, basestring):
+    if isinstance(node_field_value, string_types):
         node_field_value = [node_field_value]
 
     ctx.logger.debug("Filter by values list: {}."
@@ -644,7 +645,7 @@ def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
     graph = ctx.graph_mode()
     subgraphs = {}
 
-    if isinstance(node_field, basestring):
+    if isinstance(node_field, string_types):
         node_field = [node_field]
 
     # filtering node instances

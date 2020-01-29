@@ -1,3 +1,2 @@
-cloudify-plugins-common===4.4.0
-cloudify-rest-client===4.4.0
+cloudify-common==4.4
 cloudify-utilities-plugins-sdk==0.0.11

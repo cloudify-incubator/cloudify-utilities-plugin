@@ -61,8 +61,7 @@ class TestExecute(DeploymentProxyTestBase):
                                       execute_start,
                                       deployment_id=test_name,
                                       workflow_id='install')
-            self.assertIn('action start failed',
-                          error.message)
+            self.assertIn('action start failed', str(error))
         del _ctx, mock_client
 
     def test_execute_start_timeout(self):
@@ -84,9 +83,7 @@ class TestExecute(DeploymentProxyTestBase):
                                           deployment_id=test_name,
                                           workflow_id='install',
                                           timeout=.001)
-                self.assertIn(
-                    'Execution timeout',
-                    error.message)
+                self.assertIn('Execution timeout', str(error))
         del _ctx, mock_client
 
     def test_execute_start_succeeds(self):

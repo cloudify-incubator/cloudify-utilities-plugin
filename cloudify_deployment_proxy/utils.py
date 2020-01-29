@@ -18,7 +18,7 @@ import shutil
 import zipfile
 import tempfile
 from shutil import copy
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 
 import requests
 

@@ -195,7 +195,7 @@ def _write_key_file(_key_file_path,
                 os.remove(temporary_file.name)
 
     if _private_key_permissions:
-        os.chmod(os.path.expanduser(_key_file_path), 0600)
+        os.chmod(os.path.expanduser(_key_file_path), 0o600)
 
 
 def _remove_path(key_path):

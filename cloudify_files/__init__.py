@@ -17,6 +17,7 @@ import grp
 import os
 import pwd
 import subprocess
+from six import string_types
 
 from cloudify import ctx
 from cloudify.exceptions import (
@@ -110,7 +111,7 @@ class CloudifyFile(object):
                     'See previous ERROR log message.'.format(getuser()))
             return True
 
-        if not isinstance(self.owner, basestring):
+        if not isinstance(self.owner, string_types):
             raise NonRecoverableError('Property owner must be a string.')
 
         split_owner = self.owner.split(':')

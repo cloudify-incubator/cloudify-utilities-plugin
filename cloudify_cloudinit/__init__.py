@@ -79,7 +79,7 @@ class CloudInit(object):
                 header + '\n' + cloud_init_string
         if ctx.node.properties.get('encode_base64'):
             cloud_init_string = \
-                base64.encodestring(cloud_init_string)
+                base64.encodestring(cloud_init_string.encode())
         return cloud_init_string
 
     def update(self, **_):
@@ -88,6 +88,7 @@ class CloudInit(object):
 
     def delete(self, **_):
         # cleanup runtime properties
-        keys = ctx.instance.runtime_properties.keys()
+        # need to convert generaton to list, python 3
+        keys = [key for key in ctx.instance.runtime_properties.keys()]
         for key in keys:
             del ctx.instance.runtime_properties[key]
