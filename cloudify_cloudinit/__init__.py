@@ -17,7 +17,10 @@ try:
     import ruamel.yaml
 except ImportError:
     # hack for import namespaced modules
-    import cloudify_importer  # noqa
+    from cloudify_common_sdk import importer
+    importer.register_callback(
+        base_dir="/opt/mgmtworker/env/plugins",
+        package_name="ruamel.yaml")
     import ruamel.yaml
 
 from cloudify import ctx

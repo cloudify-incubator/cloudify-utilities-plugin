@@ -1,2 +1,2 @@
 cloudify-common==4.4
-cloudify-utilities-plugins-sdk==0.0.11
+cloudify-utilities-plugins-sdk==0.0.12
