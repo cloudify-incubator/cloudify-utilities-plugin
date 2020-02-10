@@ -15,7 +15,7 @@
 import sys
 import time
 import os
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 
 from cloudify import ctx
 from cloudify import manager

@@ -165,7 +165,7 @@ class TestPolling(DeploymentProxyTestBase):
                     cfy_mock_client,
                     test_name,
                     'deployments')
-            self.assertIn('failed', output.message)
+            self.assertIn('failed', str(output))
 
     # Test that failed polling raises an error
     def test_poll_with_timeout_timeout(self):
@@ -276,7 +276,7 @@ class TestPolling(DeploymentProxyTestBase):
                     NonRecoverableError,
                     dep_system_workflows_finished,
                     cfy_mock_client)
-            self.assertIn('failed', output.message)
+            self.assertIn('failed', str(output))
 
     # Test that no matching executions returns False
     def test_dep_workflow_in_state_pollster_no_executions(self):
@@ -407,7 +407,7 @@ class TestPolling(DeploymentProxyTestBase):
                     test_name,
                     'terminated',
                     0)
-            self.assertIn('failed', output.message)
+            self.assertIn('failed', str(output))
 
     # test that success=False raises exception
     def test_poll_workflow_after_execute_failed(self):
@@ -424,7 +424,7 @@ class TestPolling(DeploymentProxyTestBase):
                     NonRecoverableError,
                     poll_workflow_after_execute,
                     None, None, None, None, None, None, None)
-            self.assertIn('Execution timeout', output.message)
+            self.assertIn('Execution timeout', str(output))
 
     # test that success=True returns True
     def test_poll_workflow_after_execute_success(self):
@@ -468,8 +468,8 @@ class TestPolling(DeploymentProxyTestBase):
         dep_logs_redirect(cfy_mock_client, 'some_execution_id')
         _ctx.logger.log.assert_called_with(
             40,
-            '2017-03-22T11:41:59.169Z [vm_ke9e2d.create] Successfully '
-            'configured cfy-agent')
+            b'2017-03-22T11:41:59.169Z [vm_ke9e2d.create] Successfully '
+            b'configured cfy-agent')
 
     def test_dep_logs_redirect_unknown_level(self):
         test_name = "dep_logs_redirect_predefined_level"
@@ -500,8 +500,8 @@ class TestPolling(DeploymentProxyTestBase):
         dep_logs_redirect(cfy_mock_client, 'some_execution_id')
         _ctx.logger.log.assert_called_with(
             20,
-            "2017-03-22T11:42:00.083Z [vm_ke9e2d.create] Task succeeded "
-            "'cloudify_agent.installer.operations.create'")
+            b"2017-03-22T11:42:00.083Z [vm_ke9e2d.create] Task succeeded "
+            b"'cloudify_agent.installer.operations.create'")
 
     def test_dep_logs_empty_infinity(self):
         test_name = "dep_logs_redirect_predefined_level"

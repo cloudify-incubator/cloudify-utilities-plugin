@@ -15,6 +15,7 @@
 from os import getenv
 import time
 import logging
+from six import string_types
 
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
@@ -129,7 +130,7 @@ def dep_logs_redirect(_client, execution_id):
             # If the event dict had a 'level' key, then the value is
             # a string. In that case, convert it to uppercase and get
             # the matching Python logging constant.
-            if isinstance(level, basestring):
+            if isinstance(level, string_types):
                 level = logging.getLevelName(level.upper())
 
             # In the (very) odd case that the level is still not an int

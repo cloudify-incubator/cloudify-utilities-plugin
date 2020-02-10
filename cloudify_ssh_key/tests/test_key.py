@@ -20,6 +20,7 @@ import tempfile
 import testtools
 import subprocess
 import shutil
+import six
 
 # Third Party Imports
 from cloudify.state import current_ctx
@@ -90,6 +91,8 @@ class TestKey(testtools.TestCase):
         return key_path
 
     def test_operations_with_secret(self):
+        if six.PY3:
+            self.skipTest("PyCrypto unsupported with python3")
 
         ctx = self.mock_ctx('test_delete_with_secret', use_secret_store=True)
         current_ctx.set(ctx=ctx)
@@ -106,6 +109,8 @@ class TestKey(testtools.TestCase):
             self.assertFalse(os.path.exists(key_path))
 
     def test_operations_no_secret(self):
+        if six.PY3:
+            self.skipTest("PyCrypto unsupported with python3")
 
         ctx = self.mock_ctx('test_delete_no_secret')
         current_ctx.set(ctx=ctx)
@@ -117,6 +122,8 @@ class TestKey(testtools.TestCase):
         self.assertFalse(os.path.exists(key_path))
 
     def test_raise_unimplemented(self):
+        if six.PY3:
+            self.skipTest("PyCrypto unsupported with python3")
 
         corner_cases = [{
             'comment': 'some_comment',
@@ -167,9 +174,16 @@ class TestKey(testtools.TestCase):
         with mock.patch('os.path.exists', mock.MagicMock(return_value=False)):
             with mock.patch('os.makedirs', mock_client):
                 fake_file = mock.mock_open()
-                with mock.patch('__builtin__.open', fake_file):
-                    self.assertRaises(NonRecoverableError, _write_key_file,
-                                      'k', 'content')
+                if six.PY3:
+                    # python 3
+                    with mock.patch('builtins.open', fake_file):
+                        self.assertRaises(NonRecoverableError, _write_key_file,
+                                          'k', 'content')
+                else:
+                    # python 2
+                    with mock.patch('__builtin__.open', fake_file):
+                        self.assertRaises(NonRecoverableError, _write_key_file,
+                                          'k', 'content')
 
     # Skip this under CircleCI because we have no permissions
     # to sudo there.

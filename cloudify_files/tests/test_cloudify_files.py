@@ -18,6 +18,7 @@ import os
 from pwd import getpwnam
 import tempfile
 import testtools
+from six import string_types
 
 from cloudify.mocks import MockCloudifyContext
 from cloudify_files import tasks as operation_task
@@ -48,7 +49,7 @@ class CloudifyFilesTestBase(testtools.TestCase):
     @property
     def _user_id(self):
         _owner = self._owner
-        if not isinstance(_owner, basestring):
+        if not isinstance(_owner, string_types):
             return None
         split_owner = _owner.split(':')
         if not len(split_owner) == 2:
@@ -119,7 +120,7 @@ class CloudifyFilesTestBase(testtools.TestCase):
             resource_config=resource_config)
         self.assertIn(
             'No such file or directory',
-            raised_error.message)
+            str(raised_error))
 
     def test_operation_create_from_inputs(self):
         """Test the create function with inputs"""

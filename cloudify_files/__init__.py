@@ -17,6 +17,7 @@ import grp
 import os
 import pwd
 import subprocess
+from six import string_types
 
 from cloudify import ctx
 from cloudify.exceptions import (
@@ -30,7 +31,7 @@ def execute_command(_command, extra_args=None):
     ctx.logger.debug('_command {0}.'.format(_command))
 
     subprocess_args = {
-        'args': _command.split(),
+        'args': _command,
         'stdout': subprocess.PIPE,
         'stderr': subprocess.PIPE
     }
@@ -97,12 +98,15 @@ class CloudifyFile(object):
 
         if self.use_sudo:
             add_shell = {'shell': True}
-            cp_out = execute_command('sudo cp {0} {1}'.format(
-                downloaded_file_path, self.file_path), extra_args=add_shell)
-            chown_out = execute_command('sudo chown {0} {1}'.format(
-                self.owner, self.file_path), extra_args=add_shell)
-            chmod_out = execute_command('sudo chmod {0} {1}'.format(
-                self.mode, self.file_path), extra_args=add_shell)
+            cp_out = execute_command([
+                'sudo', 'cp', downloaded_file_path, self.file_path
+            ], extra_args=add_shell)
+            chown_out = execute_command([
+                'sudo', 'chown', self.owner, self.file_path
+            ], extra_args=add_shell)
+            chmod_out = execute_command([
+                'sudo', 'chmod', self.mode, self.file_path
+            ], extra_args=add_shell)
             if cp_out is False or chown_out is False or chmod_out is False:
                 raise NonRecoverableError(
                     'Sudo command failed. '
@@ -110,7 +114,7 @@ class CloudifyFile(object):
                     'See previous ERROR log message.'.format(getuser()))
             return True
 
-        if not isinstance(self.owner, basestring):
+        if not isinstance(self.owner, string_types):
             raise NonRecoverableError('Property owner must be a string.')
 
         split_owner = self.owner.split(':')
@@ -143,7 +147,7 @@ class CloudifyFile(object):
 
     def delete(self):
         if self.use_sudo:
-            execute_command('sudo rm {0}'.format(self.file_path))
+            execute_command(['sudo', 'rm', self.file_path])
             return True
         os.remove(self.file_path)
         return True

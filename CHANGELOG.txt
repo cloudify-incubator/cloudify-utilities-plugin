@@ -1,5 +1,8 @@
 releases:
 
+  v1.16.1:
+  - Fix python package importer
+
   v1.16.0:
   - Terminal: support questions after login before promt
   - EOL: Cloudify 4.3.x

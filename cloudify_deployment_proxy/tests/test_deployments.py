@@ -76,7 +76,7 @@ class TestDeployment(DeploymentProxyTestBase):
                                       deployment_id=test_name,
                                       timeout=.01)
             self.assertIn('action delete failed',
-                          error.message)
+                          str(error))
 
     def test_upload_plugins(self):
         # Tests that deployments upload plugins
@@ -158,7 +158,7 @@ class TestDeployment(DeploymentProxyTestBase):
             error = self.assertRaises(NonRecoverableError,
                                       deployment._upload_plugins)
             self.assertIn('Wrong type in plugins: True',
-                          error.message)
+                          str(error))
 
             # raise error if wrong wagon/yaml values
             deployment = DeploymentProxyBase({'plugins': [{
@@ -167,7 +167,7 @@ class TestDeployment(DeploymentProxyTestBase):
             error = self.assertRaises(NonRecoverableError,
                                       deployment._upload_plugins)
             self.assertIn("You should provide both values wagon_path: '' "
-                          "and plugin_yaml_path: ''", error.message)
+                          "and plugin_yaml_path: ''", str(error))
 
     def test_delete_deployment_success(self):
         # Tests that deployments delete succeeds
@@ -239,7 +239,7 @@ class TestDeployment(DeploymentProxyTestBase):
                                       blueprint_id='test_deployments_create',
                                       timeout=.01)
             self.assertIn('action create failed',
-                          error.message)
+                          str(error))
 
     def test_create_deployment_timeout(self):
         # Tests that deployments create fails on timeout
@@ -275,7 +275,7 @@ class TestDeployment(DeploymentProxyTestBase):
                     deployment_id='test_create_deployment_timeout',
                     blueprint_id='test', timeout=.01)
 
-                self.assertIn('Execution timeout', error.message)
+                self.assertIn('Execution timeout', str(error))
 
     def test_create_deployment_success(self):
         # Tests that create deployment succeeds

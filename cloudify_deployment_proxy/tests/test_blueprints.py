@@ -59,7 +59,7 @@ class TestBlueprint(DeploymentProxyTestBase):
                                       operation='upload_blueprint',
                                       **self.resource_config)
 
-            self.assertIn('_upload failed', error.message)
+            self.assertIn('_upload failed', str(error))
 
     def test_upload_blueprint_exists(self):
         # Test that if the blueprint ID exists
