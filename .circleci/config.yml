@@ -23,6 +23,9 @@ jobs:
           name: Install pip
           command: sudo python get-pip.py
       - run:
+          name: Upgrade pip
+          command: pip install --upgrade pip==9.0.1
+      - run:
           name: Install virtualenv
           command: pip install --user virtualenv
       - run:
