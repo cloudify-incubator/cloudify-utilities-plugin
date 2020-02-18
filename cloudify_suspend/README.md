@@ -56,6 +56,7 @@ Openstack 2.9.0+ | Y               | Y             | N (No API)              | Y
 Openstack 3.0.0+ | Y               | Y             | N (No API)              | Y                     | Y                      | Y
 vSphere 2.7.0+   | N (N/A)         | N (N/A)       | N (N/A)                 | N (N/A)               | N (N/A)                | N (N/A)
 LibVirt 0.4.1+   | Y (By VM)       | Y (Bypassed)  | Y (By VM)               | N (No API)            | Y (By VM)              | Y (Bypassed)
+GCP 1.5.0+       | N (N/A)         | Y             | N (N/A)                 | N (N/A)               | N (N/A)                | Y
 
 ### Notes:
 
@@ -213,7 +214,7 @@ $ cfy execution start resume -b examples
 Create backup:
 
 ```shell
-$ cfy executions start backup -b examples -p snapshot_name=backup_example --task-retry-interval 30
+$ cfy executions start backup -b examples -p snapshot_name=backup_example --task-retry-interval 30 --task-retries 30
 2018-05-16 12:10:22.408  CFY <examples> Starting 'backup' workflow execution
 2018-05-16 12:10:22.413  CFY <examples> [example_node_s4bgna] Starting to cloudify.interfaces.freeze.fs_prepare
 2018-05-16 12:10:22.413  CFY <examples> [qemu_vm_jvv6jt] Starting to cloudify.interfaces.snapshot.create
@@ -231,7 +232,7 @@ $ cfy executions start backup -b examples -p snapshot_name=backup_example --task
 Restore backup:
 
 ```shell
-$ cfy executions start restore -b examples -p snapshot_name=backup_example --task-retry-interval 30
+$ cfy executions start restore -b examples -p snapshot_name=backup_example --task-retry-interval 30 --task-retries 30
 2018-05-16 12:12:43.913  CFY <examples> Starting 'restore' workflow execution
 2018-05-16 12:12:43.917  CFY <examples> [example_node_s4bgna] Starting to cloudify.interfaces.freeze.fs_finalize
 2018-05-16 12:12:43.917  CFY <examples> [qemu_vm_jvv6jt] Starting to cloudify.interfaces.snapshot.apply
@@ -246,7 +247,7 @@ $ cfy executions start restore -b examples -p snapshot_name=backup_example --tas
 Delete backup:
 
 ```shell
-$ cfy executions start remove_backup -b examples -p snapshot_name=backup_example --task-retry-interval 30
+$ cfy executions start remove_backup -b examples -p snapshot_name=backup_example --task-retry-interval 30 --task-retries 30
 2018-05-16 12:14:42.171  CFY <examples> Starting 'remove_backup' workflow execution
 2018-05-16 12:14:42.174  CFY <examples> [qemu_vm_jvv6jt] Starting to cloudify.interfaces.snapshot.delete
 2018-05-16 12:14:42.275  CFY <examples> [qemu_vm_jvv6jt.delete] Sending task 'cloudify_libvirt.domain_tasks.snapshot_delete'
