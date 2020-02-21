@@ -58,7 +58,7 @@ jobs:
           command: pip install --upgrade pip==9.0.1
       - run:
           name: Install virtualenv
-          command: pip install virtualenv
+          command: pip install virtualenv==16.7.9
       - run:
           name: Init virtualenv
           command: virtualenv env
