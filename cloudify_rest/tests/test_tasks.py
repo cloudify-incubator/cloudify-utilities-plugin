@@ -18,6 +18,8 @@ import mock
 from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
+from cloudify.manager import DirtyTrackingDict
+
 from cloudify_rest import tasks
 
 TEMPLATE = """
@@ -36,11 +38,11 @@ class TestTasks(unittest.TestCase):
         _ctx = MockCloudifyContext(
             'node_name',
             properties={},
-            runtime_properties={}
         )
 
         _ctx._execution_id = "execution_id"
         _ctx.instance.host_ip = None
+        _ctx.instance._runtime_properties = DirtyTrackingDict({})
         _ctx.get_resource = mock.Mock(return_value=TEMPLATE)
         current_ctx.set(_ctx)
         return _ctx

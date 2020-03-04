@@ -19,6 +19,7 @@ from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import (
     NonRecoverableError, RecoverableError, OperationRetry
 )
+from cloudify.manager import DirtyTrackingDict
 
 import cloudify_terminal.tasks as tasks
 from cloudify_common_sdk import exceptions
@@ -34,11 +35,11 @@ class TestTasks(unittest.TestCase):
         _ctx = MockCloudifyContext(
             'node_name',
             properties={},
-            runtime_properties={}
         )
 
         _ctx._execution_id = "execution_id"
         _ctx.instance.host_ip = None
+        _ctx.instance._runtime_properties = DirtyTrackingDict({})
 
         current_ctx.set(_ctx)
         return _ctx

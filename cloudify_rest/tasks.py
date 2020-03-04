@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014-2018 Cloudify Platform Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
 # limitations under the License.
 
 import traceback
+
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
-from cloudify.decorators import operation
 
 from cloudify_rest_sdk import utility
 from cloudify_common_sdk import exceptions
 from cloudify_common_sdk.filters import get_field_value_recursive
+
+from cloudify_terminal import operation_cleanup
 
 
 def _get_params_attributes(ctx, instance, params_list):
@@ -31,7 +33,7 @@ def _get_params_attributes(ctx, instance, params_list):
     return params
 
 
-@operation(resumable=True)
+@operation_cleanup
 def bunch_execute(templates=None, auth=None, **kwargs):
     for template in templates or []:
         params = template.get('params', {})
@@ -61,7 +63,7 @@ def bunch_execute(templates=None, auth=None, **kwargs):
         ctx.logger.debug('No calls.')
 
 
-@operation(resumable=True)
+@operation_cleanup
 def execute(params=None, template_file=None, save_path=None, prerender=False,
             remove_calls=False, **kwargs):
 
@@ -79,7 +81,7 @@ def execute(params=None, template_file=None, save_path=None, prerender=False,
              remove_calls=remove_calls)
 
 
-@operation(resumable=True)
+@operation_cleanup
 def execute_as_relationship(params=None, template_file=None, save_path=None,
                             prerender=False, remove_calls=False, **kwargs):
     ctx.logger.debug("Execute as relationship params: {} template: {}"

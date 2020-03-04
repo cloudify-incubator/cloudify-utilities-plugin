@@ -17,32 +17,13 @@ from six import string_types
 
 from cloudify import ctx
 from cloudify import exceptions as cfy_exc
-from cloudify.decorators import operation
+
+from cloudify_terminal import _rerun, operation_cleanup
 
 import cloudify_terminal_sdk.terminal_connection as terminal_connection
-from cloudify_common_sdk import exceptions
 
 
-def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
-    retry_count = 10
-    while retry_count > 0:
-        try:
-            return func(*args, **kwargs)
-        except exceptions.RecoverableWarning as e:
-            ctx.logger.info("Need for rerun: {e}".format(e=repr(e)))
-            retry_count -= 1
-            time.sleep(retry_sleep)
-        except exceptions.RecoverableError as e:
-            raise cfy_exc.RecoverableError(str(e))
-        except exceptions.NonRecoverableError as e:
-            raise cfy_exc.NonRecoverableError(str(e))
-
-    raise cfy_exc.RecoverableError(
-        "Failed to rerun: {args}:{kwargs}"
-        .format(args=repr(args), kwargs=repr(kwargs)))
-
-
-@operation(resumable=True)
+@operation_cleanup
 def run(**kwargs):
     """main entry point for all calls"""
 
