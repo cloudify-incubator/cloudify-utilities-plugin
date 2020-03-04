@@ -15,7 +15,6 @@ from cloudify_common_sdk import filters
 import time
 from six import string_types
 
-from cloudify import ctx
 from cloudify import exceptions as cfy_exc
 
 from cloudify_terminal import rerun, operation_cleanup
@@ -24,7 +23,7 @@ import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
 
 @operation_cleanup
-def run(**kwargs):
+def run(ctx, **kwargs):
     """main entry point for all calls"""
 
     calls = kwargs.get('calls', [])

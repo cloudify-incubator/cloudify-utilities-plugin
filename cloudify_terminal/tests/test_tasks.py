@@ -62,23 +62,57 @@ class TestTasks(unittest.TestCase):
 
     @patch('time.sleep', Mock())
     def test_run_without_calls(self):
-        self._gen_ctx()
-        tasks.run()
+        _ctx = self._gen_ctx()
+        _ctx._operation = Mock()
+        for operation, state in [
+            # mark create as finished
+            ("cloudify.interfaces.lifecycle.create", {
+                '_finished_operations': {
+                    'cloudify.interfaces.lifecycle.create': True}}),
+            # mark configure as finished
+            ("cloudify.interfaces.lifecycle.configure", {
+                '_finished_operations': {
+                    'cloudify.interfaces.lifecycle.create': True,
+                    "cloudify.interfaces.lifecycle.configure": True}}),
+            # mark start as finished
+            ("cloudify.interfaces.lifecycle.start", {
+                '_finished_operations': {
+                    'cloudify.interfaces.lifecycle.create': True,
+                    "cloudify.interfaces.lifecycle.configure": True,
+                    "cloudify.interfaces.lifecycle.start": True}}),
+            # mark start ready for rerun
+            ("cloudify.interfaces.lifecycle.stop", {
+                '_finished_operations': {
+                    'cloudify.interfaces.lifecycle.create': True,
+                    "cloudify.interfaces.lifecycle.configure": True,
+                    "cloudify.interfaces.lifecycle.start": False,
+                    "cloudify.interfaces.lifecycle.stop": True}}),
+            # cleanup runtime properties
+            ("cloudify.interfaces.lifecycle.delete", {}),
+        ]:
+            # check
+            _ctx._operation.name = operation
+            tasks.run(ctx=_ctx)
+            self.assertEqual(_ctx.instance.runtime_properties, state)
+            # check rerun
+            tasks.run(ctx=_ctx)
+            self.assertEqual(_ctx.instance.runtime_properties, state)
 
     @patch('time.sleep', Mock())
     def test_run_without_auth(self):
-        self._gen_ctx()
+        _ctx = self._gen_ctx()
         with self.assertRaises(NonRecoverableError):
-            tasks.run(calls=[{'action': 'ls'}])
+            tasks.run(ctx=_ctx, calls=[{'action': 'ls'}])
 
     @patch('time.sleep', Mock())
     def test_run_auth(self):
-        self._gen_ctx()
+        _ctx = self._gen_ctx()
         ssh_mock = Mock()
         ssh_mock.connect = Mock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
+                    ctx=_ctx,
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': 'ip', 'user': 'user',
                                    'password': 'password'}
@@ -89,12 +123,13 @@ class TestTasks(unittest.TestCase):
 
     @patch('time.sleep', Mock())
     def test_run_auth_relationship(self):
-        self._gen_relation_ctx()
+        _ctx = self._gen_relation_ctx()
         ssh_mock = Mock()
         ssh_mock.connect = Mock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
+                    ctx=_ctx,
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': 'ip', 'user': 'user',
                                    'password': 'password'}
@@ -112,6 +147,7 @@ class TestTasks(unittest.TestCase):
             with self.assertRaises(OperationRetry):
                 _ctx.instance.host_ip = 'ip'
                 tasks.run(
+                    ctx=_ctx,
                     calls=[{'action': 'ls'}],
                     terminal_auth={'user': 'user',
                                    'password': 'password'}
@@ -122,12 +158,13 @@ class TestTasks(unittest.TestCase):
 
     @patch('time.sleep', Mock())
     def test_run_auth_several_ips(self):
-        self._gen_ctx()
+        _ctx = self._gen_ctx()
         ssh_mock = Mock()
         ssh_mock.connect = Mock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
+                    ctx=_ctx,
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': ['ip1', 'ip2'], 'user': 'user',
                                    'password': 'password'}
@@ -140,13 +177,14 @@ class TestTasks(unittest.TestCase):
 
     @patch('time.sleep', Mock())
     def test_run_auth_enabled_logs(self):
-        self._gen_ctx()
+        _ctx = self._gen_ctx()
         connection_mock = Mock()
         connection_mock.connect = Mock(side_effect=OSError("e"))
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             with self.assertRaises(OperationRetry):
                 tasks.run(
+                    ctx=_ctx,
                     calls=[{'action': 'ls'}],
                     terminal_auth={'ip': 'ip', 'user': 'user',
                                    'password': 'password', 'store_logs': True}
@@ -157,7 +195,7 @@ class TestTasks(unittest.TestCase):
 
     @patch('time.sleep', Mock())
     def test_run_without_any_real_calls(self):
-        self._gen_ctx()
+        _ctx = self._gen_ctx()
         connection_mock = Mock()
         connection_mock.connect = Mock(return_value="")
         connection_mock.run = Mock(return_value="")
@@ -165,6 +203,7 @@ class TestTasks(unittest.TestCase):
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
+                ctx=_ctx,
                 calls=[{}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
                                'password': 'password', 'store_logs': True}
@@ -182,6 +221,7 @@ class TestTasks(unittest.TestCase):
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
+                ctx=_ctx,
                 calls=[{'action': 'hostname'}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
                                'password': 'password', 'store_logs': True}
@@ -208,6 +248,7 @@ class TestTasks(unittest.TestCase):
         with patch("cloudify_terminal_sdk.terminal_connection.SmartConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
+                ctx=_ctx,
                 calls=[{'action': 'hostname'}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
                                'password': 'password', 'store_logs': True,
@@ -236,6 +277,7 @@ class TestTasks(unittest.TestCase):
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
+                ctx=_ctx,
                 calls=[{'template': '1.txt'},
                        {'template': '2.txt'},
                        {'template': '3.txt', 'params': {'aa': 'gg'}}],
@@ -262,6 +304,7 @@ class TestTasks(unittest.TestCase):
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
+                ctx=_ctx,
                 calls=[{'template_text': ""},
                        {'template_text': "bb"},
                        {'template_text': "{{ aa }}", 'params': {'aa': 'gg'}}],
@@ -288,6 +331,7 @@ class TestTasks(unittest.TestCase):
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
+                ctx=_ctx,
                 calls=[{'action': 'hostname\n \nls',
                         'save_to': 'place_for_save'}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
@@ -313,6 +357,7 @@ class TestTasks(unittest.TestCase):
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
+                ctx=_ctx,
                 calls=[{'action': 'hostname', 'save_to': 'place_for_save',
                         'responses': [{'question': 'yes?', 'answer': 'no'}],
                         'errors': ['error'], 'promt_check': ['#']}],
@@ -343,6 +388,7 @@ class TestTasks(unittest.TestCase):
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
             tasks.run(
+                ctx=_ctx,
                 calls=[{}],
                 terminal_auth={'ip': 'ip', 'user': 'user',
                                'password': 'password', 'store_logs': True}
