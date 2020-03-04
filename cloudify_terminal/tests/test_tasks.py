@@ -364,7 +364,7 @@ class TestTasks(unittest.TestCase):
         with self.assertRaises(
             RecoverableError
         ) as error:
-            tasks._rerun(
+            tasks.rerun(
                 ctx=_ctx,
                 func=Mock(
                     side_effect=exceptions.RecoverableWarning('A')
@@ -379,7 +379,7 @@ class TestTasks(unittest.TestCase):
         with self.assertRaises(
             NonRecoverableError
         ) as error:
-            tasks._rerun(
+            tasks.rerun(
                 ctx=_ctx,
                 func=func_call,
                 args=[],
@@ -393,7 +393,7 @@ class TestTasks(unittest.TestCase):
         with self.assertRaises(
             RecoverableError
         ) as error:
-            tasks._rerun(
+            tasks.rerun(
                 ctx=_ctx,
                 func=func_call,
                 args=[],
@@ -407,7 +407,7 @@ class TestTasks(unittest.TestCase):
         with self.assertRaises(
             NonRecoverableError
         ) as error:
-            tasks._rerun(
+            tasks.rerun(
                 ctx=_ctx,
                 func=func_call,
                 args=[],

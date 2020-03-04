@@ -18,7 +18,7 @@ from six import string_types
 from cloudify import ctx
 from cloudify import exceptions as cfy_exc
 
-from cloudify_terminal import _rerun, operation_cleanup
+from cloudify_terminal import rerun, operation_cleanup
 
 import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
@@ -163,7 +163,7 @@ def run(**kwargs):
             ctx.logger.debug("Execute: {opline}"
                              .format(opline=filters.shorted_text(op_line)))
 
-            result_part = _rerun(
+            result_part = rerun(
                 ctx=ctx,
                 func=connection.run,
                 args=[],
@@ -191,7 +191,7 @@ def run(**kwargs):
 
     while not connection.is_closed() and exit_command:
         ctx.logger.info("Execute close")
-        result = _rerun(
+        result = rerun(
             ctx=ctx,
             func=connection.run,
             args=[],

@@ -29,7 +29,7 @@ DELETE_NODE_ACTION = "cloudify.interfaces.lifecycle.delete"
 FINISHED_OPERATIONS = '_finished_operations'
 
 
-def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
+def rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
     while retry_count > 0:
         try:
             return func(*args, **kwargs)

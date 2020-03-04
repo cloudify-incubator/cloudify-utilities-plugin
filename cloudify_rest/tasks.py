@@ -19,10 +19,9 @@ from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 
 from cloudify_rest_sdk import utility
-from cloudify_common_sdk import exceptions
 from cloudify_common_sdk.filters import get_field_value_recursive
 
-from cloudify_terminal import operation_cleanup
+from cloudify_terminal import operation_cleanup, rerun
 
 
 def _get_params_attributes(ctx, instance, params_list):
@@ -58,7 +57,9 @@ def bunch_execute(templates=None, auth=None, **kwargs):
         runtime_properties["ctx"] = ctx
         _execute(runtime_properties, template_file, instance=ctx.instance,
                  node=ctx.node, save_path=save_to, prerender=prerender,
-                 remove_calls=remove_calls, auth=auth)
+                 remove_calls=remove_calls, auth=auth,
+                 retry_count=kwargs.get('retry_count', 1),
+                 retry_sleep=kwargs.get('retry_sleep', 15))
     else:
         ctx.logger.debug('No calls.')
 
@@ -78,7 +79,9 @@ def execute(params=None, template_file=None, save_path=None, prerender=False,
     runtime_properties.update(params)
     _execute(runtime_properties, template_file, instance=ctx.instance,
              node=ctx.node, save_path=save_path, prerender=prerender,
-             remove_calls=remove_calls)
+             remove_calls=remove_calls,
+             retry_count=kwargs.get('retry_count', 1),
+             retry_sleep=kwargs.get('retry_sleep', 15))
 
 
 @operation_cleanup
@@ -93,7 +96,9 @@ def execute_as_relationship(params=None, template_file=None, save_path=None,
     runtime_properties.update(params)
     _execute(runtime_properties, template_file, instance=ctx.source.instance,
              node=ctx.source.node, prerender=prerender,
-             remove_calls=remove_calls)
+             remove_calls=remove_calls,
+             retry_count=kwargs.get('retry_count', 1),
+             retry_sleep=kwargs.get('retry_sleep', 15))
 
 
 def _execute_in_retry(template, params, instance, node, save_path=None,
@@ -117,7 +122,7 @@ def _execute_in_retry(template, params, instance, node, save_path=None,
         instance.runtime_properties.update(result)
 
 
-def _execute(params, template_file, **kwargs):
+def _execute(params, template_file, retry_count, retry_sleep, **kwargs):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
@@ -125,14 +130,12 @@ def _execute(params, template_file, **kwargs):
     try:
         kwargs['params'] = params
         kwargs['template'] = template
-        _execute_in_retry(**kwargs)
-    except exceptions.NonRecoverableResponseException as e:
-        raise NonRecoverableError(e)
-
-    except (exceptions.RecoverableResponseException,
-            exceptions.RecoverableStatusCodeCodeException,
-            exceptions.ExpectationException)as e:
-        raise RecoverableError(e)
+        rerun(ctx=ctx, func=_execute_in_retry, args=[], kwargs=kwargs,
+              retry_count=retry_count, retry_sleep=retry_sleep)
+    except (NonRecoverableError,
+            RecoverableError) as e:
+        ctx.logger.debug("Raised: {e}".format(e=e))
+        raise e
     except Exception as e:
         ctx.logger.info('Exception traceback : {}'
                         .format(traceback.format_exc()))

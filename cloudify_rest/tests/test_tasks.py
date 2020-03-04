@@ -51,7 +51,8 @@ class TestTasks(unittest.TestCase):
         # empty tempate
         _ctx = self._gen_ctx()
         tasks._execute({}, "", instance=_ctx.instance, node=_ctx.node,
-                       save_path=None, prerender=False, remove_calls=False)
+                       save_path=None, prerender=False, remove_calls=False,
+                       retry_count=1, retry_sleep=15)
 
         # run without issues
         _ctx = self._gen_ctx()
@@ -62,7 +63,8 @@ class TestTasks(unittest.TestCase):
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
             tasks._execute({}, "rest_calls.yaml", instance=_ctx.instance,
                            node=_ctx.node, save_path=None, prerender=False,
-                           remove_calls=False)
+                           remove_calls=False, retry_count=1,
+                           retry_sleep=15)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'calls': [{'path': 'http://check.test/'}],
                 'result_properties': {'a': 'b'}})
@@ -76,7 +78,8 @@ class TestTasks(unittest.TestCase):
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
             tasks._execute({}, "rest_calls.yaml", instance=_ctx.instance,
                            node=_ctx.node, save_path=None, prerender=False,
-                           remove_calls=True)
+                           remove_calls=True, retry_count=1,
+                           retry_sleep=15)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'a': 'b'})
 
@@ -90,7 +93,8 @@ class TestTasks(unittest.TestCase):
             tasks._execute({'1': '2'}, "rest_calls.yaml",
                            instance=_ctx.instance, node=_ctx.node,
                            save_path='save', prerender=False,
-                           remove_calls=True)
+                           remove_calls=True, retry_count=1,
+                           retry_sleep=15)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'save': {'a': 'b'}})
         sdk_process.assert_called_with({'1': '2'}, TEMPLATE, {},
@@ -106,7 +110,8 @@ class TestTasks(unittest.TestCase):
                 tasks._execute({'1': '2'}, "rest_calls.yaml",
                                instance=_ctx.instance, node=_ctx.node,
                                save_path='save', prerender=False,
-                               remove_calls=True)
+                               remove_calls=True, retry_count=1,
+                               retry_sleep=15)
 
     def test_execute_as_relationship(self):
         _source_ctx = MockCloudifyContext(

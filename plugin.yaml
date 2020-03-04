@@ -471,8 +471,11 @@ node_types:
       verify:
         description: >
           A boolean which controls whether we verify the server's TLS
-          certificate.
-        type: boolean
+          certificate. Supported such values:
+          * `True`: default value, check certificaties,
+          * `False`: ignore server certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
         default: true
       params:
         description: >
@@ -508,6 +511,14 @@ node_types:
                 Remove calls list from results. Default: save calls in
                 runtime properties.
               default: false
+            retry_count:
+              description: >
+                Rerun count on warning on catched warnigs
+              default: 1
+            retry_sleep:
+              description: >
+                Sleep between rerun
+              default: 15
         configure:
           implementation: rest.cloudify_rest.tasks.execute
           inputs: *rest_template_inputs
@@ -548,8 +559,11 @@ node_types:
       verify:
         description: >
           A boolean which controls whether we verify the server's TLS
-          certificate.
-        type: boolean
+          certificate. Supported such values:
+          * `True`: default value, check certificaties,
+          * `False`: ignore server certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
         default: true
       params:
         description: >
