@@ -56,9 +56,9 @@ def bunch_execute(templates=None, auth=None, **kwargs):
         ctx.logger.debug('Params: {params}'
                          .format(params=repr(runtime_properties)))
         runtime_properties["ctx"] = ctx
-        _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-                 save_to, prerender=prerender, remove_calls=remove_calls,
-                 auth=auth)
+        _execute(runtime_properties, template_file, instance=ctx.instance,
+                 node=ctx.node, save_path=save_to, prerender=prerender,
+                 remove_calls=remove_calls, auth=auth)
     else:
         ctx.logger.debug('No calls.')
 
@@ -76,8 +76,8 @@ def execute(params=None, template_file=None, save_path=None, prerender=False,
     if not params:
         params = {}
     runtime_properties.update(params)
-    _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-             save_path=save_path, prerender=prerender,
+    _execute(runtime_properties, template_file, instance=ctx.instance,
+             node=ctx.node, save_path=save_path, prerender=prerender,
              remove_calls=remove_calls)
 
 
@@ -91,34 +91,41 @@ def execute_as_relationship(params=None, template_file=None, save_path=None,
     runtime_properties = ctx.target.instance.runtime_properties.copy()
     runtime_properties.update(ctx.source.instance.runtime_properties)
     runtime_properties.update(params)
-    _execute(runtime_properties, template_file, ctx.source.instance,
-             ctx.source.node, prerender=prerender, remove_calls=remove_calls)
+    _execute(runtime_properties, template_file, instance=ctx.source.instance,
+             node=ctx.source.node, prerender=prerender,
+             remove_calls=remove_calls)
 
 
-def _execute(params, template_file, instance, node, save_path=None,
-             prerender=False, remove_calls=False, auth=None):
+def _execute_in_retry(template, params, instance, node, save_path=None,
+                      prerender=False, remove_calls=False, auth=None):
+    merged_params = {}
+    merged_params.update(node.properties.get("params", {}))
+    merged_params.update(params)
+    merged_auth = node.properties.copy()
+    # we have something additional to node properties for merge
+    if auth:
+        merged_auth.update(auth)
+    result = utility.process(merged_params, template,
+                             merged_auth,
+                             prerender=prerender,
+                             resource_callback=ctx.get_resource)
+    if remove_calls and result:
+        result = result.get('result_properties', {})
+    if save_path:
+        instance.runtime_properties[save_path] = result
+    else:
+        instance.runtime_properties.update(result)
+
+
+def _execute(params, template_file, **kwargs):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
     template = ctx.get_resource(template_file)
     try:
-        merged_params = {}
-        merged_params.update(node.properties.get("params", {}))
-        merged_params.update(params)
-        merged_auth = node.properties.copy()
-        # we have something additional to node properties for merge
-        if auth:
-            merged_auth.update(auth)
-        result = utility.process(merged_params, template,
-                                 merged_auth,
-                                 prerender=prerender,
-                                 resource_callback=ctx.get_resource)
-        if remove_calls and result:
-            result = result.get('result_properties', {})
-        if save_path:
-            instance.runtime_properties[save_path] = result
-        else:
-            instance.runtime_properties.update(result)
+        kwargs['params'] = params
+        kwargs['template'] = template
+        _execute_in_retry(**kwargs)
     except exceptions.NonRecoverableResponseException as e:
         raise NonRecoverableError(e)
 

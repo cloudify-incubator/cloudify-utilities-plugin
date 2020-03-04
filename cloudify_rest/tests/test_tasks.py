@@ -50,8 +50,8 @@ class TestTasks(unittest.TestCase):
     def test_execute_mock_sdk(self):
         # empty tempate
         _ctx = self._gen_ctx()
-        tasks._execute({}, "", _ctx.instance, _ctx.node, save_path=None,
-                       prerender=False, remove_calls=False)
+        tasks._execute({}, "", instance=_ctx.instance, node=_ctx.node,
+                       save_path=None, prerender=False, remove_calls=False)
 
         # run without issues
         _ctx = self._gen_ctx()
@@ -60,8 +60,8 @@ class TestTasks(unittest.TestCase):
             'calls': [{'path': 'http://check.test/'}]
         })
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
-            tasks._execute({}, "rest_calls.yaml", _ctx.instance, _ctx.node,
-                           save_path=None, prerender=False,
+            tasks._execute({}, "rest_calls.yaml", instance=_ctx.instance,
+                           node=_ctx.node, save_path=None, prerender=False,
                            remove_calls=False)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'calls': [{'path': 'http://check.test/'}],
@@ -74,8 +74,8 @@ class TestTasks(unittest.TestCase):
             'calls': [{'path': 'http://check.test/'}]
         })
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
-            tasks._execute({}, "rest_calls.yaml", _ctx.instance, _ctx.node,
-                           save_path=None, prerender=False,
+            tasks._execute({}, "rest_calls.yaml", instance=_ctx.instance,
+                           node=_ctx.node, save_path=None, prerender=False,
                            remove_calls=True)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'a': 'b'})
@@ -87,8 +87,9 @@ class TestTasks(unittest.TestCase):
             'calls': [{'path': 'http://check.test/'}]
         })
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
-            tasks._execute({'1': '2'}, "rest_calls.yaml", _ctx.instance,
-                           _ctx.node, save_path='save', prerender=False,
+            tasks._execute({'1': '2'}, "rest_calls.yaml",
+                           instance=_ctx.instance, node=_ctx.node,
+                           save_path='save', prerender=False,
                            remove_calls=True)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'save': {'a': 'b'}})
@@ -102,8 +103,9 @@ class TestTasks(unittest.TestCase):
         sdk_process = mock.Mock(side_effect=Exception('abc'))
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
             with self.assertRaises(NonRecoverableError):
-                tasks._execute({'1': '2'}, "rest_calls.yaml", _ctx.instance,
-                               _ctx.node, save_path='save', prerender=False,
+                tasks._execute({'1': '2'}, "rest_calls.yaml",
+                               instance=_ctx.instance, node=_ctx.node,
+                               save_path='save', prerender=False,
                                remove_calls=True)
 
     def test_execute_as_relationship(self):

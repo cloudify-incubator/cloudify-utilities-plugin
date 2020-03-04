@@ -21,6 +21,8 @@ from cloudify.decorators import operation
 from cloudify_common_sdk import exceptions
 
 # Cloudify delete node action
+START_NODE_ACTION = "cloudify.interfaces.lifecycle.start"
+STOP_NODE_ACTION = "cloudify.interfaces.lifecycle.stop"
 DELETE_NODE_ACTION = "cloudify.interfaces.lifecycle.delete"
 
 # operation flags
@@ -28,7 +30,6 @@ FINISHED_OPERATIONS = '_finished_operations'
 
 
 def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
-    retry_count = 10
     while retry_count > 0:
         try:
             return func(*args, **kwargs)
@@ -36,9 +37,13 @@ def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
             ctx.logger.info("Need for rerun: {e}".format(e=repr(e)))
             retry_count -= 1
             time.sleep(retry_sleep)
-        except exceptions.RecoverableError as e:
+        except (exceptions.RecoverableError,
+                exceptions.RecoverableResponseException,
+                exceptions.RecoverableStatusCodeCodeException,
+                exceptions.ExpectationException) as e:
             raise cfy_exc.RecoverableError(str(e))
-        except exceptions.NonRecoverableError as e:
+        except (exceptions.NonRecoverableError,
+                exceptions.NonRecoverableResponseException) as e:
             raise cfy_exc.NonRecoverableError(str(e))
 
     raise cfy_exc.RecoverableError(
@@ -80,6 +85,10 @@ def operation_cleanup(func, force=False):
                 operations_finished = ctx.instance.runtime_properties.get(
                     FINISHED_OPERATIONS, {})
                 operations_finished[current_action] = True
+                # revert start on stop
+                if current_action == STOP_NODE_ACTION:
+                    operations_finished[START_NODE_ACTION] = False
+                # copy flags back
                 ctx.instance.runtime_properties[
                     FINISHED_OPERATIONS] = operations_finished
 
