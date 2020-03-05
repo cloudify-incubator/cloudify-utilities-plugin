@@ -37,6 +37,10 @@ jobs:
           command: /home/circleci/.local/bin/tox -e py27
           environment:
             NO_SUDO_ACCESS: True
+      # prepare for validate
+      - run: sed "s/\- plugin:cloudify-utilities-plugin/\- plugin.yaml/g" -i cloudify_rest/examples/*.yaml
+      - run: sed "s/\- plugin:cloudify-utilities-plugin/\- plugin.yaml/g" -i cloudify_terminal/examples/*.yaml
+      # run real blueprint validate
       - run: /home/circleci/.local/bin/tox -e validate
 
   wagon:

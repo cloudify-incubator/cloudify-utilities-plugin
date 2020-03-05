@@ -1,5 +1,10 @@
 releases:
 
+  v1.17.0:
+  - Rest: support CA_BUNDLE as value for verify
+  - Rest: official support for resumable operations
+  - Terminal: official support for resumable operations
+
   v1.16.1:
   - Fix python package importer
 

@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.16.1.zip
-    package_version: '1.16.1'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.17.0.zip
+    package_version: '1.17.0'
 
   cfy_files: *utilities_plugin
 
@@ -510,6 +510,10 @@ node_types:
               description: >
                 Remove calls list from results. Default: save calls in
                 runtime properties.
+              default: false
+            force_rerun:
+              description: >
+                Rerun operation if on next operation rerun
               default: false
             retry_count:
               description: >

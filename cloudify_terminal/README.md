@@ -191,6 +191,7 @@ node_templates:
       cloudify.interfaces.lifecycle:
         start: # can be create/configure/start/stop/delete
           inputs:
+            force_rerun: <optional, rerun operation if have already called before>
             terminal_auth: <optional, overwrite values from properties>
               user: <user for instance>
               password: <optional, password for instance>
