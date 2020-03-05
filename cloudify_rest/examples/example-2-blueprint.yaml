@@ -38,6 +38,7 @@ node_templates:
         start:
           inputs:
             template_file: templates/create-user-post-template.yaml
+            prerender: true
             params:
               USER_ID: {get_attribute: [user-details, user, id]}
               USERNAME: { get_attribute: [user-details, user, username] }
