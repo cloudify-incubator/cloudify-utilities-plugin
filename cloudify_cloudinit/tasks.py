@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cloudify.decorators import operation
+from cloudify_terminal import operation_cleanup
 from . import CloudInit
 
 
-@operation(resumable=True)
+@operation_cleanup
 def update(**_):
     return CloudInit(_).update()
 
 
-@operation(resumable=True)
-def delete(**_):
-    return CloudInit(_).delete()
+@operation_cleanup
+def delete(ctx, **_):
+    ctx.logger.info("Runtime properties cleanup")

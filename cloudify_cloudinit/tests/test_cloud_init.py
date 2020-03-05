@@ -65,17 +65,6 @@ class CloudifyCloudInitTestBase(unittest.TestCase):
             ctx.logger.error('Failed to set node type attribute.')
         return ctx
 
-    def test_operation_delete(self):
-        """Test the delete function"""
-
-        test_name = 'test_operation_delete'
-        _ctx = self.get_mock_ctx(test_name)
-        current_ctx.set(_ctx)
-        _ctx.instance.runtime_properties['a'] = 'b'
-
-        CloudInit(operation_inputs={}).delete()
-        self.assertFalse(_ctx.instance.runtime_properties)
-
     def test_operation_update(self):
         """Test the update function"""
 
