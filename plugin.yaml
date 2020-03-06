@@ -477,6 +477,21 @@ node_types:
           * `<file path>`: path to certificate on local system,
           * `<certificate content>`: certificate content.
         default: true
+      cert:
+        description: >
+          Supported such values:
+          * `None`: default value, ignore client certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: null
+      timeout:
+        description: >
+          Timeout value for requests.
+        default: null
+      proxies:
+        description: >
+          List of proxies.
+        default: {}
       params:
         description: >
           Template parameters. Default is empty dictionary.
@@ -569,6 +584,21 @@ node_types:
           * `<file path>`: path to certificate on local system,
           * `<certificate content>`: certificate content.
         default: true
+      cert:
+        description: >
+          Supported such values:
+          * `None`: default value, ignore client certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: null
+      timeout:
+        description: >
+          Timeout value for requests.
+        default: null
+      proxies:
+        description: >
+          List of proxies.
+        default: {}
       params:
         description: >
           Template parameters. Default is empty dictionary.
