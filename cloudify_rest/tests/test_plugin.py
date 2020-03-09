@@ -12,17 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from cloudify.exceptions import RecoverableError, NonRecoverableError
-from cloudify.mocks import MockCloudifyContext
-from cloudify.state import current_ctx
 import unittest
 import requests_mock
 import json
 import os
-
-from cloudify_rest import tasks
 from mock import MagicMock, patch
 import logging
+
+from cloudify.exceptions import RecoverableError, NonRecoverableError
+from cloudify.mocks import MockCloudifyContext
+from cloudify.state import current_ctx
+from cloudify.manager import DirtyTrackingDict
+
+from cloudify_rest import tasks
 
 
 class TestPlugin(unittest.TestCase):
@@ -34,8 +36,9 @@ class TestPlugin(unittest.TestCase):
                                                'port': -1,
                                                'ssl': False,
                                                'verify': False,
-                                               'params': {'f': 'e'}},
-                                   runtime_properties={'b': {'c': 'd'}})
+                                               'params': {'f': 'e'}})
+        _ctx.instance._runtime_properties = DirtyTrackingDict(
+            {'b': {'c': 'd'}})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template1.yaml'), 'r') as f:
@@ -62,6 +65,8 @@ class TestPlugin(unittest.TestCase):
             prerender=None, resource_callback=_ctx.get_resource)
 
         # overwrite hosts
+        _ctx.instance._runtime_properties = DirtyTrackingDict(
+            {'b': {'c': 'd'}})
         check_mock = MagicMock(return_value={})
         with patch(
             "cloudify_rest.tasks.utility.process", check_mock
@@ -88,8 +93,9 @@ class TestPlugin(unittest.TestCase):
                                                          'test123.test'],
                                                'port': -1,
                                                'ssl': False,
-                                               'verify': False},
-                                   runtime_properties={'b': {'c': 'd'}})
+                                               'verify': False})
+        _ctx.instance._runtime_properties = DirtyTrackingDict(
+            {'b': {'c': 'd'}})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template1.yaml'), 'r') as f:
@@ -149,8 +155,8 @@ class TestPlugin(unittest.TestCase):
                                                          'test123.test'],
                                                'port': -1,
                                                'ssl': False,
-                                               'verify': False},
-                                   runtime_properties={})
+                                               'verify': False})
+        _ctx.instance._runtime_properties = DirtyTrackingDict({})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template1.yaml'), 'r') as f:
@@ -204,8 +210,8 @@ class TestPlugin(unittest.TestCase):
                                    properties={'host': 'test123.test',
                                                'port': 12345,
                                                'ssl': 'true',
-                                               'verify': True},
-                                   runtime_properties={})
+                                               'verify': True})
+        _ctx.instance._runtime_properties = DirtyTrackingDict({})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template2.yaml'), 'r') as f:
@@ -227,8 +233,8 @@ class TestPlugin(unittest.TestCase):
                                    properties={'hosts': ['test123.test'],
                                                'port': 12345,
                                                'ssl': 'true',
-                                               'verify': True},
-                                   runtime_properties={})
+                                               'verify': True})
+        _ctx.instance._runtime_properties = DirtyTrackingDict({})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template3.yaml'), 'r') as f:
@@ -258,8 +264,8 @@ class TestPlugin(unittest.TestCase):
                                    properties={'hosts': ['test123.test'],
                                                'port': 12345,
                                                'ssl': 'true',
-                                               'verify': True},
-                                   runtime_properties={})
+                                               'verify': True})
+        _ctx.instance._runtime_properties = DirtyTrackingDict({})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template4.yaml'), 'r') as f:
@@ -287,8 +293,8 @@ class TestPlugin(unittest.TestCase):
                                    properties={'hosts': ['test123.test'],
                                                'port': -1,
                                                'ssl': False,
-                                               'verify': False},
-                                   runtime_properties={})
+                                               'verify': False})
+        _ctx.instance._runtime_properties = DirtyTrackingDict({})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template5.yaml'), 'r') as f:
@@ -316,8 +322,8 @@ class TestPlugin(unittest.TestCase):
                                    properties={'hosts': ['test123.test'],
                                                'port': -1,
                                                'ssl': False,
-                                               'verify': False},
-                                   runtime_properties={})
+                                               'verify': False})
+        _ctx.instance._runtime_properties = DirtyTrackingDict({})
         __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template6.yaml'), 'r') as f:

@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import testtools
+import unittest
 import base64
 import yaml
+import mock
 from cloudify.mocks import MockCloudifyContext
 from cloudify_cloudinit import CloudInit
 from cloudify.state import current_ctx
@@ -31,7 +32,7 @@ DEPLOYMENT_PROXY_TYPE = 'cloudify.nodes.CloudInit'
 MINIMUM_CLOUD_CONFIG = 'Content-Type: text/cloud_config\n{}\n'
 
 
-class CloudifyCloudInitTestBase(testtools.TestCase):
+class CloudifyCloudInitTestBase(unittest.TestCase):
 
     def get_mock_ctx(self,
                      test_name,
@@ -54,22 +55,15 @@ class CloudifyCloudInitTestBase(testtools.TestCase):
 
         ctx.operation._operation_context = {'name': 'some.test'}
         ctx.node.type_hierarchy = ['cloudify.nodes.Root', node_type]
+        ctx.get_resource_and_render = mock.Mock(
+            return_value="resource_and_render")
+        ctx.get_resource = mock.Mock(
+            return_value="get_resource")
         try:
             ctx.node.type = node_type
         except AttributeError:
             ctx.logger.error('Failed to set node type attribute.')
         return ctx
-
-    def test_operation_delete(self):
-        """Test the delete function"""
-
-        test_name = 'test_operation_delete'
-        _ctx = self.get_mock_ctx(test_name)
-        current_ctx.set(_ctx)
-        _ctx.instance.runtime_properties['a'] = 'b'
-
-        CloudInit(operation_inputs={}).delete()
-        self.assertFalse(_ctx.instance.runtime_properties)
 
     def test_operation_update(self):
         """Test the update function"""
@@ -123,3 +117,62 @@ class CloudifyCloudInitTestBase(testtools.TestCase):
                 MINIMUM_CLOUD_CONFIG.format("packages: [package1, package2]")),
             yaml.load(
                 _ctx._runtime_properties.get('cloud_config')))
+
+        # check file content
+        update_inputs = {
+            'resource_config': {'write_files': [{
+                'path': 'direct',
+                'content': 'abc'
+            }, {
+                'path': 'resource',
+                'content': {
+                    'resource_name': 'resource',
+                    'resource_type': 'file_resource'
+                }
+            }, {
+                'path': 'resource_render',
+                'content': {
+                    'resource_type': 'file_resource',
+                    'resource_name': 'render',
+                    'template_variables': {'a': 'b'}
+                }
+            }]}
+        }
+
+        # Test that Operation inputs override the current ctx.
+        CloudInit(operation_inputs=update_inputs).update()
+        self.assertEquals(
+            {
+                'packages': ['package1', 'package2'],
+                'Content-Type': 'text/cloud_config',
+                'write_files': [{
+                    'content': 'abc',
+                    'path': 'direct'
+                }, {
+                    'content': '|\nget_resource',
+                    'path': 'resource'
+                }, {
+                    'content': '|\nresource_and_render',
+                    'path': 'resource_render'
+                }]
+            },
+            # Need to covert before compare as we can have different syntax
+            yaml.load(
+                _ctx._runtime_properties.get('cloud_config')))
+
+        # custom cases
+        _ctx.get_resource = mock.Mock(side_effect=ValueError('Strage'))
+        update_inputs = {
+            'resource_config': {'write_files': [{
+                'path': 'resource',
+                'content': {
+                    'resource_name': 'resource',
+                    'resource_type': 'file_resource'
+                }
+            }, 'something_strage']}
+        }
+        CloudInit(operation_inputs=update_inputs).update()
+
+
+if __name__ == '__main__':
+    unittest.main()

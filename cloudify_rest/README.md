@@ -39,7 +39,19 @@ Node properties for `cloudify.rest.Requests` and `cloudify.rest.BunchRequests`:
   and 443 for ssl = true). Default: -1
 * `ssl`: http or https. Default: `false`
 * `verify`: A boolean which controls whether we verify the server's TLS
-  certificate. Default: `true`
+  certificate. Default: `true`.
+  Supported such values:
+  * `True`: default value, check certificaties,
+  * `False`: ignore server certificates,
+  * `<file path>`: path to certificate on local system,
+  * `<certificate content>`: certificate content.
+* `timeout`: Optional, timeout value for requests.
+* `cert`: Optional, provide https client certificates. Default: `None`.
+  Supported such values:
+  * `None`: default value, ignore client certificates,
+  * `<file path>`: path to certificate on local system,
+  * `<certificate content>`: certificate content.
+* `proxies`: proxies dictionary. By default: empty.
 * `params`: Common params for all calls, will be merged with params from
 each call/action.
 

@@ -88,10 +88,3 @@ class CloudInit(object):
     def update(self, **_):
         ctx.instance.runtime_properties['resource_config'] = self.config
         ctx.instance.runtime_properties['cloud_config'] = self.__str__
-
-    def delete(self, **_):
-        # cleanup runtime properties
-        # need to convert generaton to list, python 3
-        keys = [key for key in ctx.instance.runtime_properties.keys()]
-        for key in keys:
-            del ctx.instance.runtime_properties[key]

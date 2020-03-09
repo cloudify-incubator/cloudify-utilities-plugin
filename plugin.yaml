@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.16.1.zip
-    package_version: '1.16.1'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.17.0.zip
+    package_version: '1.17.0'
 
   cfy_files: *utilities_plugin
 
@@ -471,9 +471,27 @@ node_types:
       verify:
         description: >
           A boolean which controls whether we verify the server's TLS
-          certificate.
-        type: boolean
+          certificate. Supported such values:
+          * `True`: default value, check certificaties,
+          * `False`: ignore server certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
         default: true
+      cert:
+        description: >
+          Supported such values:
+          * `None`: default value, ignore client certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: null
+      timeout:
+        description: >
+          Timeout value for requests.
+        default: null
+      proxies:
+        description: >
+          List of proxies.
+        default: {}
       params:
         description: >
           Template parameters. Default is empty dictionary.
@@ -508,6 +526,18 @@ node_types:
                 Remove calls list from results. Default: save calls in
                 runtime properties.
               default: false
+            force_rerun:
+              description: >
+                Rerun operation if on next operation rerun
+              default: false
+            retry_count:
+              description: >
+                Rerun count on warning on catched warnigs
+              default: 1
+            retry_sleep:
+              description: >
+                Sleep between rerun
+              default: 15
         configure:
           implementation: rest.cloudify_rest.tasks.execute
           inputs: *rest_template_inputs
@@ -548,9 +578,27 @@ node_types:
       verify:
         description: >
           A boolean which controls whether we verify the server's TLS
-          certificate.
-        type: boolean
+          certificate. Supported such values:
+          * `True`: default value, check certificaties,
+          * `False`: ignore server certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
         default: true
+      cert:
+        description: >
+          Supported such values:
+          * `None`: default value, ignore client certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: null
+      timeout:
+        description: >
+          Timeout value for requests.
+        default: null
+      proxies:
+        description: >
+          List of proxies.
+        default: {}
       params:
         description: >
           Template parameters. Default is empty dictionary.

@@ -15,35 +15,15 @@ from cloudify_common_sdk import filters
 import time
 from six import string_types
 
-from cloudify import ctx
 from cloudify import exceptions as cfy_exc
-from cloudify.decorators import operation
+
+from cloudify_terminal import rerun, operation_cleanup
 
 import cloudify_terminal_sdk.terminal_connection as terminal_connection
-from cloudify_common_sdk import exceptions
 
 
-def _rerun(ctx, func, args, kwargs, retry_count=10, retry_sleep=15):
-    retry_count = 10
-    while retry_count > 0:
-        try:
-            return func(*args, **kwargs)
-        except exceptions.RecoverableWarning as e:
-            ctx.logger.info("Need for rerun: {e}".format(e=repr(e)))
-            retry_count -= 1
-            time.sleep(retry_sleep)
-        except exceptions.RecoverableError as e:
-            raise cfy_exc.RecoverableError(str(e))
-        except exceptions.NonRecoverableError as e:
-            raise cfy_exc.NonRecoverableError(str(e))
-
-    raise cfy_exc.RecoverableError(
-        "Failed to rerun: {args}:{kwargs}"
-        .format(args=repr(args), kwargs=repr(kwargs)))
-
-
-@operation(resumable=True)
-def run(**kwargs):
+@operation_cleanup
+def run(ctx, **kwargs):
     """main entry point for all calls"""
 
     calls = kwargs.get('calls', [])
@@ -182,7 +162,7 @@ def run(**kwargs):
             ctx.logger.debug("Execute: {opline}"
                              .format(opline=filters.shorted_text(op_line)))
 
-            result_part = _rerun(
+            result_part = rerun(
                 ctx=ctx,
                 func=connection.run,
                 args=[],
@@ -210,7 +190,7 @@ def run(**kwargs):
 
     while not connection.is_closed() and exit_command:
         ctx.logger.info("Execute close")
-        result = _rerun(
+        result = rerun(
             ctx=ctx,
             func=connection.run,
             args=[],

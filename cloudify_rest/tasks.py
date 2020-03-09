@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014-2018 Cloudify Platform Ltd. All rights reserved
+# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
 # limitations under the License.
 
 import traceback
+
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
-from cloudify.decorators import operation
 
 from cloudify_rest_sdk import utility
-from cloudify_common_sdk import exceptions
 from cloudify_common_sdk.filters import get_field_value_recursive
+
+from cloudify_terminal import operation_cleanup, rerun
 
 
 def _get_params_attributes(ctx, instance, params_list):
@@ -31,7 +32,7 @@ def _get_params_attributes(ctx, instance, params_list):
     return params
 
 
-@operation(resumable=True)
+@operation_cleanup
 def bunch_execute(templates=None, auth=None, **kwargs):
     for template in templates or []:
         params = template.get('params', {})
@@ -54,14 +55,16 @@ def bunch_execute(templates=None, auth=None, **kwargs):
         ctx.logger.debug('Params: {params}'
                          .format(params=repr(runtime_properties)))
         runtime_properties["ctx"] = ctx
-        _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-                 save_to, prerender=prerender, remove_calls=remove_calls,
-                 auth=auth)
+        _execute(runtime_properties, template_file, instance=ctx.instance,
+                 node=ctx.node, save_path=save_to, prerender=prerender,
+                 remove_calls=remove_calls, auth=auth,
+                 retry_count=kwargs.get('retry_count', 1),
+                 retry_sleep=kwargs.get('retry_sleep', 15))
     else:
         ctx.logger.debug('No calls.')
 
 
-@operation(resumable=True)
+@operation_cleanup
 def execute(params=None, template_file=None, save_path=None, prerender=False,
             remove_calls=False, **kwargs):
 
@@ -74,12 +77,14 @@ def execute(params=None, template_file=None, save_path=None, prerender=False,
     if not params:
         params = {}
     runtime_properties.update(params)
-    _execute(runtime_properties, template_file, ctx.instance, ctx.node,
-             save_path=save_path, prerender=prerender,
-             remove_calls=remove_calls)
+    _execute(runtime_properties, template_file, instance=ctx.instance,
+             node=ctx.node, save_path=save_path, prerender=prerender,
+             remove_calls=remove_calls,
+             retry_count=kwargs.get('retry_count', 1),
+             retry_sleep=kwargs.get('retry_sleep', 15))
 
 
-@operation(resumable=True)
+@operation_cleanup
 def execute_as_relationship(params=None, template_file=None, save_path=None,
                             prerender=False, remove_calls=False, **kwargs):
     ctx.logger.debug("Execute as relationship params: {} template: {}"
@@ -89,41 +94,48 @@ def execute_as_relationship(params=None, template_file=None, save_path=None,
     runtime_properties = ctx.target.instance.runtime_properties.copy()
     runtime_properties.update(ctx.source.instance.runtime_properties)
     runtime_properties.update(params)
-    _execute(runtime_properties, template_file, ctx.source.instance,
-             ctx.source.node, prerender=prerender, remove_calls=remove_calls)
+    _execute(runtime_properties, template_file, instance=ctx.source.instance,
+             node=ctx.source.node, prerender=prerender,
+             remove_calls=remove_calls,
+             retry_count=kwargs.get('retry_count', 1),
+             retry_sleep=kwargs.get('retry_sleep', 15))
 
 
-def _execute(params, template_file, instance, node, save_path=None,
-             prerender=False, remove_calls=False, auth=None):
+def _execute_in_retry(template, params, instance, node, save_path=None,
+                      prerender=False, remove_calls=False, auth=None):
+    merged_params = {}
+    merged_params.update(node.properties.get("params", {}))
+    merged_params.update(params)
+    merged_auth = node.properties.copy()
+    # we have something additional to node properties for merge
+    if auth:
+        merged_auth.update(auth)
+    result = utility.process(merged_params, template,
+                             merged_auth,
+                             prerender=prerender,
+                             resource_callback=ctx.get_resource)
+    if remove_calls and result:
+        result = result.get('result_properties', {})
+    if save_path:
+        instance.runtime_properties[save_path] = result
+    else:
+        instance.runtime_properties.update(result)
+
+
+def _execute(params, template_file, retry_count, retry_sleep, **kwargs):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
     template = ctx.get_resource(template_file)
     try:
-        merged_params = {}
-        merged_params.update(node.properties.get("params", {}))
-        merged_params.update(params)
-        merged_auth = node.properties.copy()
-        # we have something additional to node properties for merge
-        if auth:
-            merged_auth.update(auth)
-        result = utility.process(merged_params, template,
-                                 merged_auth,
-                                 prerender=prerender,
-                                 resource_callback=ctx.get_resource)
-        if remove_calls and result:
-            result = result.get('result_properties', {})
-        if save_path:
-            instance.runtime_properties[save_path] = result
-        else:
-            instance.runtime_properties.update(result)
-    except exceptions.NonRecoverableResponseException as e:
-        raise NonRecoverableError(e)
-
-    except (exceptions.RecoverableResponseException,
-            exceptions.RecoverableStatusCodeCodeException,
-            exceptions.ExpectationException)as e:
-        raise RecoverableError(e)
+        kwargs['params'] = params
+        kwargs['template'] = template
+        rerun(ctx=ctx, func=_execute_in_retry, args=[], kwargs=kwargs,
+              retry_count=retry_count, retry_sleep=retry_sleep)
+    except (NonRecoverableError,
+            RecoverableError) as e:
+        ctx.logger.debug("Raised: {e}".format(e=e))
+        raise e
     except Exception as e:
         ctx.logger.info('Exception traceback : {}'
                         .format(traceback.format_exc()))
