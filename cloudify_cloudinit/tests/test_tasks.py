@@ -13,6 +13,7 @@
 # limitations under the License.
 import unittest
 import yaml
+import json
 import mock
 
 from cloudify.manager import DirtyTrackingDict
@@ -92,6 +93,12 @@ class CloudifyCloudTasksTest(unittest.TestCase):
                              ['openssl-devel']]},
             yaml.load(
                 _ctx.instance.runtime_properties.get('cloud_config')))
+        self.assertEquals(
+            {
+                'packages': [['epel-release'],
+                             ['openssl-devel']]},
+            json.loads(
+                _ctx.instance.runtime_properties.get('json_config')))
 
     def test_delete(self):
 
