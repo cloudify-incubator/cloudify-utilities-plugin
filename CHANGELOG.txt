@@ -1,5 +1,9 @@
 releases:
 
+  v1.18.0:
+  - ftp: add ftp file upload support
+  - cloudinit: add json dump and fix `write_files` template engine.
+
   v1.17.0:
   - Rest: support CA_BUNDLE as value for verify
   - Rest: official support for resumable operations
