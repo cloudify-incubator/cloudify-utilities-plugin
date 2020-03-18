@@ -8,6 +8,8 @@ plugins:
 
   cfy_files: *utilities_plugin
 
+  cfy_ftp: *utilities_plugin
+
   cloudify_custom_workflow: *utilities_plugin
 
   cloudinit: *utilities_plugin
@@ -164,11 +166,38 @@ data_types:
           Unvalidated parameters.
         required: false
 
+  cloudify.datatypes.ftp_auth:
+    properties:
+      user:
+        description: >
+          The login credentials for ftp server.
+        default: ''
+      password:
+        description: >
+          optional, ftp password
+        default: ''
+      ip:
+        description: >
+          optional, device ip
+        default: ''
+      port:
+        description: >
+          optional, ftp port
+        default: 21
+      ignore_host:
+        description: >
+          optional, ignore host in ftp response
+        default: false
+      tls:
+        description: >
+          optional, use tls connection to ftp
+        default: false
+
   cloudify.datatypes.terminal_auth:
     properties:
       user:
         description: >
-          The login credentials for ios server.
+          The login credentials for ssh server.
         default: ''
       password:
         description: >
@@ -443,6 +472,37 @@ node_types:
           implementation: cfy_files.cloudify_files.tasks.create
         delete:
           implementation: cfy_files.cloudify_files.tasks.delete
+
+  cloudify.nodes.ftp:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        type: cloudify.datatypes.ftp_auth
+        required: true
+      raw_files:
+        default: {}
+        description: >
+          list files from blueprint to upload
+      files:
+        default: {}
+        description: >
+          list files with content from blueprint to upload
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_ftp.cloudify_ftp.tasks.create
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+            raw_files:
+              default: { get_property: [ SELF, raw_files ] }
+            files:
+              default: { get_property: [ SELF, files ] }
+        delete:
+          implementation: cfy_ftp.cloudify_ftp.tasks.delete
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
 
   cloudify.rest.Requests:
     derived_from: cloudify.nodes.Root
