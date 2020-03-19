@@ -149,10 +149,10 @@ class CloudifyCloudInitTestBase(unittest.TestCase):
                     'content': 'abc',
                     'path': 'direct'
                 }, {
-                    'content': '|\nget_resource',
+                    'content': 'get_resource',
                     'path': 'resource'
                 }, {
-                    'content': '|\nresource_and_render',
+                    'content': 'resource_and_render',
                     'path': 'resource_render'
                 }]
             },

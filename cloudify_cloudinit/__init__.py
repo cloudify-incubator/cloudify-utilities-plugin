@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import base64
+import json
 try:
     import ruamel.yaml
 except ImportError:
@@ -53,7 +54,7 @@ class CloudInit(object):
                                 resource_name, template_variables)
                         else:
                             new_content = ctx.get_resource(resource_name)
-                        f['content'] = '|\n' + new_content
+                        f['content'] = new_content
             except ValueError:
                 ctx.logger.debug('No external resource recognized.')
                 pass
@@ -68,6 +69,10 @@ class CloudInit(object):
         config.update(self.get_external_resource(config.copy()))
 
         return config
+
+    def json(self):
+        """Dump json representaion of config"""
+        return json.dumps(self.config)
 
     @property
     def __str__(self):
@@ -88,3 +93,4 @@ class CloudInit(object):
     def update(self, **_):
         ctx.instance.runtime_properties['resource_config'] = self.config
         ctx.instance.runtime_properties['cloud_config'] = self.__str__
+        ctx.instance.runtime_properties['json_config'] = self.json()
