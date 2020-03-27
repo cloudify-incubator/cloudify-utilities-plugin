@@ -25,6 +25,7 @@ setuptools.setup(
               'cloudify_files',
               'cloudify_terminal',
               'cloudify_configuration',
+              'cloudify_hooks_workflow',
               'cloudify_custom_workflow',
               'cloudify_suspend',
               'cloudify_cloudinit',

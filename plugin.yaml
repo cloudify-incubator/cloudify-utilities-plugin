@@ -12,6 +12,8 @@ plugins:
 
   cloudify_custom_workflow: *utilities_plugin
 
+  cloudify_hooks_workflow: *utilities_plugin
+
   cloudinit: *utilities_plugin
 
   configuration: *utilities_plugin
@@ -979,3 +981,26 @@ workflows:
         description: >
          Node runtime properties field value for search. Can be provided as
          list of possible values.
+
+  hook_workflow_run_filtered:
+    mapping: cloudify_hooks_workflow.cloudify_hooks_workflow.tasks.run_workflow
+    parameters:
+     client_config:
+       description: >
+         custom credentials for manager, by default is not required for use
+       default: {}
+     filter_by:
+       description: >
+         key-value list, where:
+           path is path to field for validate,
+           values is list of possible values
+         example:
+           - path: ["deployment_capabilities", "autouninstall", "value"]
+             values: [true, "yes"]
+     workflow_for_run:
+       description: >
+         name workflow to run on deployment
+     workflow_params:
+       description: >
+         additional workflow parameters
+       default: {}
