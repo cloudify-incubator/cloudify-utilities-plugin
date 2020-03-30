@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 Cloudify Platform Ltd. All rights reserved
+# Copyright (c) 2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,6 +70,65 @@ class TestTasks(unittest.TestCase):
                                ctx=_ctx)
             fake_client.executions.start.assert_called_with(
                 deployment_id='w_id', workflow_id='uninstall', force=True)
+
+    def test_run_workflow_run_filter(self):
+        _ctx = Mock()
+        fake_client = Mock()
+        fake_client.deployments.get = Mock(return_value={
+            'id': 'id',
+            'capabilities': {
+                'autouninstall': {
+                    'value': True
+                }
+            }
+        })
+        mock_manager = Mock()
+        mock_manager.get_rest_client = Mock(return_value=fake_client)
+        with patch('cloudify_hooks_workflow.tasks.manager', mock_manager):
+            tasks.run_workflow(
+                inputs={'deployment_id': 'w_id'},
+                workflow_for_run="uninstall",
+                workflow_params={'force': True},
+                filter_by=[{
+                    "path": [
+                        "deployment_capabilities", "autouninstall", "value"],
+                    "values": [True, "yes"]
+                }],
+                ctx=_ctx)
+            fake_client.executions.start.assert_called_with(
+                deployment_id='w_id', workflow_id='uninstall', force=True)
+
+    def test_check_filter(self):
+        _ctx = Mock()
+        # wrong filter type
+        self.assertFalse(tasks._check_filter(
+            ctx=_ctx, filter_by={}, inputs={}))
+
+        # wrong filter rule type
+        self.assertFalse(tasks._check_filter(
+            ctx=_ctx, filter_by=[[]], inputs={}))
+
+        # no path
+        self.assertFalse(tasks._check_filter(
+            ctx=_ctx, filter_by=[{}], inputs={}))
+
+        # no values
+        self.assertFalse(tasks._check_filter(
+            ctx=_ctx, filter_by=[{'path': ['a', 'b', 'c']}], inputs={}))
+
+        # value is not in values list
+        self.assertFalse(tasks._check_filter(
+            ctx=_ctx, filter_by=[{
+                'path': ['a', 'b', 'c'],
+                'values': ['d', 'e']
+            }], inputs={}))
+
+        # value is in values list
+        self.assertTrue(tasks._check_filter(
+            ctx=_ctx, filter_by=[{
+                'path': ['a', 'b', 'c'],
+                'values': ['d', 'e']
+            }], inputs={'a': {'b': {'c': 'e'}}}))
 
 
 if __name__ == '__main__':

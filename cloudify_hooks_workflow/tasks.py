@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014-2020 Cloudify Platform Ltd. All rights reserved
+# Copyright (c) 2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,48 @@ from cloudify_rest_client.client import CloudifyClient
 from cloudify.decorators import workflow
 
 from cloudify_common_sdk.filters import get_field_value_recursive
+
+
+def _check_filter(ctx, filter_by, inputs):
+    if isinstance(filter_by, list):
+        for field_desc in filter_by:
+            # check type of field_desc
+            if not isinstance(field_desc, dict):
+                ctx.logger.error(
+                    "Event skiped by wrong field description.")
+                return False
+
+            # check path
+            field_path = field_desc.get('path')
+            if not field_path:
+                ctx.logger.error("Event skiped by undefined key.")
+                return False
+
+            # posible values
+            field_values = field_desc.get('values')
+            if not field_values:
+                ctx.logger.error("Event skiped by undefined values.")
+                return False
+
+            # check that we have such values in properties
+            value = get_field_value_recursive(
+                ctx.logger, inputs, field_path)
+
+            # skip events if not in subset
+            if value not in field_values:
+                ctx.logger.error(
+                    "Event with {value} skiped by {key}:{values} rule."
+                    .format(
+                        value=repr(value), key=repr(field_path),
+                        values=repr(field_values)))
+                return False
+    else:
+        ctx.logger.error(
+            "Filter skiped by incorrect type of rules list.")
+        return False
+
+    # everything looks good
+    return True
 
 
 # callback name from hooks config
@@ -71,41 +113,9 @@ def run_workflow(inputs, *args, **kwargs):
         inputs['deployment_inputs'] = deployment.get('inputs', {})
         inputs['deployment_outputs'] = deployment.get('outputs', {})
         inputs['deployment_capabilities'] = deployment.get('capabilities', {})
-        if isinstance(filter_by, list):
-            for field_desc in filter_by:
-                # check type of field_desc
-                if not isinstance(field_desc, dict):
-                    _ctx.logger.error(
-                        "Event skiped by wrong field description.")
-                    return
-
-                # check path
-                field_path = field_desc.get('path')
-                if not field_path:
-                    _ctx.logger.error("Event skiped by undefined key.")
-                    return
-
-                # posible values
-                field_values = field_desc.get('values')
-                if not field_values:
-                    _ctx.logger.error("Event skiped by undefined values.")
-                    return
-
-                # check that we have such values in properties
-                value = get_field_value_recursive(
-                    ctx.logger, inputs, field_path)
-
-                # skip events if not in subset
-                if value not in field_values:
-                    _ctx.logger.error(
-                        "Event with {value} skiped by {key}:{values} rule."
-                        .format(
-                            value=repr(value), key=repr(field_path),
-                            values=repr(field_values)))
-                    return
-        else:
-            _ctx.logger.error(
-                "Filter skiped by incorrect type of rules list.")
+        if not _check_filter(ctx=_ctx, filter_by=filter_by, inputs=inputs):
+            _ctx.logger.debug(
+                "Event skiped by filter.")
             return
 
     # mark that we going to run to logs
