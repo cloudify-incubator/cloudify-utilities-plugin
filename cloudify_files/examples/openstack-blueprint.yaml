@@ -4,7 +4,7 @@ description: >
   This blueprint provides the basic architecture for an Openstack blueprint.
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/5.0.0/types.yaml
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.3.0/plugin.yaml
   - plugin.yaml
 
