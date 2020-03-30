@@ -16,7 +16,7 @@ import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.18.0',
+    version='1.19.0',
     author='Cloudify Platform Ltd.',
     author_email='hello@cloudify.co',
     description='Utilities for extending Cloudify',
@@ -25,6 +25,7 @@ setuptools.setup(
               'cloudify_files',
               'cloudify_terminal',
               'cloudify_configuration',
+              'cloudify_hooks_workflow',
               'cloudify_custom_workflow',
               'cloudify_suspend',
               'cloudify_cloudinit',

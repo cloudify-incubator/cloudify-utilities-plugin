@@ -504,7 +504,7 @@ def scaledownlist(ctx, scale_compute=False,
 
     # we have list of instances_id(string) as part of scale dictionary
     scale_settings = _scaledown_group_to_settings(
-        ctx, _get_scale_list(ctx, instances, basestring), scale_compute)
+        ctx, _get_scale_list(ctx, instances, string_types), scale_compute)
 
     try:
         _run_scale_settings(ctx, scale_settings, {},

@@ -1,5 +1,8 @@
 releases:
 
+  v1.19.0:
+  - hooks: add hooks events filtering plugin
+
   v1.18.0:
   - ftp: add ftp file upload support
   - cloudinit: add json dump and fix `write_files` template engine.

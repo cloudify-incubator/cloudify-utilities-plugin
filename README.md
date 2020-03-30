@@ -10,6 +10,7 @@ Utilities for extending Cloudify features.
 - [Cloudify Cloud-Init](cloudify_cloudinit/README.md)
 - [Cloudify Configuration](cloudify_configuration/README.md)
 - [Cloudify Custom Workflow](cloudify_custom_workflow/README.md)
+- [Cloudify Hooks Workflow](cloudify_hooks_workflow/README.md)
 - [Cloudify Deployment Proxy](cloudify_deployment_proxy/README.md)
 - [Cloudify Files](cloudify_files/README.md)
 - [Cloudify REST plugin](cloudify_rest/README.md)

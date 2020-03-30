@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
-  - http://www.getcloudify.org/spec/utilities-plugin/1.15.3/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/5.0.0/types.yaml
+  - http://www.getcloudify.org/spec/utilities-plugin/1.18.0/plugin.yaml
 
 node_types:
   server_type:

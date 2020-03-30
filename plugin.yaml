@@ -3,14 +3,16 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.18.0.zip
-    package_version: '1.18.0'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.19.0.zip
+    package_version: '1.19.0'
 
   cfy_files: *utilities_plugin
 
   cfy_ftp: *utilities_plugin
 
   cloudify_custom_workflow: *utilities_plugin
+
+  cloudify_hooks_workflow: *utilities_plugin
 
   cloudinit: *utilities_plugin
 
@@ -979,3 +981,32 @@ workflows:
         description: >
          Node runtime properties field value for search. Can be provided as
          list of possible values.
+
+  hook_workflow_run_filtered:
+    mapping: cloudify_hooks_workflow.cloudify_hooks_workflow.tasks.run_workflow
+    parameters:
+     inputs:
+       description: >
+         Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+         cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+       default: {}
+     client_config:
+       description: >
+         custom credentials for manager, by default is not required for use
+       default: {}
+     filter_by:
+       description: >
+         key-value list, where:
+           path is path to field for validate,
+           values is list of possible values
+         example:
+           - path: ["deployment_capabilities", "autouninstall", "value"]
+             values: [true, "yes"]
+     workflow_for_run:
+       description: >
+         name workflow to run on deployment
+       default: uninstall
+     workflow_params:
+       description: >
+         additional workflow parameters
+       default: {}
