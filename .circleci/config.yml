@@ -11,7 +11,7 @@ checkout:
 
 jobs:
 
-  unittests:
+  unittests2:
     docker:
       - image: circleci/python:2.7.15-stretch
     steps:
@@ -38,10 +38,36 @@ jobs:
           environment:
             NO_SUDO_ACCESS: True
       # prepare for validate
-      - run: sed "s/\- plugin:cloudify-utilities-plugin/\- plugin.yaml/g" -i cloudify_rest/examples/*.yaml
-      - run: sed "s/\- plugin:cloudify-utilities-plugin/\- plugin.yaml/g" -i cloudify_terminal/examples/*.yaml
+      - run: sed "s/\- plugin:cloudify-utilities-plugin/\- plugin.yaml/g" -i */examples/*.yaml
       # run real blueprint validate
       - run: /home/circleci/.local/bin/tox -e validate
+
+  unittests3:
+    docker:
+      - image: circleci/python:3.6.4
+    steps:
+      - checkout
+      - run:
+          name: Download pip
+          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+      - run:
+          name: Install pip
+          command: sudo python3 get-pip.py
+      - run:
+          name: Install virtualenv
+          command: pip3 install --user virtualenv
+      - run:
+          name: Init virtualenv
+          command: virtualenv env
+      - run:
+          name: install tox
+          command: pip3 install --user tox
+      - run: /home/circleci/.local/bin/tox -e flake8_3
+      - run:
+          name: run tox
+          command: /home/circleci/.local/bin/tox -e py36
+          environment:
+            NO_SUDO_ACCESS: True
 
   wagon:
     docker:
@@ -130,7 +156,8 @@ workflows:
   version: 2
   tests:
     jobs:
-      - unittests
+      - unittests2
+      - unittests3
       - wagon:
           filters:
             branches:
@@ -138,7 +165,7 @@ workflows:
       - cloudify-manager:
           context: ecosystem
           requires:
-            - unittests
+            - unittests2
             - wagon
           filters:
             branches:

@@ -985,6 +985,11 @@ workflows:
   hook_workflow_run_filtered:
     mapping: cloudify_hooks_workflow.cloudify_hooks_workflow.tasks.run_workflow
     parameters:
+     inputs:
+       description: >
+         Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+         cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+       default: {}
      client_config:
        description: >
          custom credentials for manager, by default is not required for use
