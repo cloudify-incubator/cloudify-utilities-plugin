@@ -1027,7 +1027,7 @@ workflows:
         default: {}
 
   hook_workflow_rest:
-    mapping: cloudify-utilities-plugin.cloudify_rest.tasks.execute_as_workflow
+    mapping: rest.cloudify_rest.tasks.execute_as_workflow
     parameters:
       inputs:
         description: >
