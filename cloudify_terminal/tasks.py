@@ -16,6 +16,8 @@ import time
 from six import string_types
 
 from cloudify import exceptions as cfy_exc
+from cloudify import ctx as CloudifyContext
+from cloudify import context
 
 from cloudify_terminal import rerun, operation_cleanup
 
@@ -23,24 +25,26 @@ import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
 
 @operation_cleanup
-def run(ctx, **kwargs):
+def run(*args, **kwargs):
     """main entry point for all calls"""
+    # get current context
+    ctx = kwargs.get('ctx', CloudifyContext)
 
+    # get current calls
     calls = kwargs.get('calls', [])
     if not calls:
         ctx.logger.info("No calls")
         return
 
-    try:
-        ctx_properties = ctx.node.properties
+    if ctx.type == context.NODE_INSTANCE:
+        properties = ctx.node.properties
         ctx_instance = ctx.instance
-    except cfy_exc.NonRecoverableError:
+    elif ctx.type == context.RELATIONSHIP_INSTANCE:
         # Realationships context?
-        ctx_properties = ctx.target.node.properties
+        properties = ctx.target.node.properties
         ctx_instance = ctx.target.instance
 
     # credentials
-    properties = ctx_properties
     terminal_auth = properties.get('terminal_auth', {})
     terminal_auth.update(kwargs.get('terminal_auth', {}))
     ip_list = terminal_auth.get('ip')
