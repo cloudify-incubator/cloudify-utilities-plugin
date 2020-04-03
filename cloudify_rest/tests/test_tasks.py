@@ -50,9 +50,11 @@ class TestTasks(unittest.TestCase):
     def test_execute_mock_sdk(self):
         # empty tempate
         _ctx = self._gen_ctx()
-        tasks._execute({}, "", instance=_ctx.instance, node=_ctx.node,
-                       save_path=None, prerender=False, remove_calls=False,
-                       retry_count=1, retry_sleep=15)
+        tasks._execute({}, "",
+                       instance_props=_ctx.instance.runtime_properties,
+                       node_props=_ctx.node.properties,
+                       ctx=_ctx, save_path=None, prerender=False,
+                       remove_calls=False, retry_count=1, retry_sleep=15)
 
         # run without issues
         _ctx = self._gen_ctx()
@@ -61,10 +63,13 @@ class TestTasks(unittest.TestCase):
             'calls': [{'path': 'http://check.test/'}]
         })
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
-            tasks._execute({}, "rest_calls.yaml", instance=_ctx.instance,
-                           node=_ctx.node, save_path=None, prerender=False,
-                           remove_calls=False, retry_count=1,
-                           retry_sleep=15)
+            tasks._execute({}, "rest_calls.yaml",
+                           instance_props=_ctx.instance.runtime_properties,
+                           node_props=_ctx.node.properties,
+                           ctx=_ctx, save_path=None,
+                           prerender=False, remove_calls=False,
+                           resource_callback=_ctx.get_resource,
+                           retry_count=1, retry_sleep=15)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'calls': [{'path': 'http://check.test/'}],
                 'result_properties': {'a': 'b'}})
@@ -76,10 +81,13 @@ class TestTasks(unittest.TestCase):
             'calls': [{'path': 'http://check.test/'}]
         })
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
-            tasks._execute({}, "rest_calls.yaml", instance=_ctx.instance,
-                           node=_ctx.node, save_path=None, prerender=False,
-                           remove_calls=True, retry_count=1,
-                           retry_sleep=15)
+            tasks._execute({}, "rest_calls.yaml",
+                           instance_props=_ctx.instance.runtime_properties,
+                           node_props=_ctx.node.properties,
+                           ctx=_ctx, save_path=None,
+                           prerender=False, remove_calls=True,
+                           resource_callback=_ctx.get_resource,
+                           retry_count=1, retry_sleep=15)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'a': 'b'})
 
@@ -91,10 +99,12 @@ class TestTasks(unittest.TestCase):
         })
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
             tasks._execute({'1': '2'}, "rest_calls.yaml",
-                           instance=_ctx.instance, node=_ctx.node,
+                           instance_props=_ctx.instance.runtime_properties,
+                           node_props=_ctx.node.properties, ctx=_ctx,
                            save_path='save', prerender=False,
-                           remove_calls=True, retry_count=1,
-                           retry_sleep=15)
+                           remove_calls=True,
+                           resource_callback=_ctx.get_resource,
+                           retry_count=1, retry_sleep=15)
             self.assertDictEqual(_ctx.instance.runtime_properties, {
                 'save': {'a': 'b'}})
         sdk_process.assert_called_with({'1': '2'}, TEMPLATE, {},
@@ -108,10 +118,12 @@ class TestTasks(unittest.TestCase):
         with mock.patch("cloudify_rest_sdk.utility.process", sdk_process):
             with self.assertRaises(NonRecoverableError):
                 tasks._execute({'1': '2'}, "rest_calls.yaml",
-                               instance=_ctx.instance, node=_ctx.node,
-                               save_path='save', prerender=False,
-                               remove_calls=True, retry_count=1,
-                               retry_sleep=15)
+                               instance_props=_ctx.instance.runtime_properties,
+                               node_props=_ctx.node.properties,
+                               ctx=_ctx, save_path='save', prerender=False,
+                               remove_calls=True,
+                               resource_callback=_ctx.get_resource,
+                               retry_count=1, retry_sleep=15)
 
     def test_execute_as_relationship(self):
         _source_ctx = MockCloudifyContext(
@@ -131,7 +143,69 @@ class TestTasks(unittest.TestCase):
         )
         current_ctx.set(_ctx)
 
-        tasks.execute_as_relationship(ctx=_ctx)
+        mock_execute = mock.Mock(return_value=None)
+        with mock.patch("cloudify_rest.tasks._execute", mock_execute):
+            tasks.execute_as_relationship(ctx=_ctx)
+
+        mock_execute.assert_called_with(
+            params={}, template_file=None, auth=None, ctx=_ctx,
+            instance_props={}, node_props={}, prerender=False,
+            remove_calls=False, retry_count=1, retry_sleep=15,
+            resource_callback=_ctx.get_resource,
+            save_path=None)
+
+    def test_execute(self):
+        _ctx = self._gen_ctx()
+        current_ctx.set(_ctx)
+
+        mock_execute = mock.Mock(return_value=None)
+        with mock.patch("cloudify_rest.tasks._execute", mock_execute):
+            tasks.execute(ctx=_ctx)
+
+        mock_execute.assert_called_with(
+            params={}, template_file=None, auth=None, ctx=_ctx,
+            instance_props={'_finished_operations': {None: True}},
+            node_props={}, prerender=False,
+            remove_calls=False, retry_count=1, retry_sleep=15,
+            resource_callback=_ctx.get_resource,
+            save_path=None)
+
+    def test_execute_as_workflow(self):
+        _ctx = MockCloudifyContext(
+            "execution_id",
+        )
+        current_ctx.set(_ctx)
+
+        mock_execute = mock.Mock(return_value=None)
+        with mock.patch("cloudify_rest.tasks._execute", mock_execute):
+            tasks.execute_as_workflow(
+                inputs={
+                    'blueprint_id': '<blueprint>',
+                    'deployment_id': '<deployment>',
+                    'tenant_name': '<tenant>',
+                    'rest_token': '<token>'}, ctx=_ctx,
+                properties={
+                    "hosts": ["jsonplaceholder.typicode.com"], "port": 443,
+                    "ssl": True, "verify": False})
+        mock_execute.assert_called_with(
+            params={
+                '__inputs__': {
+                    'tenant_name': '<tenant>',
+                    'deployment_id': '<deployment>',
+                    'rest_token': '<token>',
+                    'blueprint_id': '<blueprint>'}},
+            template_file=None, auth=None, ctx=_ctx,
+            instance_props={},
+            node_props={
+                "hosts": ["jsonplaceholder.typicode.com"],
+                "port": 443,
+                "ssl": True,
+                "verify": False
+            },
+            prerender=False,
+            remove_calls=False, retry_count=1, retry_sleep=15,
+            resource_callback=tasks._workflow_get_resource,
+            save_path=None)
 
 
 if __name__ == '__main__':

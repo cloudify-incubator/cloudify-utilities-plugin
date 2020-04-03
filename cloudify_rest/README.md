@@ -55,6 +55,38 @@ Node properties for `cloudify.rest.Requests` and `cloudify.rest.BunchRequests`:
 * `params`: Common params for all calls, will be merged with params from
 each call/action.
 
+## Use rest calls actionable events
+Add such event handler to `/opt/mgmtworker/config/hooks.conf`
+[Look to documentation for more information](https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/).
+```yaml
+hooks:
+- event_type: workflow_succeeded
+  implementation: cloudify-utilities-plugin.cloudify_rest.tasks.execute_as_workflow
+  inputs:
+    logger_file: /tmp/hooks_log.log
+    properties:
+      hosts: ["jsonplaceholder.typicode.com"]
+      port: 443
+      ssl: true
+      verify: false
+    template_file: /opt/manager/resources/blueprints/default_tenant/examples/templates/get-user-all-properties-template.yaml
+  description: A hook for workflow_succeeded
+```
+
+Supported parameters:
+* `inputs`: passed from cloudify hooks (or first param hooks)
+* `logger_file`: duplicate logger output to separate file
+* `properties`: connection properties(same as properties in `cloudify.rest.Requests`)
+* `template_file`: absolute path to template file
+* `params`: Template parameters, additionally providided `__inputs__` from hooks.
+  Default is empty dictionary.
+* `save_path`: Save result to runtime properties key. Default is directly
+  save to runtime properties.
+* `prerender`: Prerender template before run calls `jinja render` =>
+  `yaml parse`. Default is `yaml parse` => `jinja render`.
+* `remove_calls`: Remove calls list from results. Default: dump only final
+  responses.
+
 ### Blueprint
 
 **Example Node Template single call:**
