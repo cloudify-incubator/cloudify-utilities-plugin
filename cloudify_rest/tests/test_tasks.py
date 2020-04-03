@@ -14,6 +14,7 @@
 # limitations under the License.
 import unittest
 import mock
+import six
 
 from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
@@ -206,6 +207,62 @@ class TestTasks(unittest.TestCase):
             remove_calls=False, retry_count=1, retry_sleep=15,
             resource_callback=tasks._workflow_get_resource,
             save_path=None)
+
+    def test_execute_as_workflow_hook(self):
+        _ctx = MockCloudifyContext(
+            "execution_id",
+        )
+        current_ctx.set(_ctx)
+
+        mock_execute = mock.Mock(return_value=None)
+        with mock.patch("cloudify_rest.tasks._execute", mock_execute):
+            tasks.execute_as_workflow(
+                {
+                    'blueprint_id': '<blueprint>',
+                    'deployment_id': '<deployment>',
+                    'tenant_name': '<tenant>',
+                    'rest_token': '<token>'}, ctx=_ctx,
+                logger_file='/tmp/workflow_failed.log',
+                properties={
+                    "hosts": ["jsonplaceholder.typicode.com"], "port": 443,
+                    "ssl": True, "verify": False})
+        mock_execute.assert_called_with(
+            params={
+                '__inputs__': {
+                    'tenant_name': '<tenant>',
+                    'deployment_id': '<deployment>',
+                    'rest_token': '<token>',
+                    'blueprint_id': '<blueprint>'}},
+            template_file=None, auth=None, ctx=_ctx,
+            instance_props={},
+            node_props={
+                "hosts": ["jsonplaceholder.typicode.com"],
+                "port": 443,
+                "ssl": True,
+                "verify": False
+            },
+            prerender=False,
+            remove_calls=False, retry_count=1, retry_sleep=15,
+            resource_callback=tasks._workflow_get_resource,
+            save_path=None)
+
+    def test_workflow_get_resource(self):
+        fake_file = mock.mock_open()
+        fake_file.read = mock.Mock(return_value="abc")
+        if six.PY3:
+            # python 3
+            with mock.patch(
+                    'builtins.open', fake_file
+            ):
+                tasks._workflow_get_resource('/proc/read_only_file')
+        else:
+            # python 2
+            with mock.patch(
+                    '__builtin__.open', fake_file
+            ):
+                tasks._workflow_get_resource('/proc/read_only_file')
+        fake_file.assert_called_once_with('/proc/read_only_file', 'r')
+        fake_file().read.assert_called_with()
 
 
 if __name__ == '__main__':

@@ -127,13 +127,8 @@ def execute_as_relationship(*argc, **kwargs):
 
 
 def _workflow_get_resource(file_name):
-    try:
-        with open(file_name, 'r') as f:
-            return f.read()
-    except IOError as ex:
-        raise NonRecoverableError(
-            'Failed to open: {file_name}: {ex}'
-            .format(file_name=file_name, ex=repr(ex)))
+    with open(file_name, 'r') as f:
+        return f.read()
 
 
 # callback name from hooks config
@@ -154,17 +149,6 @@ def execute_as_workflow(*args, **kwargs):
         inputs = args[0]
     else:
         inputs = kwargs.get('inputs', {})
-
-    # copy resource ids back
-    for field in [
-        'blueprint_id', 'deployment_id', 'tenant_name', 'rest_token'
-    ]:
-        if not ctx._context.get(field):
-            if not inputs.get(field):
-                ctx.logger.error("Partially provided inputs: {inputs}"
-                                 .format(inputs=inputs))
-                return
-            ctx._context[field] = inputs[field]
 
     auth = kwargs.get('auth')
     params = kwargs.get('params', {})

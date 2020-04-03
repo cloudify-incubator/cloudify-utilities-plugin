@@ -35,9 +35,17 @@ class TestTasks(unittest.TestCase):
         fake_client.deployments.get = Mock(return_value={})
         mock_manager = Mock()
         mock_manager.get_rest_client = Mock(return_value=fake_client)
+        # with inputs
         with patch('cloudify_hooks_workflow.tasks.manager', mock_manager):
             tasks.run_workflow(inputs={'deployment_id': 'w_id'},
                                workflow_for_run="uninstall",
+                               ctx=_ctx)
+            _ctx.logger.error.assert_called_with('Deployment disappear.')
+        # without inputs
+        with patch('cloudify_hooks_workflow.tasks.manager', mock_manager):
+            tasks.run_workflow({'deployment_id': 'w_id'},
+                               workflow_for_run="uninstall",
+                               logger_file="/tmp/logs.log",
                                ctx=_ctx)
             _ctx.logger.error.assert_called_with('Deployment disappear.')
 
