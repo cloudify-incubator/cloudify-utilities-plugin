@@ -27,9 +27,11 @@ from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.secrets import Secret
 from cloudify_ssh_key.operations import (create, delete, _get_secret,
                                          _create_secret, _delete_secret,
-                                         _remove_path, _write_key_file)
+                                         _remove_path, _write_key_file,
+                                         _check_if_secret_exist)
 
 
 class TestKey(testtools.TestCase):
@@ -37,19 +39,23 @@ class TestKey(testtools.TestCase):
     def setUp(self):
         super(TestKey, self).setUp()
 
-    def mock_ctx(self, test_name, use_secret_store=False):
+    def mock_ctx(self, test_name, use_secret_store=False,
+                 use_secret_of_key_name_if_exists=False):
 
         key_path = tempfile.mkdtemp()
 
         test_node_id = test_name
-        if use_secret_store:
+
+        if use_secret_store or use_secret_of_key_name_if_exists:
             test_properties = {
                 'use_secret_store': use_secret_store,
+                'use_secret_of_key_name_if_exists':
+                    use_secret_of_key_name_if_exists,
                 'key_name': test_name,
                 'resource_config': {
                     'public_key_path': '{0}/{1}.pem.pub'.format(
-                            key_path,
-                            test_name),
+                        key_path,
+                        test_name),
                     'openssh_format': True,
                     'algorithm': 'RSA',
                     'bits': 2048
@@ -60,11 +66,11 @@ class TestKey(testtools.TestCase):
                 'use_secret_store': use_secret_store,
                 'resource_config': {
                     'private_key_path': '{0}/{1}'.format(
-                            key_path,
-                            test_name),
+                        key_path,
+                        test_name),
                     'public_key_path': '{0}/{1}.pub'.format(
-                            key_path,
-                            test_name),
+                        key_path,
+                        test_name),
                     'openssh_format': True,
                     'algorithm': 'RSA',
                     'bits': 2048
@@ -72,8 +78,8 @@ class TestKey(testtools.TestCase):
             }
 
         ctx = MockCloudifyContext(
-                node_id=test_node_id,
-                properties=test_properties
+            node_id=test_node_id,
+            properties=test_properties
         )
 
         return ctx
@@ -138,6 +144,11 @@ class TestKey(testtools.TestCase):
             'openssh_format': True,
             'algorithm': 'RSA',
             'bits': 2048
+        }, {
+            'use_secret_store': False,
+            'use_secret_of_key_name_if_exists': True,
+            'algorithm': 'RSA',
+            'bits': 2048
         }]
 
         for case in corner_cases:
@@ -147,6 +158,15 @@ class TestKey(testtools.TestCase):
             self.assertRaises(NonRecoverableError,
                               create,
                               resource_config=copy.deepcopy(case))
+
+    def test_use_secret_of_key_name_if_exists_error(self):
+        if six.PY3:
+            self.skipTest("PyCrypto unsupported with python3")
+        ctx = self.mock_ctx('test_use_secret_of_key_name_if_exists_error',
+                            use_secret_store=False,
+                            use_secret_of_key_name_if_exists=True)
+        current_ctx.set(ctx=ctx)
+        self.assertRaises(NonRecoverableError, create)
 
     def test_create_secret_Error(self):
         mock_client = mock.MagicMock(side_effect=CloudifyClientError("e"))
@@ -162,6 +182,20 @@ class TestKey(testtools.TestCase):
         mock_client = mock.MagicMock(side_effect=CloudifyClientError("e"))
         with mock.patch('cloudify.manager.get_rest_client', mock_client):
             self.assertRaises(NonRecoverableError, _delete_secret, 'k')
+
+    def test_secret_if_exsists_exception(self):
+        mock_client = mock.MagicMock(side_effect=NonRecoverableError("e"))
+        with mock.patch('cloudify.manager.get_rest_client', mock_client):
+            self.assertEquals(False, _check_if_secret_exist('k'))
+
+    def test_check_if_secret_exist(self):
+        mock_secrets_client = mock.Mock()
+        mock_secrets_client.secrets.get.return_value = Secret(
+            {'key': 'k', "value": "v"})
+        mock_client = mock.MagicMock(return_value=mock_secrets_client)
+        with mock.patch('cloudify.manager.get_rest_client', mock_client):
+            self.assertEquals(True, _check_if_secret_exist('k'))
+            self.assertEquals(False, _check_if_secret_exist('different_key'))
 
     def test_remove_path_Error(self):
         mock_client = mock.MagicMock(side_effect=OSError("e"))
