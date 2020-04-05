@@ -184,8 +184,7 @@ def _check_if_secret_exist(key):
     try:
         if _get_secret(key).key == key:
             return True
-        else:
-            return False
+        return False
     except NonRecoverableError:
         return False
 
