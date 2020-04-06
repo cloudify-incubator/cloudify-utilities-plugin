@@ -191,6 +191,11 @@ workflows:
     jobs:
       - unittests2
       - unittests3
+      - release:
+          context: ecosystem
+          filters:
+            branches:
+              only: /master/
       - wagon:
           filters:
             branches:
