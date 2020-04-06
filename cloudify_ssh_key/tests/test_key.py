@@ -40,17 +40,17 @@ class TestKey(testtools.TestCase):
         super(TestKey, self).setUp()
 
     def mock_ctx(self, test_name, use_secret_store=False,
-                 use_secret_of_key_name_if_exists=False):
+                 use_secrets_if_exist=False):
 
         key_path = tempfile.mkdtemp()
 
         test_node_id = test_name
 
-        if use_secret_store or use_secret_of_key_name_if_exists:
+        if use_secret_store or use_secrets_if_exist:
             test_properties = {
                 'use_secret_store': use_secret_store,
-                'use_secret_of_key_name_if_exists':
-                    use_secret_of_key_name_if_exists,
+                'use_secrets_if_exist':
+                    use_secrets_if_exist,
                 'key_name': test_name,
                 'resource_config': {
                     'public_key_path': '{0}/{1}.pem.pub'.format(
@@ -146,7 +146,7 @@ class TestKey(testtools.TestCase):
             'bits': 2048
         }, {
             'use_secret_store': False,
-            'use_secret_of_key_name_if_exists': True,
+            'use_secrets_if_exist': True,
             'algorithm': 'RSA',
             'bits': 2048
         }]
@@ -159,12 +159,12 @@ class TestKey(testtools.TestCase):
                               create,
                               resource_config=copy.deepcopy(case))
 
-    def test_use_secret_of_key_name_if_exists_error(self):
+    def test_use_secrets_if_exist_error(self):
         if six.PY3:
             self.skipTest("PyCrypto unsupported with python3")
-        ctx = self.mock_ctx('test_use_secret_of_key_name_if_exists_error',
+        ctx = self.mock_ctx('test_use_secrets_if_exist_error',
                             use_secret_store=False,
-                            use_secret_of_key_name_if_exists=True)
+                            use_secrets_if_exist=True)
         current_ctx.set(ctx=ctx)
         self.assertRaises(NonRecoverableError, create)
 

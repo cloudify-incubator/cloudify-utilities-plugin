@@ -410,7 +410,7 @@ node_types:
       use_secret_store:
         type: boolean
         default: true
-      use_secret_of_key_name_if_exists:
+      use_secrets_if_exist:
         type: boolean
         description: >
           this flag is able to be true only if use_secret_store is true

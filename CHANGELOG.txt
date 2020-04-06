@@ -1,6 +1,6 @@
 releases:
   v1.20.0:
-  -ssh_key: add use_secret_of_key_name_if_exists property to
+  -ssh_key: add use_secrets_if_exist property to
    cloudify.keys.nodes.RSAKey node.
 
 

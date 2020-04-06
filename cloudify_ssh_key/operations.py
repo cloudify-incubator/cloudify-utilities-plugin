@@ -64,9 +64,9 @@ def create(**_):
                                                           ctx.instance.id)
     store_private_key_material = _.get('store_private_key_material', False)
     store_public_key_material = _.get('store_public_key_material', True)
-    use_secret_of_key_name_if_exists = config.get(
-        'use_secret_of_key_name_if_exists') or ctx.node.properties.get(
-        'use_secret_of_key_name_if_exists')
+    use_secrets_if_exist = config.get(
+        'use_secrets_if_exist') or ctx.node.properties.get(
+        'use_secrets_if_exist')
 
     if config.get('comment'):
         ctx.logger.error('Property "comment" not implemented.')
@@ -82,9 +82,9 @@ def create(**_):
     if algorithm != ALGORITHM:
         raise NonRecoverableError('Only RSA algorithm is supported')
 
-    if not use_secret_store and use_secret_of_key_name_if_exists:
+    if not use_secret_store and use_secrets_if_exist:
         raise NonRecoverableError(
-            'Cant enable "use_secret_of_key_name_if_exists" property without '
+            'Cant enable "use_secrets_if_exist" property without '
             'enable "use_secret_store" property')
 
     key_object = RSA.generate(bits)
@@ -95,7 +95,7 @@ def create(**_):
     if use_secret_store:
         private_name = '{0}_private'.format(key_name)
         public_name = '{0}_public'.format(key_name)
-        if use_secret_of_key_name_if_exists and _check_if_secret_exist(
+        if use_secrets_if_exist and _check_if_secret_exist(
                 private_name) and _check_if_secret_exist(public_name):
             ctx.instance.runtime_properties[SECRETS_KEY_OWNER] = False
             private_key_export = _get_secret(private_name).value
@@ -146,7 +146,10 @@ def delete(**_):
             _delete_secret(public_name)
         del ctx.instance.runtime_properties[SECRETS_KEY_NAME]
         del ctx.instance.runtime_properties[SECRETS_KEY_OWNER]
-
+    else:
+        ctx.logger.info(
+            "Skipping delete secrets task because you are using a secret that"
+            " was not created in this deployment.")
     # remove stored to filesystem keys
     private_key_path = ctx.instance.runtime_properties.get(PRIVATE_KEY_PATH)
     public_key_path = ctx.instance.runtime_properties.get(PUBLIC_KEY_PATH)
