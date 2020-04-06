@@ -37,13 +37,13 @@ PUBLIC_KEY_PATH = 'public_key_path'
 PRIVATE_KEY_PATH = 'private_key_path'
 PUBLIC_KEY_EXPORT = 'public_key_export'
 PRIVATE_KEY_EXPORT = 'private_key_export'
+SECRETS_KEY_OWNER = 'secrets_key_owner'
 
 
 @operation(resumable=True)
 def create(**_):
-
     for key in [SECRETS_KEY_NAME, PUBLIC_KEY_PATH, PRIVATE_KEY_PATH,
-                PUBLIC_KEY_EXPORT, PRIVATE_KEY_EXPORT]:
+                PUBLIC_KEY_EXPORT, PRIVATE_KEY_EXPORT, SECRETS_KEY_OWNER]:
         if key in ctx.instance.runtime_properties:
             ctx.logger.error("You should run delete before run create")
             return
@@ -58,12 +58,15 @@ def create(**_):
     openssh_format = config.get('openssh_format', True)
     algorithm = config.get('algorithm')
     bits = config.get('bits')
-    use_secret_store = config.get('use_secret_store') \
-        or ctx.node.properties.get('use_secret_store')
-    key_name = config.get('key_name') \
-        or '{0}-{1}'.format(ctx.deployment.id, ctx.instance.id)
+    use_secret_store = config.get(
+        'use_secret_store') or ctx.node.properties.get('use_secret_store')
+    key_name = config.get('key_name') or '{0}-{1}'.format(ctx.deployment.id,
+                                                          ctx.instance.id)
     store_private_key_material = _.get('store_private_key_material', False)
     store_public_key_material = _.get('store_public_key_material', True)
+    use_secrets_if_exist = config.get(
+        'use_secrets_if_exist') or ctx.node.properties.get(
+        'use_secrets_if_exist')
 
     if config.get('comment'):
         ctx.logger.error('Property "comment" not implemented.')
@@ -79,14 +82,28 @@ def create(**_):
     if algorithm != ALGORITHM:
         raise NonRecoverableError('Only RSA algorithm is supported')
 
+    if not use_secret_store and use_secrets_if_exist:
+        raise NonRecoverableError(
+            'Cant enable "use_secrets_if_exist" property without '
+            'enable "use_secret_store" property')
+
     key_object = RSA.generate(bits)
     private_key_export = key_object.exportKey(PRIVATE_KEY_EXPORT_TYPE)
     pubkey = key_object.publickey()
     public_key_export = pubkey.exportKey(OPENSSH_FORMAT_STRING)
 
     if use_secret_store:
-        _create_secret('{0}_private'.format(key_name), private_key_export)
-        _create_secret('{0}_public'.format(key_name), public_key_export)
+        private_name = '{0}_private'.format(key_name)
+        public_name = '{0}_public'.format(key_name)
+        if use_secrets_if_exist and _check_if_secret_exist(
+                private_name) and _check_if_secret_exist(public_name):
+            ctx.instance.runtime_properties[SECRETS_KEY_OWNER] = False
+            private_key_export = _get_secret(private_name).value
+            public_key_export = _get_secret(public_name).value
+        else:
+            _create_secret(private_name, private_key_export)
+            _create_secret(public_name, public_key_export)
+            ctx.instance.runtime_properties[SECRETS_KEY_OWNER] = True
         ctx.instance.runtime_properties[SECRETS_KEY_NAME] = key_name
 
     if (
@@ -110,6 +127,7 @@ def create(**_):
     if store_public_key_material:
         ctx.instance.runtime_properties[PUBLIC_KEY_EXPORT] = \
             public_key_export
+
     if store_private_key_material:
         ctx.instance.runtime_properties[PRIVATE_KEY_EXPORT] = \
             private_key_export
@@ -117,10 +135,9 @@ def create(**_):
 
 @operation(resumable=True)
 def delete(**_):
-
     # remove keys only if created on previous step
     key_name = ctx.instance.runtime_properties.get(SECRETS_KEY_NAME)
-    if key_name:
+    if key_name and ctx.instance.runtime_properties.get(SECRETS_KEY_OWNER):
         private_name = '{0}_private'.format(key_name)
         if _get_secret(private_name):
             _delete_secret(private_name)
@@ -128,7 +145,11 @@ def delete(**_):
         if _get_secret(public_name):
             _delete_secret(public_name)
         del ctx.instance.runtime_properties[SECRETS_KEY_NAME]
-
+        del ctx.instance.runtime_properties[SECRETS_KEY_OWNER]
+    else:
+        ctx.logger.info(
+            "Skipping delete secrets task because you are using a secret that"
+            " was not created in this deployment.")
     # remove stored to filesystem keys
     private_key_path = ctx.instance.runtime_properties.get(PRIVATE_KEY_PATH)
     public_key_path = ctx.instance.runtime_properties.get(PUBLIC_KEY_PATH)
@@ -147,7 +168,6 @@ def delete(**_):
 
 
 def _create_secret(key, value):
-
     try:
         client = manager.get_rest_client()
         client.secrets.create(key, value)
@@ -156,7 +176,6 @@ def _create_secret(key, value):
 
 
 def _get_secret(key):
-
     try:
         client = manager.get_rest_client()
         return client.secrets.get(key)
@@ -164,8 +183,16 @@ def _get_secret(key):
         raise NonRecoverableError(str(e))
 
 
-def _delete_secret(key):
+def _check_if_secret_exist(key):
+    try:
+        if _get_secret(key).key == key:
+            return True
+        return False
+    except NonRecoverableError:
+        return False
 
+
+def _delete_secret(key):
     try:
         client = manager.get_rest_client()
         client.secrets.delete(key)
@@ -199,7 +226,6 @@ def _write_key_file(_key_file_path,
 
 
 def _remove_path(key_path):
-
     try:
         path = os.path.expanduser(key_path)
         if os.path.exists(path):

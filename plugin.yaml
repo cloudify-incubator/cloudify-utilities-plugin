@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.19.0.zip
-    package_version: '1.19.0'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.20.0.zip
+    package_version: '1.20.0'
 
   cfy_files: *utilities_plugin
 
@@ -410,6 +410,15 @@ node_types:
       use_secret_store:
         type: boolean
         default: true
+      use_secrets_if_exist:
+        type: boolean
+        description: >
+          this flag is able to be true only if use_secret_store is true
+          if this property is false the secret for the key value will be
+          created, if true then the existing secrets of an existing node
+          with same key_name will be used as a key, if this property is true
+          and the secrets does not exist they will be created.
+        default: false
       key_name:
         type: string
         description: Deprecated. Use resource_config.key_name.
