@@ -1,4 +1,8 @@
 releases:
+  v1.20.0:
+  -ssh_key: add use_secret_of_key_name_if_exists property to
+   cloudify.keys.nodes.RSAKey node.
+
 
   v1.19.0:
   - hooks: add hooks events filtering plugin
