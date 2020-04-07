@@ -12,7 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from cloudify import ctx
+import logging
+
+from cloudify import ctx as CloudifyContext
 from cloudify import manager
 from cloudify_rest_client.client import CloudifyClient
 from cloudify.decorators import workflow
@@ -64,12 +66,25 @@ def _check_filter(ctx, filter_by, inputs):
 
 # callback name from hooks config
 @workflow
-def run_workflow(inputs, *args, **kwargs):
+def run_workflow(*args, **kwargs):
     # get current context
-    _ctx = kwargs.get('ctx', ctx)
+    ctx = kwargs.get('ctx', CloudifyContext)
+
+    # register logger file
+    logger_file = kwargs.get('logger_file')
+    if logger_file:
+        fh = logging.FileHandler(logger_file)
+        fh.setLevel(logging.DEBUG)
+        ctx.logger.addHandler(fh)
+
+    # check inputs
+    if len(args):
+        inputs = args[0]
+    else:
+        inputs = kwargs.get('inputs', {})
 
     # dump current parameters
-    _ctx.logger.debug(
+    ctx.logger.debug(
         "Workflow run called with {inputs} and args '{args}' and kwargs:"
         " {kwargs}".format(inputs=repr(inputs), args=repr(args),
                            kwargs=repr(kwargs)))
@@ -77,13 +92,13 @@ def run_workflow(inputs, *args, **kwargs):
     # check deployment id, strange if empty but lets check
     deployment_id = inputs.get('deployment_id')
     if not deployment_id:
-        _ctx.logger.error("Deployment id is undefined")
+        ctx.logger.error("Deployment id is undefined")
         return
 
     # get workflow name
     workflow_name = kwargs.get('workflow_for_run')
     if not workflow_name:
-        _ctx.logger.error("Workflow for run is undefined")
+        ctx.logger.error("Workflow for run is undefined")
         return
 
     # get workflow params
@@ -101,25 +116,25 @@ def run_workflow(inputs, *args, **kwargs):
     # get deployment information
     deployment = client.deployments.get(deployment_id=deployment_id)
     if not deployment:
-        _ctx.logger.error("Deployment disappear.")
+        ctx.logger.error("Deployment disappear.")
         return
 
     # get filter dictionary
     filter_by = kwargs.get('filter_by', [])
-    _ctx.logger.debug("Filter {filter_by}".format(filter_by=repr(filter_by)))
+    ctx.logger.debug("Filter {filter_by}".format(filter_by=repr(filter_by)))
     if filter_by:
         # get values from deployment information, use _get_
         # for support 5+ managers
         inputs['deployment_inputs'] = deployment.get('inputs', {})
         inputs['deployment_outputs'] = deployment.get('outputs', {})
         inputs['deployment_capabilities'] = deployment.get('capabilities', {})
-        if not _check_filter(ctx=_ctx, filter_by=filter_by, inputs=inputs):
-            _ctx.logger.debug(
+        if not _check_filter(ctx=ctx, filter_by=filter_by, inputs=inputs):
+            ctx.logger.debug(
                 "Event skiped by filter.")
             return
 
     # mark that we going to run to logs
-    _ctx.logger.info("Going to {workflow_name} on {deployment_id}".format(
+    ctx.logger.info("Going to {workflow_name} on {deployment_id}".format(
         workflow_name=workflow_name,
         deployment_id=deployment_id))
 
