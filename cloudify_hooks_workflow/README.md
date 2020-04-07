@@ -1,8 +1,7 @@
 # cloudify-hooks-workflow
 
 Supported parameters:
-* `inputs`: passed from cloudify hooks (or first param hooks)
-* `logger_file`: duplicate logger output to separate file
+* `inputs`: passed from cloudify hooks,
 * `client_config`: custom credentials for manager, by default is not required for use
 * `filter_by`: key-value list, where:
   * `path`: path to field for validate,
@@ -50,12 +49,9 @@ hooks:
 - event_type: workflow_failed
   implementation: cloudify-utilities-plugin.cloudify_hooks_workflow.tasks.run_workflow
   inputs:
-    logger_file: /tmp/workflow_failed.log
     workflow_for_run: uninstall
     workflow_params: {}
     filter_by:
-    - path: ["workflow_id"]
-      values: ["install"]
     - path: ["deployment_capabilities", "autouninstall", "value"]
       values: [true, "yes"]
   description: A hook for workflow_failed

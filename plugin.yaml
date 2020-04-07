@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.21.0.zip
-    package_version: '1.21.0'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.20.0.zip
+    package_version: '1.20.0'
 
   cfy_files: *utilities_plugin
 
@@ -994,76 +994,28 @@ workflows:
   hook_workflow_run_filtered:
     mapping: cloudify_hooks_workflow.cloudify_hooks_workflow.tasks.run_workflow
     parameters:
-      inputs:
-        description: >
-          Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
-          cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
-        default: {}
-      logger_file:
-        description: >
-          duplicate logger output to separate file
-        default: ""
-      client_config:
-        description: >
-          custom credentials for manager, by default is not required for use
-        default: {}
-      filter_by:
-        description: >
-          key-value list, where:
-            path is path to field for validate,
-            values is list of possible values
-          example:
-          - path: ["workflow_id"]
-            values: ["install"]
-          - path: ["deployment_capabilities", "autouninstall", "value"]
-            values: [true, "yes"]
-      workflow_for_run:
-        description: >
-          name workflow to run on deployment
-        default: uninstall
-      workflow_params:
-        description: >
-          additional workflow parameters
-        default: {}
-
-  hook_workflow_rest:
-    mapping: rest.cloudify_rest.tasks.execute_as_workflow
-    parameters:
-      inputs:
-        description: >
-          Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
-          cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
-        default: {}
-      logger_file:
-        description: >
-          duplicate logger output to separate file
-        default: ""
-      properties:
-        description: >
-          connection properties(same as properties in `cloudify.rest.Requests`)
-        default: {}
-      params:
-        description: >
-          Template parameters. Default is empty dictionary. Merged
-          with params from node properties and has 'ctx' key for
-          current action context.
-        default: {}
-      template_file:
-        description: >
-          Absolute path to template file
-        default: ''
-      save_path:
-        description: >
-          Save result to runtime properties key. Default is directly
-          save to runtime properties.
-        default: false
-      prerender:
-        description: >
-          Prerender template before run calls jinja render=>yaml parse.
-          Default is yaml parse=>jinja render.
-        default: false
-      remove_calls:
-        description: >
-          Remove calls list from results. Default: save calls in
-          runtime properties.
-        default: false
+     inputs:
+       description: >
+         Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+         cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+       default: {}
+     client_config:
+       description: >
+         custom credentials for manager, by default is not required for use
+       default: {}
+     filter_by:
+       description: >
+         key-value list, where:
+           path is path to field for validate,
+           values is list of possible values
+         example:
+           - path: ["deployment_capabilities", "autouninstall", "value"]
+             values: [true, "yes"]
+     workflow_for_run:
+       description: >
+         name workflow to run on deployment
+       default: uninstall
+     workflow_params:
+       description: >
+         additional workflow parameters
+       default: {}

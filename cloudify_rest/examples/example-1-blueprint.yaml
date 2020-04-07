@@ -14,12 +14,7 @@ inputs:
   rest_endpoint_cert_path:
     description: >
       REST API endpoint CA_BUNDLE
-    # ubuntu
-    # default: /usr/lib/python2.7/dist-packages/certifi/cacert.pem
-    # centos
-    # default: /opt/manager/env/lib/python2.7/site-packages/certifi/cacert.pem
-    # or get cacert path/content from secret
-    default: { get_secret: cacert_bundle }
+    default: /usr/lib/python2.7/dist-packages/certifi/cacert.pem
 
   rest_endpoint_cert:
     description: >
