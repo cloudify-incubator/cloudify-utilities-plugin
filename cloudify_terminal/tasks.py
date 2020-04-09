@@ -14,21 +14,29 @@
 from cloudify_common_sdk import filters
 import time
 from six import string_types
+import logging
 
 from cloudify import exceptions as cfy_exc
 from cloudify import ctx as CloudifyContext
 from cloudify import context
+from cloudify.decorators import workflow
 
-from cloudify_terminal import rerun, operation_cleanup
+from cloudify_terminal import rerun, operation_cleanup, workflow_get_resource
 
 import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
 
-@operation_cleanup
-def run(*args, **kwargs):
-    """main entry point for all calls"""
-    # get current context
-    ctx = kwargs.get('ctx', CloudifyContext)
+def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
+             log_stamp, kwargs):
+    # register logger file
+    logger_file = kwargs.get('logger_file')
+    if logger_file:
+        fh = logging.FileHandler(logger_file)
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter(
+            fmt="%(asctime)s %(levelname)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"))
+        ctx.logger.addHandler(fh)
 
     # get current calls
     calls = kwargs.get('calls', [])
@@ -36,22 +44,14 @@ def run(*args, **kwargs):
         ctx.logger.info("No calls")
         return
 
-    if ctx.type == context.NODE_INSTANCE:
-        properties = ctx.node.properties
-        ctx_instance = ctx.instance
-    elif ctx.type == context.RELATIONSHIP_INSTANCE:
-        # Realationships context?
-        properties = ctx.target.node.properties
-        ctx_instance = ctx.target.instance
-
     # credentials
     terminal_auth = properties.get('terminal_auth', {})
     terminal_auth.update(kwargs.get('terminal_auth', {}))
     ip_list = terminal_auth.get('ip')
 
     # if node contained in some other node, try to overwrite ip
-    if not ip_list:
-        ip_list = [ctx_instance.host_ip]
+    if not ip_list and host_ip:
+        ip_list = [host_ip]
         ctx.logger.info("Used host from container: {ip_list}"
                         .format(ip_list=repr(ip_list)))
 
@@ -75,12 +75,12 @@ def run(*args, **kwargs):
     global_responses = terminal_auth.get('responses', [])
     exit_command = terminal_auth.get('exit_command', 'exit')
     smart_device = terminal_auth.get('smart_device')
+
     # save logs to debug file
     log_file_name = None
     if terminal_auth.get('store_logs'):
-        log_file_name = "/tmp/terminal-%s_%s_%s.log" % (
-            str(ctx.execution_id), str(ctx_instance.id), str(ctx.workflow_id)
-        )
+        log_file_name = "/tmp/terminal-{log_stamp}.log".format(
+            log_stamp=log_stamp)
         ctx.logger.info(
             "Communication logs will be saved to %s" % log_file_name
         )
@@ -123,7 +123,7 @@ def run(*args, **kwargs):
         if not operation and 'template' in call:
             template_name = call.get('template')
             template_params = call.get('params')
-            template = ctx.get_resource(template_name)
+            template = get_resource(template_name)
             if not template:
                 ctx.logger.info("Empty template.")
                 continue
@@ -190,7 +190,7 @@ def run(*args, **kwargs):
         if save_to:
             ctx.logger.info("For save: {result}"
                             .format(result=filters.shorted_text(result)))
-            ctx_instance.runtime_properties[save_to] = result.strip()
+            runtime_properties[save_to] = result.strip()
 
     while not connection.is_closed() and exit_command:
         ctx.logger.info("Execute close")
@@ -210,3 +210,82 @@ def run(*args, **kwargs):
         time.sleep(1)
 
     connection.close()
+
+
+@operation_cleanup
+def run(*args, **kwargs):
+    """main entry point for all calls"""
+    # get current context
+    ctx = kwargs.get('ctx', CloudifyContext)
+
+    if ctx.type == context.NODE_INSTANCE:
+        # Node instance
+        properties = ctx.node.properties
+        runtime_properties = ctx.instance.runtime_properties
+
+        # get ip from parent
+        try:
+            host_ip = ctx.instance.host_ip
+        except cfy_exc.NonRecoverableError:
+            host_ip = None
+
+        log_stamp = "{execution_id}_{instance_id}_{workflow_id}".format(
+            execution_id=ctx.execution_id,
+            instance_id=ctx.instance.id,
+            workflow_id=ctx.workflow_id
+        )
+
+    elif ctx.type == context.RELATIONSHIP_INSTANCE:
+        # Realationships context
+        properties = ctx.target.node.properties
+        runtime_properties = ctx.target.instance.runtime_properties
+
+        # get ip from parent
+        try:
+            host_ip = ctx.target.instance.host_ip
+        except cfy_exc.NonRecoverableError:
+            host_ip = None
+
+        log_stamp = "{execution_id}_{instance_id}_{workflow_id}".format(
+            execution_id=ctx.execution_id,
+            instance_id=ctx.target.instance.id,
+            workflow_id=ctx.workflow_id
+        )
+
+    _execute(
+        ctx=ctx,
+        properties=properties,
+        runtime_properties=runtime_properties,
+        get_resource=ctx.get_resource,
+        host_ip=host_ip,
+        log_stamp=log_stamp,
+        kwargs=kwargs
+    )
+
+
+# callback name from hooks config
+@workflow
+def run_as_workflow(*args, **kwargs):
+    # get current context
+    ctx = kwargs.get('ctx', CloudifyContext)
+
+    # check inputs
+    if len(args):
+        inputs = args[0]
+    else:
+        inputs = kwargs.get('inputs', {})
+
+    properties = kwargs.get('properties', {})
+
+    _execute(
+        ctx=ctx,
+        properties=properties,
+        runtime_properties={'__inputs__': inputs},
+        get_resource=workflow_get_resource,
+        host_ip=None,
+        log_stamp="{execution_id}_{workflow_id}".format(
+            execution_id=inputs.get("execution_id", 'noexecution'),
+            workflow_id=inputs.get("workflow_id", 'noworkflow')
+        ),
+        kwargs=kwargs
+    )

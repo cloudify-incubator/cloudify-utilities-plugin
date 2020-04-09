@@ -22,7 +22,7 @@ from cloudify.decorators import workflow
 from cloudify_rest_sdk import utility
 from cloudify_common_sdk.filters import get_field_value_recursive
 
-from cloudify_terminal import operation_cleanup, rerun
+from cloudify_terminal import operation_cleanup, rerun, workflow_get_resource
 
 
 def _get_params_attributes(ctx, runtime_properties, params_list):
@@ -126,11 +126,6 @@ def execute_as_relationship(*argc, **kwargs):
              retry_sleep=kwargs.get('retry_sleep', 15))
 
 
-def _workflow_get_resource(file_name):
-    with open(file_name, 'r') as f:
-        return f.read()
-
-
 # callback name from hooks config
 @workflow
 def execute_as_workflow(*args, **kwargs):
@@ -142,6 +137,9 @@ def execute_as_workflow(*args, **kwargs):
     if logger_file:
         fh = logging.FileHandler(logger_file)
         fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter(
+            fmt="%(asctime)s %(levelname)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"))
         ctx.logger.addHandler(fh)
 
     # check inputs
@@ -172,7 +170,7 @@ def execute_as_workflow(*args, **kwargs):
              ctx=ctx, instance_props=runtime_properties,
              node_props=node_props, save_path=save_path, prerender=prerender,
              remove_calls=remove_calls, auth=auth,
-             resource_callback=_workflow_get_resource,
+             resource_callback=workflow_get_resource,
              retry_count=kwargs.get('retry_count', 1),
              retry_sleep=kwargs.get('retry_sleep', 15))
     ctx.logger.debug("Final response: {runtime}"

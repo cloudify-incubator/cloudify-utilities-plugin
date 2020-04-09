@@ -75,6 +75,9 @@ def run_workflow(*args, **kwargs):
     if logger_file:
         fh = logging.FileHandler(logger_file)
         fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter(
+            fmt="%(asctime)s %(levelname)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"))
         ctx.logger.addHandler(fh)
 
     # check inputs

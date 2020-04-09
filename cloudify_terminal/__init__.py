@@ -98,3 +98,8 @@ def operation_cleanup(func, force=False):
 
         return result
     return operation(func=wrapper, resumable=True)
+
+
+def workflow_get_resource(file_name):
+    with open(file_name, 'r') as f:
+        return f.read()

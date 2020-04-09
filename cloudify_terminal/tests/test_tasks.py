@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import unittest
-from mock import Mock, patch, call
+from mock import Mock, patch, call, PropertyMock
 
 from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
@@ -109,11 +109,60 @@ class TestTasks(unittest.TestCase):
         _ctx = self._gen_ctx()
         ssh_mock = Mock()
         ssh_mock.connect = Mock(side_effect=OSError("e"))
+        try:
+            type(_ctx.instance).host_ip = PropertyMock(
+                side_effect=NonRecoverableError('host_ip is undefined'))
+            with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
+                with self.assertRaises(OperationRetry):
+                    tasks.run(
+                        ctx=_ctx,
+                        calls=[{'action': 'ls'}],
+                        terminal_auth={'ip': 'ip', 'user': 'user',
+                                       'password': 'password'}
+                    )
+            ssh_mock.connect.assert_called_with(
+                'ip', allow_agent=False, look_for_keys=False,
+                password='password', port=22, timeout=5, username='user')
+        finally:
+            type(_ctx.instance).host_ip = None
+
+    @patch('time.sleep', Mock())
+    def test_run_auth_relationship(self):
+        _ctx = self._gen_relation_ctx()
+        ssh_mock = Mock()
+        ssh_mock.connect = Mock(side_effect=OSError("e"))
+        try:
+            type(_ctx.target.instance).host_ip = PropertyMock(
+                side_effect=NonRecoverableError('host_ip is undefined'))
+            with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
+                with self.assertRaises(OperationRetry):
+                    tasks.run(
+                        ctx=_ctx,
+                        calls=[{'action': 'ls'}],
+                        logger_file="/tmp/terminal.log",
+                        terminal_auth={'ip': 'ip', 'user': 'user',
+                                       'password': 'password'}
+                    )
+            ssh_mock.connect.assert_called_with(
+                'ip', allow_agent=False, look_for_keys=False,
+                password='password', port=22, timeout=5, username='user')
+        finally:
+            type(_ctx.target.instance).host_ip = None
+
+    @patch('time.sleep', Mock())
+    def test_run_auth_workflow_impicit_input(self):
+        _ctx = MockCloudifyContext(
+            "execution_id",
+        )
+        ssh_mock = Mock()
+        ssh_mock.connect = Mock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
-                tasks.run(
+                tasks.run_as_workflow(
+                    {},
                     ctx=_ctx,
                     calls=[{'action': 'ls'}],
+                    logger_file="/tmp/terminal.log",
                     terminal_auth={'ip': 'ip', 'user': 'user',
                                    'password': 'password'}
                 )
@@ -122,15 +171,19 @@ class TestTasks(unittest.TestCase):
             port=22, timeout=5, username='user')
 
     @patch('time.sleep', Mock())
-    def test_run_auth_relationship(self):
-        _ctx = self._gen_relation_ctx()
+    def test_run_auth_workflow_explicit_input(self):
+        _ctx = MockCloudifyContext(
+            "execution_id",
+        )
         ssh_mock = Mock()
         ssh_mock.connect = Mock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
             with self.assertRaises(OperationRetry):
-                tasks.run(
+                tasks.run_as_workflow(
+                    inputs={},
                     ctx=_ctx,
                     calls=[{'action': 'ls'}],
+                    logger_file="/tmp/terminal.log",
                     terminal_auth={'ip': 'ip', 'user': 'user',
                                    'password': 'password'}
                 )

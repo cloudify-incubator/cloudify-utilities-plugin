@@ -1,5 +1,8 @@
 releases:
 
+  v1.22.0:
+  - terminal: support run action as hook
+
   v1.21.0:
   - rest: support run action as hook
 

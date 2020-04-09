@@ -28,6 +28,7 @@ ip you can use contained_in relationship.
       cloudify.interfaces.lifecycle:
         create:
           inputs:
+            logger_file: <duplicate logger output to separate file>
             terminal_auth:
               user: <user for instance>
               password: <optional, password for instance>
@@ -191,6 +192,7 @@ node_templates:
       cloudify.interfaces.lifecycle:
         start: # can be create/configure/start/stop/delete
           inputs:
+            logger_file: <duplicate logger output to separate file>
             force_rerun: <optional, rerun operation if have already called before>
             terminal_auth: <optional, overwrite values from properties>
               user: <user for instance>
@@ -215,6 +217,33 @@ node_templates:
                 retry_count: <optional, rerun count on warning, by default 10>
                 retry_sleep: <optional, sleep between rerun, by default 15>
 ```
+
+**Example 7: Use terminal as hooks **
+
+```yaml
+hooks:
+- event_type: workflow_succeeded
+  implementation: cloudify-utilities-plugin.cloudify_terminal.tasks.run_as_workflow
+  inputs:
+    logger_file: /tmp/hooks_log.log
+    terminal_auth:
+      user: centos
+      password: passw0rd
+      ip: localhost
+      port: 22
+      smart_device: true
+      promt_check:
+        - '#'
+        - '$'
+    calls:
+      - action: hostname
+        save_to: domain
+      - action: uname -a
+        save_to: uname
+
+  description: A hook for workflow_succeeded
+```
+
 
 # Examples
 
