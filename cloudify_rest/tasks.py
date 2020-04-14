@@ -15,6 +15,7 @@
 import logging
 import traceback
 
+from cloudify import context
 from cloudify import ctx as CloudifyContext
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import workflow
@@ -131,6 +132,12 @@ def execute_as_relationship(*argc, **kwargs):
 def execute_as_workflow(*args, **kwargs):
     # get current context
     ctx = kwargs.get('ctx', CloudifyContext)
+    if ctx.type != context.DEPLOYMENT:
+        raise NonRecoverableError(
+            "Called with wrong context: {ctx_type}".format(
+                ctx_type=ctx.type
+            )
+        )
 
     # register logger file
     logger_file = kwargs.get('logger_file')

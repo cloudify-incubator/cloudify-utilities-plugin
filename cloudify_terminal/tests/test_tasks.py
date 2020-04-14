@@ -151,9 +151,25 @@ class TestTasks(unittest.TestCase):
 
     @patch('time.sleep', Mock())
     def test_run_auth_workflow_impicit_input(self):
-        _ctx = MockCloudifyContext(
-            "execution_id",
-        )
+        # wrong context type
+        _ctx = Mock()
+        _ctx.type = '<unknown>'
+        ssh_mock = Mock()
+        ssh_mock.connect = Mock(side_effect=OSError("e"))
+        with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
+            with self.assertRaises(NonRecoverableError):
+                tasks.run_as_workflow(
+                    {},
+                    ctx=_ctx,
+                    calls=[{'action': 'ls'}],
+                    logger_file="/tmp/terminal.log",
+                    terminal_auth={'ip': 'ip', 'user': 'user',
+                                   'password': 'password'}
+                )
+
+        # correct context type
+        _ctx = Mock()
+        _ctx.type = 'deployment'
         ssh_mock = Mock()
         ssh_mock.connect = Mock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):
@@ -172,9 +188,8 @@ class TestTasks(unittest.TestCase):
 
     @patch('time.sleep', Mock())
     def test_run_auth_workflow_explicit_input(self):
-        _ctx = MockCloudifyContext(
-            "execution_id",
-        )
+        _ctx = Mock()
+        _ctx.type = 'deployment'
         ssh_mock = Mock()
         ssh_mock.connect = Mock(side_effect=OSError("e"))
         with patch("paramiko.SSHClient", Mock(return_value=ssh_mock)):

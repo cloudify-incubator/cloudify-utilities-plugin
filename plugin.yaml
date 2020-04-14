@@ -453,7 +453,10 @@ node_types:
     properties:
       terminal_auth:
         description: >
-          terminal credentials
+          terminal credentials, like example:
+            user: <user name>
+            password: <user password>
+            ip: <host name>
         type: cloudify.datatypes.terminal_auth
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -1084,7 +1087,10 @@ workflows:
         default: ""
       terminal_auth:
         description: >
-          terminal credentials
+          terminal credentials, like example:
+            user: <user name>
+            password: <user password>
+            ip: <host name>
         type: cloudify.datatypes.terminal_auth
       calls:
         description: >

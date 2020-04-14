@@ -268,6 +268,12 @@ def run(*args, **kwargs):
 def run_as_workflow(*args, **kwargs):
     # get current context
     ctx = kwargs.get('ctx', CloudifyContext)
+    if ctx.type != context.DEPLOYMENT:
+        raise cfy_exc.NonRecoverableError(
+            "Called with wrong context: {ctx_type}".format(
+                ctx_type=ctx.type
+            )
+        )
 
     # check inputs
     if len(args):

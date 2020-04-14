@@ -14,8 +14,10 @@
 # limitations under the License.
 import logging
 
+from cloudify import exceptions as cfy_exc
 from cloudify import ctx as CloudifyContext
 from cloudify import manager
+from cloudify import context
 from cloudify_rest_client.client import CloudifyClient
 from cloudify.decorators import workflow
 
@@ -69,6 +71,12 @@ def _check_filter(ctx, filter_by, inputs):
 def run_workflow(*args, **kwargs):
     # get current context
     ctx = kwargs.get('ctx', CloudifyContext)
+    if ctx.type != context.DEPLOYMENT:
+        raise cfy_exc.NonRecoverableError(
+            "Called with wrong context: {ctx_type}".format(
+                ctx_type=ctx.type
+            )
+        )
 
     # register logger file
     logger_file = kwargs.get('logger_file')
