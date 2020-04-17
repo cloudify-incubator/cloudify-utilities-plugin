@@ -35,7 +35,7 @@ setuptools.setup(
     license='LICENSE',
     install_requires=[
         'cloudify-common>=4.4',  # deployment_proxy
-        'cloudify-utilities-plugins-sdk==0.0.17',  # terminal, rest
+        'cloudify-utilities-plugins-sdk==0.0.19',  # terminal, rest
         'pycrypto==2.6.1',  # ssh_key
         'ruamel.yaml']  # cloudinit
 )
