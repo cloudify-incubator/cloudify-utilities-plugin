@@ -172,10 +172,27 @@ class TestTasks(unittest.TestCase):
             save_path=None)
 
     def test_execute_as_workflow(self):
-        _ctx = MockCloudifyContext(
-            "execution_id",
-        )
-        current_ctx.set(_ctx)
+        # wrong context type
+        _ctx = mock.Mock()
+        _ctx.type = '<unknown>'
+
+        mock_execute = mock.Mock(return_value=None)
+        with mock.patch("cloudify_rest.tasks._execute", mock_execute):
+            with self.assertRaises(tasks.NonRecoverableError):
+                tasks.execute_as_workflow(
+                    inputs={
+                        'blueprint_id': '<blueprint>',
+                        'deployment_id': '<deployment>',
+                        'tenant_name': '<tenant>',
+                        'rest_token': '<token>'}, ctx=_ctx,
+                    properties={
+                        "hosts": ["jsonplaceholder.typicode.com"],
+                        "port": 443,
+                        "ssl": True, "verify": False})
+
+        # correct context type
+        _ctx = mock.Mock()
+        _ctx.type = 'deployment'
 
         mock_execute = mock.Mock(return_value=None)
         with mock.patch("cloudify_rest.tasks._execute", mock_execute):
@@ -205,14 +222,12 @@ class TestTasks(unittest.TestCase):
             },
             prerender=False,
             remove_calls=False, retry_count=1, retry_sleep=15,
-            resource_callback=tasks._workflow_get_resource,
+            resource_callback=tasks.workflow_get_resource,
             save_path=None)
 
     def test_execute_as_workflow_hook(self):
-        _ctx = MockCloudifyContext(
-            "execution_id",
-        )
-        current_ctx.set(_ctx)
+        _ctx = mock.Mock()
+        _ctx.type = 'deployment'
 
         mock_execute = mock.Mock(return_value=None)
         with mock.patch("cloudify_rest.tasks._execute", mock_execute):
@@ -243,7 +258,7 @@ class TestTasks(unittest.TestCase):
             },
             prerender=False,
             remove_calls=False, retry_count=1, retry_sleep=15,
-            resource_callback=tasks._workflow_get_resource,
+            resource_callback=tasks.workflow_get_resource,
             save_path=None)
 
     def test_workflow_get_resource(self):
@@ -254,13 +269,13 @@ class TestTasks(unittest.TestCase):
             with mock.patch(
                     'builtins.open', fake_file
             ):
-                tasks._workflow_get_resource('/proc/read_only_file')
+                tasks.workflow_get_resource('/proc/read_only_file')
         else:
             # python 2
             with mock.patch(
                     '__builtin__.open', fake_file
             ):
-                tasks._workflow_get_resource('/proc/read_only_file')
+                tasks.workflow_get_resource('/proc/read_only_file')
         fake_file.assert_called_once_with('/proc/read_only_file', 'r')
         fake_file().read.assert_called_with()
 

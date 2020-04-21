@@ -1,5 +1,9 @@
 releases:
 
+  v1.22.0:
+  - terminal: support run action as hook
+  - terminal: fix prompt check code (in sdk)
+
   v1.21.0:
   - rest: support run action as hook
 

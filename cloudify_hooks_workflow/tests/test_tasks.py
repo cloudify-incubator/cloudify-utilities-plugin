@@ -22,15 +22,18 @@ class TestTasks(unittest.TestCase):
     def test_run_workflow_skip_uncofigured(self):
         # no settings
         _ctx = Mock()
+        _ctx.type = 'deployment'
         tasks.run_workflow(inputs={}, ctx=_ctx)
         _ctx.logger.error.assert_called_with("Deployment id is undefined")
 
         _ctx = Mock()
+        _ctx.type = 'deployment'
         tasks.run_workflow(inputs={'deployment_id': 'w_id'}, ctx=_ctx)
         _ctx.logger.error.assert_called_with("Workflow for run is undefined")
 
     def test_run_workflow_skip_no_deployment(self):
         _ctx = Mock()
+        _ctx.type = 'deployment'
         fake_client = Mock()
         fake_client.deployments.get = Mock(return_value={})
         mock_manager = Mock()
@@ -50,12 +53,22 @@ class TestTasks(unittest.TestCase):
             _ctx.logger.error.assert_called_with('Deployment disappear.')
 
     def test_run_workflow_skip_wrong_filter_by(self):
-        _ctx = Mock()
         fake_client = Mock()
         fake_client.deployments.get = Mock(return_value={'id': 'id'})
         mock_manager = Mock()
         mock_manager.get_rest_client = Mock(return_value=fake_client)
         with patch('cloudify_hooks_workflow.tasks.manager', mock_manager):
+            _ctx = Mock()
+            _ctx.type = '<unknow>'
+            with self.assertRaises(tasks.cfy_exc.NonRecoverableError):
+                tasks.run_workflow(inputs={'deployment_id': 'w_id'},
+                                   workflow_for_run="uninstall",
+                                   filter_by={'a': 'b'},
+                                   ctx=_ctx)
+
+            # correct type
+            _ctx = Mock()
+            _ctx.type = 'deployment'
             tasks.run_workflow(inputs={'deployment_id': 'w_id'},
                                workflow_for_run="uninstall",
                                filter_by={'a': 'b'},
@@ -65,6 +78,7 @@ class TestTasks(unittest.TestCase):
 
     def test_run_workflow_run_external_client(self):
         _ctx = Mock()
+        _ctx.type = 'deployment'
         fake_client = Mock()
         fake_client.deployments.get = Mock(return_value={'id': 'id'})
         with patch(
@@ -81,6 +95,7 @@ class TestTasks(unittest.TestCase):
 
     def test_run_workflow_run_filter(self):
         _ctx = Mock()
+        _ctx.type = 'deployment'
         fake_client = Mock()
         fake_client.deployments.get = Mock(return_value={
             'id': 'id',
@@ -108,6 +123,7 @@ class TestTasks(unittest.TestCase):
 
     def test_check_filter(self):
         _ctx = Mock()
+        _ctx.type = 'deployment'
         # wrong filter type
         self.assertFalse(tasks._check_filter(
             ctx=_ctx, filter_by={}, inputs={}))
