@@ -218,7 +218,7 @@ node_templates:
                 retry_sleep: <optional, sleep between rerun, by default 15>
 ```
 
-**Example 7: Use terminal as hooks **
+**Example 7: Use terminal as hooks**
 
 ```yaml
 hooks:
