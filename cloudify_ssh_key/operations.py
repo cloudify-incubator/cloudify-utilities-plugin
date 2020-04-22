@@ -100,6 +100,14 @@ def create(**_):
             ctx.instance.runtime_properties[SECRETS_KEY_OWNER] = False
             private_key_export = _get_secret(private_name).value
             public_key_export = _get_secret(public_name).value
+        # if the user want to use existing secrets but one of them is missing
+        elif use_secrets_if_exist and (
+                _check_if_secret_exist(public_name) ^ _check_if_secret_exist(
+                private_name)):
+            raise NonRecoverableError('Cant use existing secrets: {0}, {1} '
+                                      'because only one of them exists in '
+                                      'your manager'.format(public_name,
+                                                            private_name))
         else:
             _create_secret(private_name, private_key_export)
             _create_secret(public_name, public_key_export)
