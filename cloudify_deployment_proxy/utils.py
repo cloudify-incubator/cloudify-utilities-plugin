@@ -147,7 +147,7 @@ def get_local_path(source, destination=None, create_temp=False):
             'using one of the allowed schemes: {0}'.format(allowed_schemes))
 
 
-def zip(source, destination, include_folder=True):
+def zip_folder(source, destination, include_folder=True):
     ctx.logger.debug('Creating zip archive: {0}...'.format(destination))
     with zipfile.ZipFile(destination, 'w') as zip_file:
         for root, _, files in os.walk(source):
@@ -165,6 +165,6 @@ def zip_files(files):
     destination_zip = source_folder + '.zip'
     for path in files:
         copy(path, source_folder)
-    zip(source_folder, destination_zip, include_folder=False)
+    zip_folder(source_folder, destination_zip, include_folder=False)
     shutil.rmtree(source_folder)
     return destination_zip

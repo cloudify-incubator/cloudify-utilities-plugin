@@ -1,1 +1,3 @@
-cloudify-common==4.4
+# python3+
+networkx
+https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip
