@@ -1,5 +1,8 @@
 releases:
 
+  v1.23.0:
+  - Apply futurize fixes for python3
+
   v1.22.0:
   - terminal: support run action as hook
   - terminal: fix prompt check code (in sdk)

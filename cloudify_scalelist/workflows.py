@@ -449,8 +449,7 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
 
         scale_settings[scale_id] = {
             'instances': planned_num_instances,
-            # need to run sorted only for tests and have same sequence of id's
-            'removed_ids_include_hint': sorted(instances_remove),
+            'removed_ids_include_hint': instances_remove,
         }
 
     ctx.logger.info('Scale settings: {}'.format(repr(scale_settings)))

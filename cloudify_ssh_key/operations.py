@@ -19,7 +19,9 @@ import sys
 import os
 import tempfile
 import shutil
-from Crypto.PublicKey import RSA
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
 
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
@@ -27,8 +29,8 @@ from cloudify.utils import exception_to_error_cause
 from cloudify import ctx, manager
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-OPENSSH_FORMAT_STRING = 'OpenSSH'
-PRIVATE_KEY_EXPORT_TYPE = 'PEM'
+from cloudify_terminal import operation_cleanup
+
 ALGORITHM = 'RSA'
 
 # runtime names
@@ -87,10 +89,19 @@ def create(**_):
             'Cant enable "use_secrets_if_exist" property without '
             'enable "use_secret_store" property')
 
-    key_object = RSA.generate(bits)
-    private_key_export = key_object.exportKey(PRIVATE_KEY_EXPORT_TYPE)
-    pubkey = key_object.publickey()
-    public_key_export = pubkey.exportKey(OPENSSH_FORMAT_STRING)
+    key_object = rsa.generate_private_key(
+        backend=default_backend(),
+        public_exponent=65537,
+        key_size=bits
+    )
+    private_key_export = key_object.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption())
+    public_key_export = key_object.public_key().public_bytes(
+        encoding=serialization.Encoding.OpenSSH,
+        format=serialization.PublicFormat.OpenSSH
+    )
 
     if use_secret_store:
         private_name = '{0}_private'.format(key_name)
@@ -141,7 +152,7 @@ def create(**_):
             private_key_export
 
 
-@operation(resumable=True)
+@operation_cleanup
 def delete(**_):
     # remove keys only if created on previous step
     key_name = ctx.instance.runtime_properties.get(SECRETS_KEY_NAME)
@@ -168,11 +179,6 @@ def delete(**_):
     if public_key_path:
         _remove_path(public_key_path)
         del ctx.instance.runtime_properties[PUBLIC_KEY_PATH]
-
-    # cleanup runtime properties
-    keys = ctx.instance.runtime_properties.keys()
-    for key in keys:
-        del ctx.instance.runtime_properties[key]
 
 
 def _create_secret(key, value):
@@ -212,7 +218,7 @@ def _write_key_file(_key_file_path,
                     _key_file_material,
                     _private_key_permissions=False):
     expanded_key_path = os.path.expanduser(_key_file_path)
-    with tempfile.NamedTemporaryFile('w', delete=False) as temporary_file:
+    with tempfile.NamedTemporaryFile('wb', delete=False) as temporary_file:
         temporary_file.write(_key_file_material)
         temporary_file.close()
         try:

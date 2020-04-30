@@ -24,6 +24,7 @@ import six
 
 # Third Party Imports
 from cloudify.state import current_ctx
+from cloudify.manager import DirtyTrackingDict
 from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -82,6 +83,9 @@ class TestKey(testtools.TestCase):
             properties=test_properties
         )
 
+        ctx.instance._runtime_properties = DirtyTrackingDict({})
+        ctx._operation = mock.Mock()
+
         return ctx
 
     def create_private_key_path(self, ctx):
@@ -97,9 +101,6 @@ class TestKey(testtools.TestCase):
         return key_path
 
     def test_operations_with_secret(self):
-        if six.PY3:
-            self.skipTest("PyCrypto unsupported with python3")
-
         ctx = self.mock_ctx('test_delete_with_secret', use_secret_store=True)
         current_ctx.set(ctx=ctx)
 
@@ -111,26 +112,23 @@ class TestKey(testtools.TestCase):
             )
             self.assertIsNotNone(_get_secret('test_delete_with_secret'))
             self.assertTrue(os.path.exists(key_path))
+            ctx._operation.name = "cloudify.interfaces.lifecycle.delete"
             delete()
             self.assertFalse(os.path.exists(key_path))
 
     def test_operations_no_secret(self):
-        if six.PY3:
-            self.skipTest("PyCrypto unsupported with python3")
-
         ctx = self.mock_ctx('test_delete_no_secret')
         current_ctx.set(ctx=ctx)
 
         key_path = self.create_private_key_path(ctx=ctx)
+        ctx._operation.name = "cloudify.interfaces.lifecycle.create"
         create()
         self.assertTrue(os.path.exists(key_path))
+        ctx._operation.name = "cloudify.interfaces.lifecycle.delete"
         delete()
         self.assertFalse(os.path.exists(key_path))
 
     def test_raise_unimplemented(self):
-        if six.PY3:
-            self.skipTest("PyCrypto unsupported with python3")
-
         corner_cases = [{
             'comment': 'some_comment',
             'passphrase': 'some_passphrase',
@@ -160,8 +158,6 @@ class TestKey(testtools.TestCase):
                               resource_config=copy.deepcopy(case))
 
     def test_use_secrets_if_exist_error(self):
-        if six.PY3:
-            self.skipTest("PyCrypto unsupported with python3")
         ctx = self.mock_ctx('test_use_secrets_if_exist_error',
                             use_secret_store=False,
                             use_secrets_if_exist=True)
@@ -212,7 +208,7 @@ class TestKey(testtools.TestCase):
                     # python 3
                     with mock.patch('builtins.open', fake_file):
                         self.assertRaises(NonRecoverableError, _write_key_file,
-                                          'k', 'content')
+                                          'k', bytes('content', 'utf8'))
                 else:
                     # python 2
                     with mock.patch('__builtin__.open', fake_file):
@@ -231,7 +227,7 @@ class TestKey(testtools.TestCase):
         subprocess.check_call(['sudo', 'mount', '-t', 'tmpfs', '-o',
                                'size=2K', 'tmpfs', tempdir])
         target_file = os.path.join(tempdir, 'test.key')
-        _write_key_file(target_file, 'hello')
+        _write_key_file(target_file, bytes('hello'))
         with open(target_file, 'r') as f:
             contents = f.read()
             self.assertEqual(contents, 'hello')
