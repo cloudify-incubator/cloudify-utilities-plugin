@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import unittest
 from mock import (
     Mock,
@@ -123,9 +124,9 @@ class TestTasks(unittest.TestCase):
                     tasks.run(
                         ctx=_ctx,
                         calls=[{'action': 'ls'}],
-                        terminal_auth={'ip': 'ip', 'user': 'user',
-                                       'password': 'password'}
-                    )
+                        terminal_auth=json.loads(json.dumps(
+                            {'ip': 'ip', 'user': 'user',
+                             'password': 'password'})))
             ssh_mock.connect.assert_called_with(
                 'ip', allow_agent=False, look_for_keys=False,
                 password='password', port=22, timeout=5, username='user')
@@ -146,9 +147,9 @@ class TestTasks(unittest.TestCase):
                         ctx=_ctx,
                         calls=[{'action': 'ls'}],
                         logger_file="/tmp/terminal.log",
-                        terminal_auth={'ip': 'ip', 'user': 'user',
-                                       'password': 'password'}
-                    )
+                        terminal_auth=json.loads(json.dumps(
+                            {'ip': 'ip', 'user': 'user',
+                             'password': 'password'})))
             ssh_mock.connect.assert_called_with(
                 'ip', allow_agent=False, look_for_keys=False,
                 password='password', port=22, timeout=5, username='user')
@@ -169,9 +170,9 @@ class TestTasks(unittest.TestCase):
                     ctx=_ctx,
                     calls=[{'action': 'ls'}],
                     logger_file="/tmp/terminal.log",
-                    terminal_auth={'ip': 'ip', 'user': 'user',
-                                   'password': 'password'}
-                )
+                    terminal_auth=json.loads(json.dumps(
+                        {'ip': 'ip', 'user': 'user',
+                         'password': 'password'})))
 
         # correct context type
         _ctx = Mock()
@@ -185,9 +186,9 @@ class TestTasks(unittest.TestCase):
                     ctx=_ctx,
                     calls=[{'action': 'ls'}],
                     logger_file="/tmp/terminal.log",
-                    terminal_auth={'ip': 'ip', 'user': 'user',
-                                   'password': 'password'}
-                )
+                    terminal_auth=json.loads(json.dumps(
+                        {'ip': 'ip', 'user': 'user',
+                         'password': 'password'})))
         ssh_mock.connect.assert_called_with(
             'ip', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user')
@@ -205,9 +206,9 @@ class TestTasks(unittest.TestCase):
                     ctx=_ctx,
                     calls=[{'action': 'ls'}],
                     logger_file="/tmp/terminal.log",
-                    terminal_auth={'ip': 'ip', 'user': 'user',
-                                   'password': 'password'}
-                )
+                    terminal_auth=json.loads(json.dumps(
+                        {'ip': 'ip', 'user': 'user',
+                         'password': 'password'})))
         ssh_mock.connect.assert_called_with(
             'ip', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user')
@@ -223,9 +224,9 @@ class TestTasks(unittest.TestCase):
                 tasks.run(
                     ctx=_ctx,
                     calls=[{'action': 'ls'}],
-                    terminal_auth={'user': 'user',
-                                   'password': 'password'}
-                )
+                    terminal_auth=json.loads(json.dumps(
+                        {'user': 'user',
+                         'password': 'password'})))
         ssh_mock.connect.assert_called_with(
             'ip', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user')
@@ -240,9 +241,9 @@ class TestTasks(unittest.TestCase):
                 tasks.run(
                     ctx=_ctx,
                     calls=[{'action': 'ls'}],
-                    terminal_auth={'ip': ['ip1', 'ip2'], 'user': 'user',
-                                   'password': 'password'}
-                )
+                    terminal_auth=json.loads(json.dumps(
+                        {'ip': ['ip1', 'ip2'], 'user': 'user',
+                         'password': 'password'})))
         ssh_mock.connect.assert_has_calls([call(
             'ip1', allow_agent=False, look_for_keys=False, password='password',
             port=22, timeout=5, username='user'), call(
@@ -260,9 +261,9 @@ class TestTasks(unittest.TestCase):
                 tasks.run(
                     ctx=_ctx,
                     calls=[{'action': 'ls'}],
-                    terminal_auth={'ip': 'ip', 'user': 'user',
-                                   'password': 'password', 'store_logs': True}
-                )
+                    terminal_auth=json.loads(json.dumps(
+                        {'ip': 'ip', 'user': 'user',
+                         'password': 'password', 'store_logs': True})))
         connection_mock.connect.assert_called_with(
             'ip', 'user', 'password', None, 22,
             prompt_check=None, responses=[])
@@ -279,9 +280,9 @@ class TestTasks(unittest.TestCase):
             tasks.run(
                 ctx=_ctx,
                 calls=[{}],
-                terminal_auth={'ip': 'ip', 'user': 'user',
-                               'password': 'password', 'store_logs': True}
-            )
+                terminal_auth=json.loads(json.dumps(
+                    {'ip': 'ip', 'user': 'user',
+                     'password': 'password', 'store_logs': True})))
 
         connection_mock.run.assert_not_called()
 
@@ -297,9 +298,9 @@ class TestTasks(unittest.TestCase):
             tasks.run(
                 ctx=_ctx,
                 calls=[{'action': 'hostname'}],
-                terminal_auth={'ip': 'ip', 'user': 'user',
-                               'password': 'password', 'store_logs': True}
-            )
+                terminal_auth=json.loads(json.dumps(
+                    {'ip': 'ip', 'user': 'user',
+                     'password': 'password', 'store_logs': True})))
 
         connection_mock.run.assert_called_with(
             command='hostname',
@@ -324,10 +325,10 @@ class TestTasks(unittest.TestCase):
             tasks.run(
                 ctx=_ctx,
                 calls=[{'action': 'hostname'}],
-                terminal_auth={'ip': 'ip', 'user': 'user',
-                               'password': 'password', 'store_logs': True,
-                               'smart_device': True}
-            )
+                terminal_auth=json.loads(json.dumps(
+                    {'ip': 'ip', 'user': 'user',
+                     'password': 'password', 'store_logs': True,
+                     'smart_device': True})))
 
         connection_mock.run.assert_called_with(
             command='hostname',
@@ -355,9 +356,9 @@ class TestTasks(unittest.TestCase):
                 calls=[{'template': '1.txt'},
                        {'template': '2.txt'},
                        {'template': '3.txt', 'params': {'aa': 'gg'}}],
-                terminal_auth={'ip': 'ip', 'user': 'user',
-                               'password': 'password'}
-            )
+                terminal_auth=json.loads(json.dumps(
+                    {'ip': 'ip', 'user': 'user',
+                     'password': 'password'})))
 
         connection_mock.run.assert_has_calls([
             call(command='bb', prompt_check=None, warning_examples=[],
@@ -382,9 +383,9 @@ class TestTasks(unittest.TestCase):
                 calls=[{'template_text': ""},
                        {'template_text': "bb"},
                        {'template_text': "{{ aa }}", 'params': {'aa': 'gg'}}],
-                terminal_auth={'ip': 'ip', 'user': 'user',
-                               'password': 'password'}
-            )
+                terminal_auth=json.loads(json.dumps(
+                    {'ip': 'ip', 'user': 'user',
+                     'password': 'password'})))
 
         connection_mock.run.assert_has_calls([
             call(command='bb', prompt_check=None, warning_examples=[],
@@ -408,9 +409,9 @@ class TestTasks(unittest.TestCase):
                 ctx=_ctx,
                 calls=[{'action': 'hostname\n \nls',
                         'save_to': 'place_for_save'}],
-                terminal_auth={'ip': 'ip', 'user': 'user',
-                               'password': 'password', 'store_logs': True}
-            )
+                terminal_auth=json.loads(json.dumps(
+                    {'ip': 'ip', 'user': 'user',
+                     'password': 'password', 'store_logs': True})))
 
         connection_mock.run.assert_has_calls([
             call(command='hostname', prompt_check=None, warning_examples=[],
@@ -435,9 +436,9 @@ class TestTasks(unittest.TestCase):
                 calls=[{'action': 'hostname', 'save_to': 'place_for_save',
                         'responses': [{'question': 'yes?', 'answer': 'no'}],
                         'errors': ['error'], 'promt_check': ['#']}],
-                terminal_auth={'ip': 'ip', 'user': 'user',
-                               'password': 'password', 'store_logs': True}
-            )
+                terminal_auth=json.loads(json.dumps(
+                    {'ip': 'ip', 'user': 'user',
+                     'password': 'password', 'store_logs': True})))
 
         connection_mock.run.assert_called_with(
             command='hostname',
@@ -464,9 +465,9 @@ class TestTasks(unittest.TestCase):
             tasks.run(
                 ctx=_ctx,
                 calls=[{}],
-                terminal_auth={'ip': 'ip', 'user': 'user',
-                               'password': 'password', 'store_logs': True}
-            )
+                terminal_auth=json.loads(json.dumps(
+                    {'ip': 'ip', 'user': 'user',
+                     'password': 'password', 'store_logs': True})))
 
         connection_mock.run.assert_has_calls([
             call(command='exit', prompt_check=None, warning_examples=[],

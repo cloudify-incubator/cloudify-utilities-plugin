@@ -461,16 +461,15 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
 def scaledownlist(ctx, scale_compute=False,
                   ignore_failure=False,
                   force_db_cleanup=False,
-                  scale_transaction_field="",
+                  scale_transaction_field=u'',
                   scale_node_name=None,
-                  scale_node_field="",
-                  scale_node_field_value="",
+                  scale_node_field=u'',
+                  scale_node_field_value=u'',
                   all_results=False,
                   node_sequence=None,
-                  **kwargs):
-    if (
-        not scale_node_field
-    ):
+                  **_):
+
+    if not scale_node_field:
         raise ValueError('You should provide `scale_node_field` for correct'
                          'downscale.')
 
