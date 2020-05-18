@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import unittest
 from mock import MagicMock, patch, call
 
 from cloudify.state import current_ctx
 
-import cloudify_suspend.workflows as workflows
+from .. import workflows
 
 
 class TestSuspend(unittest.TestCase):

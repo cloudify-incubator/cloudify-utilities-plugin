@@ -68,3 +68,5 @@ ChangeLog
 local-storage/
 
 plugin_docs
+
+*.wgn

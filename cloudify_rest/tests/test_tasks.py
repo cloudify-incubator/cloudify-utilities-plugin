@@ -12,16 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest
-import mock
-import six
 
-from cloudify.exceptions import NonRecoverableError
-from cloudify.mocks import MockCloudifyContext
+import mock
+import unittest
+
 from cloudify.state import current_ctx
 from cloudify.manager import DirtyTrackingDict
+from cloudify.mocks import MockCloudifyContext
+from cloudify.exceptions import NonRecoverableError
 
-from cloudify_rest import tasks
+from cloudify_common_sdk._compat import PY2
+
+from .. import tasks
 
 TEMPLATE = """
     rest_calls:
@@ -264,16 +266,16 @@ class TestTasks(unittest.TestCase):
     def test_workflow_get_resource(self):
         fake_file = mock.mock_open()
         fake_file.read = mock.Mock(return_value="abc")
-        if six.PY3:
-            # python 3
-            with mock.patch(
-                    'builtins.open', fake_file
-            ):
-                tasks.workflow_get_resource('/proc/read_only_file')
-        else:
+        if PY2:
             # python 2
             with mock.patch(
                     '__builtin__.open', fake_file
+            ):
+                tasks.workflow_get_resource('/proc/read_only_file')
+        else:
+            # python 3
+            with mock.patch(
+                    'builtins.open', fake_file
             ):
                 tasks.workflow_get_resource('/proc/read_only_file')
         fake_file.assert_called_once_with('/proc/read_only_file', 'r')

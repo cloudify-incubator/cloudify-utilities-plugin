@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from getpass import getuser
 import grp
 import os
 import pwd
 import subprocess
-from six import string_types
+from getpass import getuser
 
 from cloudify import ctx
 from cloudify.exceptions import (
     NonRecoverableError,
     HttpException
 )
+
+from cloudify_common_sdk._compat import text_type
 
 
 def execute_command(_command, extra_args=None):
@@ -114,7 +115,7 @@ class CloudifyFile(object):
                     'See previous ERROR log message.'.format(getuser()))
             return True
 
-        if not isinstance(self.owner, string_types):
+        if not isinstance(self.owner, text_type):
             raise NonRecoverableError('Property owner must be a string.')
 
         split_owner = self.owner.split(':')

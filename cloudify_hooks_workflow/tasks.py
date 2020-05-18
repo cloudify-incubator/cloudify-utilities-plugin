@@ -12,14 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import logging
 
-from cloudify import exceptions as cfy_exc
-from cloudify import ctx as CloudifyContext
 from cloudify import manager
 from cloudify import context
-from cloudify_rest_client.client import CloudifyClient
 from cloudify.decorators import workflow
+from cloudify import exceptions as cfy_exc
+from cloudify import ctx as CloudifyContext
+from cloudify_rest_client.client import CloudifyClient
 
 from cloudify_common_sdk.filters import get_field_value_recursive
 

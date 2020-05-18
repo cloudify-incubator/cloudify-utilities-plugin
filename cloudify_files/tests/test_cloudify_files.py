@@ -12,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mock import MagicMock
 
 import os
-from pwd import getpwnam
 import tempfile
 import testtools
-from six import string_types
+from pwd import getpwnam
+from mock import MagicMock
 
 from cloudify.mocks import MockCloudifyContext
-from cloudify_files import tasks as operation_task
 from cloudify.exceptions import NonRecoverableError
 from cloudify.state import current_ctx
+
+from cloudify_common_sdk._compat import text_type
+
+from .. import tasks as operation_task
 
 
 class CloudifyFilesTestBase(testtools.TestCase):
@@ -49,7 +51,7 @@ class CloudifyFilesTestBase(testtools.TestCase):
     @property
     def _user_id(self):
         _owner = self._owner
-        if not isinstance(_owner, string_types):
+        if not isinstance(_owner, text_type):
             return None
         split_owner = _owner.split(':')
         if not len(split_owner) == 2:

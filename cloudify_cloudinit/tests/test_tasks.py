@@ -20,7 +20,7 @@ from cloudify.manager import DirtyTrackingDict
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
 
-import cloudify_cloudinit.tasks as tasks
+from .. import tasks
 
 
 NODE_PROPS = {

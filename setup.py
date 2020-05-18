@@ -16,12 +16,11 @@ import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.23.0',
+    version='1.23.1',
     author='Cloudify Platform Ltd.',
     author_email='hello@cloudify.co',
     description='Utilities for extending Cloudify',
-    packages=['cloudify_deployment_proxy',
-              'cloudify_ssh_key',
+    packages=['cloudify_ssh_key',
               'cloudify_files',
               'cloudify_terminal',
               'cloudify_configuration',
@@ -35,6 +34,6 @@ setuptools.setup(
     license='LICENSE',
     install_requires=[
         'cloudify-common>=4.4',  # deployment_proxy
-        'cloudify-utilities-plugins-sdk==0.0.20',  # terminal, rest
+        'cloudify-utilities-plugins-sdk==0.0.21',  # terminal, rest
         'ruamel.yaml']  # cloudinit
 )

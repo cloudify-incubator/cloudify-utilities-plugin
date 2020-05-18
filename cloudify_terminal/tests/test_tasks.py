@@ -11,8 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import unittest
-from mock import Mock, patch, call, PropertyMock
+from mock import (
+    Mock,
+    patch,
+    call,
+    PropertyMock)
 
 from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
@@ -21,7 +26,8 @@ from cloudify.exceptions import (
 )
 from cloudify.manager import DirtyTrackingDict
 
-import cloudify_terminal.tasks as tasks
+from .. import tasks
+
 from cloudify_common_sdk import exceptions
 
 

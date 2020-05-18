@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import unittest
 from mock import Mock, patch, call
 
-from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
+from cloudify.mocks import MockCloudifyContext
 from cloudify.workflows.workflow_api import ExecutionCancelled
 
 import cloudify_scalelist.workflows as workflows

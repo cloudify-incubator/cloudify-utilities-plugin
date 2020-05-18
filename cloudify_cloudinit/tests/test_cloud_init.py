@@ -17,7 +17,7 @@ import base64
 import yaml
 import mock
 from cloudify.mocks import MockCloudifyContext
-from cloudify_cloudinit import CloudInit
+from .. import CloudInit
 from cloudify.state import current_ctx
 
 NODE_PROPS = {

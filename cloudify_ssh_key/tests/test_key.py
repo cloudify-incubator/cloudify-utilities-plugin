@@ -20,19 +20,20 @@ import tempfile
 import testtools
 import subprocess
 import shutil
-import six
 
 # Third Party Imports
 from cloudify.state import current_ctx
 from cloudify.manager import DirtyTrackingDict
 from cloudify.mocks import MockCloudifyContext
+from cloudify_rest_client.secrets import Secret
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_rest_client.secrets import Secret
-from cloudify_ssh_key.operations import (create, delete, _get_secret,
-                                         _create_secret, _delete_secret,
-                                         _remove_path, _write_key_file,
-                                         _check_if_secret_exist)
+from ..operations import (create, delete, _get_secret,
+                          _create_secret, _delete_secret,
+                          _remove_path, _write_key_file,
+                          _check_if_secret_exist)
+
+from cloudify_common_sdk._compat import PY2
 
 
 class TestKey(testtools.TestCase):
@@ -204,16 +205,16 @@ class TestKey(testtools.TestCase):
         with mock.patch('os.path.exists', mock.MagicMock(return_value=False)):
             with mock.patch('os.makedirs', mock_client):
                 fake_file = mock.mock_open()
-                if six.PY3:
-                    # python 3
-                    with mock.patch('builtins.open', fake_file):
-                        self.assertRaises(NonRecoverableError, _write_key_file,
-                                          'k', bytes('content', 'utf8'))
-                else:
+                if PY2:
                     # python 2
                     with mock.patch('__builtin__.open', fake_file):
                         self.assertRaises(NonRecoverableError, _write_key_file,
                                           'k', 'content')
+                else:
+                    # python 3
+                    with mock.patch('builtins.open', fake_file):
+                        self.assertRaises(NonRecoverableError, _write_key_file,
+                                          'k', bytes('content', 'utf8'))
 
     # Skip this under CircleCI because we have no permissions
     # to sudo there.

@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import time
 
-from cloudify import exceptions as cfy_exc
-from cloudify import ctx as CloudifyContext
 from cloudify import context
 from cloudify.decorators import operation
+from cloudify import exceptions as cfy_exc
+from cloudify import ctx as CloudifyContext
 
 from cloudify_common_sdk import exceptions
 
@@ -77,8 +78,7 @@ def operation_cleanup(func, force=False):
             if current_action == DELETE_NODE_ACTION:
                 # cleanup runtime properties
                 # need to convert generaton to list, python 3
-                keys = [key for key in ctx.instance.runtime_properties.keys()]
-                for key in keys:
+                for key, _ in list(ctx.instance.runtime_properties.items()):
                     del ctx.instance.runtime_properties[key]
             else:
                 # mark oparation as finished
