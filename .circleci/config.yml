@@ -223,29 +223,29 @@ workflows:
       - py3_compat
       - unittests_py27
       - unittests_py36
-#      - wagon:
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-#      - integration_tests:
-#          requires:
-#            - wagon
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-#      - release:
-#          filters:
-#            branches:
-#              only: /master/
-#          requires:
-#            - wagon
-#            - integration_tests
-#  nightly:
-#    triggers:
-#    - schedule:
-#        cron: "0 1 * * *"
-#        filters:
-#          branches:
-#            only:
-#              - master
-#    jobs: *all_jobs
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - integration_tests:
+          requires:
+            - wagon
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - release:
+          filters:
+            branches:
+              only: /master/
+          requires:
+            - wagon
+            - integration_tests
+  nightly:
+    triggers:
+    - schedule:
+        cron: "0 1 * * *"
+        filters:
+          branches:
+            only:
+              - master
+    jobs: *all_jobs
