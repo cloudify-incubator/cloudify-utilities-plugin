@@ -17,6 +17,7 @@ import time
 from cloudify import constants
 from cloudify.decorators import workflow
 from cloudify import exceptions as cfy_exc
+from cloudify_common_sdk.filters import obfuscate_passwords
 
 
 def _check_type(node, include_node_types, exclude_node_types):
@@ -38,7 +39,8 @@ def _check_type(node, include_node_types, exclude_node_types):
 
 
 def _run_operation(ctx, sequence, operation, **kwargs):
-    ctx.logger.debug("Run {}({})".format(operation, repr(kwargs)))
+    ctx.logger.debug("Run {}({})".format(operation,
+                                         repr(obfuscate_passwords(kwargs))))
 
     include_node_types = kwargs.get('include_node_types', [])
     exclude_node_types = kwargs.get('exclude_node_types', [])

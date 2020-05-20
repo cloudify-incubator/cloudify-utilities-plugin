@@ -185,8 +185,8 @@ def execute_as_workflow(*args, **kwargs):
              resource_callback=workflow_get_resource,
              retry_count=kwargs.get('retry_count', 1),
              retry_sleep=kwargs.get('retry_sleep', 15))
-    ctx.logger.debug("Final response: {runtime}".format(
-        runtime=repr(obfuscate_passwords(runtime_properties))))
+    ctx.logger.debug("Final response: {0}".format(
+        repr(obfuscate_passwords(runtime_properties))))
 
 
 def _execute_in_retry(template, params, instance_props, node_props,

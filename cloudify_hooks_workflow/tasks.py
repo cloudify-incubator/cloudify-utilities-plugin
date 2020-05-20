@@ -22,7 +22,8 @@ from cloudify import exceptions as cfy_exc
 from cloudify import ctx as CloudifyContext
 from cloudify_rest_client.client import CloudifyClient
 
-from cloudify_common_sdk.filters import get_field_value_recursive
+from cloudify_common_sdk.filters import (get_field_value_recursive,
+                                         obfuscate_passwords, )
 
 
 def _check_filter(ctx, filter_by, inputs):
@@ -31,19 +32,19 @@ def _check_filter(ctx, filter_by, inputs):
             # check type of field_desc
             if not isinstance(field_desc, dict):
                 ctx.logger.error(
-                    "Event skiped by wrong field description.")
+                    "Event skipped by wrong field description.")
                 return False
 
             # check path
             field_path = field_desc.get('path')
             if not field_path:
-                ctx.logger.error("Event skiped by undefined key.")
+                ctx.logger.error("Event skipped by undefined key.")
                 return False
 
-            # posible values
+            # possible values
             field_values = field_desc.get('values')
             if not field_values:
-                ctx.logger.error("Event skiped by undefined values.")
+                ctx.logger.error("Event skipped by undefined values.")
                 return False
 
             # check that we have such values in properties
@@ -53,14 +54,14 @@ def _check_filter(ctx, filter_by, inputs):
             # skip events if not in subset
             if value not in field_values:
                 ctx.logger.error(
-                    "Event with {value} skiped by {key}:{values} rule."
+                    "Event with {value} skipped by {key}:{values} rule."
                     .format(
                         value=repr(value), key=repr(field_path),
                         values=repr(field_values)))
                 return False
     else:
         ctx.logger.error(
-            "Filter skiped by incorrect type of rules list.")
+            "Filter skipped by incorrect type of rules list.")
         return False
 
     # everything looks good
@@ -98,8 +99,9 @@ def run_workflow(*args, **kwargs):
     # dump current parameters
     ctx.logger.debug(
         "Workflow run called with {inputs} and args '{args}' and kwargs:"
-        " {kwargs}".format(inputs=repr(inputs), args=repr(args),
-                           kwargs=repr(kwargs)))
+        " {kwargs}".format(inputs=repr(obfuscate_passwords(inputs)),
+                           args=repr(obfuscate_passwords(args)),
+                           kwargs=repr(obfuscate_passwords(kwargs))))
 
     # check deployment id, strange if empty but lets check
     deployment_id = inputs.get('deployment_id')

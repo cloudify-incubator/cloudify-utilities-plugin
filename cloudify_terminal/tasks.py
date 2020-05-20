@@ -20,7 +20,9 @@ from cloudify.decorators import workflow
 from cloudify import exceptions as cfy_exc
 from cloudify import ctx as CloudifyContext
 
-from cloudify_common_sdk import filters
+from cloudify_common_sdk.filters import (obfuscate_passwords,
+                                         shorted_text,
+                                         render_template, )
 from cloudify_common_sdk._compat import text_type
 import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
@@ -109,8 +111,8 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
     else:
         raise cfy_exc.OperationRetry(message="Let's try one more time?")
 
-    ctx.logger.info("Device prompt: {prompt}"
-                    .format(prompt=filters.shorted_text(prompt)))
+    ctx.logger.info(
+        "Device prompt: {prompt}".format(prompt=shorted_text(prompt)))
 
     for call in calls:
         responses = call.get('responses', global_responses)
@@ -132,7 +134,7 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
                 template_params = {}
             # save context for reuse in template
             template_params['ctx'] = ctx
-            operation = filters.render_template(template, template_params)
+            operation = render_template(template, template_params)
 
         # incase of template_text
         if not operation and 'template_text' in call:
@@ -145,17 +147,17 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
                 template_params = {}
             # save context for reuse in template
             template_params['ctx'] = ctx
-            operation = filters.render_template(template, template_params)
+            operation = render_template(template, template_params)
 
         if not operation:
             continue
 
         if responses:
             ctx.logger.info("We have predefined responses: {responses}"
-                            .format(responses=filters.shorted_text(responses)))
+                            .format(responses=shorted_text(responses)))
 
-        ctx.logger.debug("Template: \n{operation}"
-                         .format(operation=filters.shorted_text(operation)))
+        ctx.logger.debug("Template: \n{operation}".format(
+            operation=shorted_text(obfuscate_passwords(operation))))
 
         result = ""
         for op_line in operation.split("\n"):
@@ -164,8 +166,8 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
                 continue
 
             ctx.logger.info("Executing template...")
-            ctx.logger.debug("Execute: {opline}"
-                             .format(opline=filters.shorted_text(op_line)))
+            ctx.logger.debug("Execute: {opline}".format(
+                opline=shorted_text(obfuscate_passwords(op_line))))
 
             result_part = rerun(
                 ctx=ctx,
@@ -183,14 +185,14 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
                 retry_sleep=call.get('retry_sleep', 15))
 
             if result_part.strip():
-                ctx.logger.info(filters.shorted_text(result_part))
+                ctx.logger.info(shorted_text(result_part))
 
             result += (result_part + "\n")
         # save results to runtime properties
         save_to = call.get('save_to')
         if save_to:
             ctx.logger.info("For save: {result}"
-                            .format(result=filters.shorted_text(result)))
+                            .format(result=shorted_text(result)))
             runtime_properties[save_to] = result.strip()
 
     while not connection.is_closed() and exit_command:
@@ -207,7 +209,7 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
                 "critical_examples": global_error_examples
             })
         ctx.logger.info("Result of close: {result}"
-                        .format(result=filters.shorted_text(result)))
+                        .format(result=shorted_text(result)))
         time.sleep(1)
 
     connection.close()
