@@ -15,6 +15,7 @@
 
 
 import os
+import json
 import pytest
 
 from ecosystem_tests.dorkl import (
@@ -39,7 +40,7 @@ def blueprint_examples(request):
         basic_blueprint_test(
             request.param,
             test_name,
-            inputs={}
+            inputs=json.dumps({})
         )
     except:
         cleanup_on_failure(test_name)
