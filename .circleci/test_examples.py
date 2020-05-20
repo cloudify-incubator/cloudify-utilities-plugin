@@ -38,7 +38,8 @@ def blueprint_examples(request):
     try:
         basic_blueprint_test(
             request.param,
-            test_name
+            test_name,
+            inputs={}
         )
     except:
         cleanup_on_failure(test_name)
