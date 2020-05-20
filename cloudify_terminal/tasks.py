@@ -11,19 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from cloudify_common_sdk import filters
+
 import time
-from six import string_types
 import logging
 
-from cloudify import exceptions as cfy_exc
-from cloudify import ctx as CloudifyContext
 from cloudify import context
 from cloudify.decorators import workflow
+from cloudify import exceptions as cfy_exc
+from cloudify import ctx as CloudifyContext
 
-from cloudify_terminal import rerun, operation_cleanup, workflow_get_resource
-
+from cloudify_common_sdk import filters
+from cloudify_common_sdk._compat import text_type
 import cloudify_terminal_sdk.terminal_connection as terminal_connection
+
+from . import rerun, operation_cleanup, workflow_get_resource
 
 
 def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
@@ -55,7 +56,7 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
         ctx.logger.info("Used host from container: {ip_list}"
                         .format(ip_list=repr(ip_list)))
 
-    if isinstance(ip_list, string_types):
+    if isinstance(ip_list, text_type):
         ip_list = [ip_list]
     user = terminal_auth.get('user')
     password = terminal_auth.get('password')

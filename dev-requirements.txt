@@ -1,3 +1,2 @@
 # python3+
 networkx
-https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip

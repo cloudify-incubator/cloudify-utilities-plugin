@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import six
 import json
 
 
@@ -49,7 +48,7 @@ class SecretsSDK(object):
     def _write(self, rest_client_method, entries, variant=None):
         result = {}
 
-        for key, value in six.iteritems(entries):
+        for key, value in entries.items():
             self._logger.debug(
                 'Creating secret "{0}" with value: {1}'
                 .format(key, value)

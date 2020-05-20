@@ -17,7 +17,7 @@ from mock import MagicMock, patch
 from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
 
-import cloudify_configuration.tasks as tasks
+from .. import tasks
 
 
 class TestTasks(unittest.TestCase):

@@ -86,7 +86,7 @@ def cleanup_deployment(depl_id, get_all):
 if __name__ == '__main__':
     if len(sys.argv) < 2 or len(sys.argv) > 3:
         sys.stderr.write(
-            'Usage: {prog} <deployment id> {page, all}\n'.format(
+            'Usage: {prog} <deployment id> {{page, all}}\n'.format(
                 prog=sys.argv[0],
             )
         )

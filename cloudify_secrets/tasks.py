@@ -12,11 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import six
 
 from cloudify.decorators import operation
 from cloudify.manager import get_rest_client
-from cloudify_secrets.sdk import SecretsSDK
+
+from .sdk import SecretsSDK
+
 
 DATA_RUNTIME_PROPERTY = 'data'
 
@@ -26,7 +27,7 @@ KEYS_PROPERTY = 'keys'
 
 
 def _get_parameters(properties, kwargs):
-    for k, v in six.iteritems(properties):
+    for k, v in properties.items():
         if k not in kwargs:
             kwargs[k] = v
 

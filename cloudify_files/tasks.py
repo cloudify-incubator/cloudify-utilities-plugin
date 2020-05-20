@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from cloudify.decorators import operation
+
 from . import CloudifyFile
 
 

@@ -14,14 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cloudify import ctx
-from cloudify.workflows import ctx as workflow_ctx
-from cloudify.decorators import workflow
-import six
-
-from cloudify import manager
-
 import json
+
+from cloudify import ctx
+from cloudify import manager
+from cloudify.decorators import workflow
+from cloudify.workflows import ctx as workflow_ctx
 
 LIFECYCLE_OPERATION_UPDATE = 'cloudify.interfaces.lifecycle.update'
 LIFECYCLE_OPERATION_CONFIGURE = 'cloudify.interfaces.lifecycle.configure'
@@ -38,7 +36,7 @@ DIFF_PARAMS = 'diff_params'
 
 def _merge_dicts(d1, d2):
     result = d1.copy()
-    for key, new_val in six.iteritems(d2):
+    for key, new_val in d2.items():
         current_val = result.get(key)
         if isinstance(current_val, dict) and isinstance(new_val, dict):
             result[key] = _merge_dicts(current_val, new_val)
@@ -86,7 +84,7 @@ def load_configuration_to_runtime_properties(source_config=None, **kwargs):
 
     # populate params from main configuration with only relevant values
     params = {
-        k: v for k, v in six.iteritems(source_config) if k in params_list}
+        k: v for k, v in source_config.items() if k in params_list}
     # override params with HARD coded node params
     params.update(ctx.source.node.properties['params'])
 
@@ -96,7 +94,7 @@ def load_configuration_to_runtime_properties(source_config=None, **kwargs):
 
     # find changed params between old params and populated params
     diff_params = [
-        k for k, v in six.iteritems(params) if v != old_params.get(k)]
+        k for k, v in params.items() if v != old_params.get(k)]
 
     # populate the old params into params
     params[OLD_PARAMS] = old_params

@@ -10,3 +10,4 @@ requests-mock
 PyYAML==5.1.1
 # for blueprints validate
 nose-exclude
+https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip

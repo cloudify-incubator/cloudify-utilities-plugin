@@ -11,15 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import time
-from six import string_types
 
-from cloudify.decorators import workflow
-from cloudify.manager import get_rest_client
-from cloudify.plugins import lifecycle
+import time
+
 from cloudify.workflows import api
 from cloudify.workflows import tasks
+from cloudify.plugins import lifecycle
+from cloudify.decorators import workflow
+from cloudify.manager import get_rest_client
 
+from cloudify_common_sdk._compat import text_type
 from cloudify_common_sdk.filters import get_field_value_recursive
 
 
@@ -460,20 +461,19 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
 def scaledownlist(ctx, scale_compute=False,
                   ignore_failure=False,
                   force_db_cleanup=False,
-                  scale_transaction_field="",
+                  scale_transaction_field=u'',
                   scale_node_name=None,
-                  scale_node_field="",
-                  scale_node_field_value="",
+                  scale_node_field=u'',
+                  scale_node_field_value=u'',
                   all_results=False,
                   node_sequence=None,
-                  **kwargs):
-    if (
-        not scale_node_field
-    ):
+                  **_):
+
+    if not scale_node_field:
         raise ValueError('You should provide `scale_node_field` for correct'
                          'downscale.')
 
-    if isinstance(scale_node_field_value, string_types):
+    if isinstance(scale_node_field_value, text_type):
         scale_node_field_value = [scale_node_field_value]
 
     ctx.logger.debug("Filter by values list: {}."
@@ -483,10 +483,10 @@ def scaledownlist(ctx, scale_compute=False,
         scale_node_name = None
         ctx.logger.debug("Will be searched by all instances.")
 
-    if isinstance(scale_node_name, string_types):
+    if isinstance(scale_node_name, text_type):
         scale_node_name = [scale_node_name]
 
-    if isinstance(scale_node_field, string_types):
+    if isinstance(scale_node_field, text_type):
         scale_node_field = [scale_node_field]
 
     instances, instance_ids = _get_transaction_instances(
@@ -503,7 +503,7 @@ def scaledownlist(ctx, scale_compute=False,
 
     # we have list of instances_id(string) as part of scale dictionary
     scale_settings = _scaledown_group_to_settings(
-        ctx, _get_scale_list(ctx, instances, string_types), scale_compute)
+        ctx, _get_scale_list(ctx, instances, text_type), scale_compute)
 
     try:
         _run_scale_settings(ctx, scale_settings, {},
@@ -635,7 +635,7 @@ def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
                       **kwargs):
     """ A generic workflow for executing arbitrary operations on nodes """
 
-    if isinstance(node_field_value, string_types):
+    if isinstance(node_field_value, text_type):
         node_field_value = [node_field_value]
 
     ctx.logger.debug("Filter by values list: {}."
@@ -644,7 +644,7 @@ def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
     graph = ctx.graph_mode()
     subgraphs = {}
 
-    if isinstance(node_field, string_types):
+    if isinstance(node_field, text_type):
         node_field = [node_field]
 
     # filtering node instances

@@ -13,12 +13,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest
-import six
-from mock import MagicMock, patch, mock_open, Mock, call
 
-import cloudify_terminal_sdk.terminal_connection as terminal_connection
+import unittest
+from mock import (
+    MagicMock,
+    patch,
+    mock_open,
+    Mock,
+    call)
+
+
 from cloudify_common_sdk import exceptions
+from cloudify_common_sdk._compat import PY2
+import cloudify_terminal_sdk.terminal_connection as terminal_connection
 
 
 class TestTasks(unittest.TestCase):
@@ -209,16 +216,16 @@ class TestTasks(unittest.TestCase):
 
         with patch("os.path.isdir", MagicMock(return_value=True)):
             fake_file = mock_open()
-            if six.PY3:
-                # python 3
-                with patch(
-                        'builtins.open', fake_file
-                ):
-                    conn._write_to_log("Some_text")
-            else:
+            if PY2:
                 # python 2
                 with patch(
                         '__builtin__.open', fake_file
+                ):
+                    conn._write_to_log("Some_text")
+            else:
+                # python 3
+                with patch(
+                        'builtins.open', fake_file
                 ):
                     conn._write_to_log("Some_text")
             fake_file.assert_called_once_with('/proc/read_only_file', 'a+')
@@ -231,16 +238,16 @@ class TestTasks(unittest.TestCase):
 
         with patch("os.path.isdir", MagicMock(return_value=True)):
             fake_file = mock_open()
-            if six.PY3:
-                # python 3
-                with patch(
-                        'builtins.open', fake_file
-                ):
-                    conn._write_to_log("Some_text", False)
-            else:
+            if PY2:
                 # python 2
                 with patch(
                         '__builtin__.open', fake_file
+                ):
+                    conn._write_to_log("Some_text", False)
+            else:
+                # python 3
+                with patch(
+                        'builtins.open', fake_file
                 ):
                     conn._write_to_log("Some_text", False)
 
