@@ -75,7 +75,7 @@ class TestTasks(unittest.TestCase):
                                filter_by={'a': 'b'},
                                ctx=_ctx)
             _ctx.logger.error.assert_called_with(
-                'Filter skiped by incorrect type of rules list.')
+                'Filter skipped by incorrect type of rules list.')
 
     def test_run_workflow_run_external_client(self):
         _ctx = Mock()

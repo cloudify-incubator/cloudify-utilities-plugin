@@ -21,7 +21,8 @@ from cloudify.decorators import workflow
 from cloudify.manager import get_rest_client
 
 from cloudify_common_sdk._compat import text_type
-from cloudify_common_sdk.filters import get_field_value_recursive
+from cloudify_common_sdk.filters import (get_field_value_recursive,
+                                         obfuscate_passwords, )
 
 
 def _update_runtime_properties(ctx, instance_id, properties_updates):
@@ -29,7 +30,7 @@ def _update_runtime_properties(ctx, instance_id, properties_updates):
 
     resulted_state = manager.node_instances.get(instance_id)
     ctx.logger.debug('State before update: {}'
-                     .format(repr(resulted_state)))
+                     .format(repr(obfuscate_passwords(resulted_state))))
     ctx.logger.info("Update node: {}".format(instance_id))
     runtime_properties = resulted_state.runtime_properties or {}
     runtime_properties.update(properties_updates)
@@ -38,7 +39,7 @@ def _update_runtime_properties(ctx, instance_id, properties_updates):
                                   version=resulted_state.version + 1)
     resulted_state = manager.node_instances.get(instance_id)
     ctx.logger.debug('State after update: {}'
-                     .format(repr(resulted_state)))
+                     .format(repr(obfuscate_passwords(resulted_state))))
 
 
 def _cleanup_instances(ctx, instance_ids):
@@ -47,7 +48,7 @@ def _cleanup_instances(ctx, instance_ids):
     for instance_id in instance_ids:
         resulted_state = manager.node_instances.get(instance_id)
         ctx.logger.debug('State before update: {}'
-                         .format(repr(resulted_state)))
+                         .format(repr(obfuscate_passwords(resulted_state))))
         ctx.logger.info("Cleanup node: {}".format(instance_id))
         manager.node_instances.update(node_instance_id=instance_id,
                                       runtime_properties={},
@@ -55,7 +56,7 @@ def _cleanup_instances(ctx, instance_ids):
                                       version=resulted_state.version + 1)
         resulted_state = manager.node_instances.get(instance_id)
         ctx.logger.debug('State after update: {}'
-                         .format(repr(resulted_state)))
+                         .format(repr(obfuscate_passwords(resulted_state))))
 
 
 def _deployments_get_groups(ctx):
@@ -209,7 +210,8 @@ def _get_scale_list(ctx, scalable_entity_properties, property_type):
                 scalable_entity_properties[node_name]
             )
 
-    ctx.logger.info("Scale rules: {}".format(repr(scalable_entity_dict)))
+    ctx.logger.info("Scale rules: {}".format(
+        repr(obfuscate_passwords(scalable_entity_dict))))
     return scalable_entity_dict
 
 
@@ -324,7 +326,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                             "{}: Updating {} runtime properties by {}".format(
                                 node_instance._node_instance.node_id,
                                 node_instance._node_instance.id,
-                                repr(properties)))
+                                repr(obfuscate_passwords(properties))))
                         _update_runtime_properties(
                             ctx, node_instance._node_instance.id, properties)
                 if node_sequence:
@@ -453,7 +455,8 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
             'removed_ids_include_hint': instances_remove,
         }
 
-    ctx.logger.info('Scale settings: {}'.format(repr(scale_settings)))
+    ctx.logger.info(
+        'Scale settings: {}'.format(repr(obfuscate_passwords(scale_settings))))
     return scale_settings
 
 
@@ -468,7 +471,6 @@ def scaledownlist(ctx, scale_compute=False,
                   all_results=False,
                   node_sequence=None,
                   **_):
-
     if not scale_node_field:
         raise ValueError('You should provide `scale_node_field` for correct'
                          'downscale.')
@@ -476,8 +478,8 @@ def scaledownlist(ctx, scale_compute=False,
     if isinstance(scale_node_field_value, text_type):
         scale_node_field_value = [scale_node_field_value]
 
-    ctx.logger.debug("Filter by values list: {}."
-                     .format(repr(scale_node_field_value)))
+    ctx.logger.debug("Filter by values list: {}.".format(
+        repr(obfuscate_passwords(scale_node_field_value))))
 
     if not scale_node_name:
         scale_node_name = None
@@ -565,7 +567,8 @@ def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):
             'instances': planned_num_instances,
         }
 
-    ctx.logger.info('Scale settings: {}'.format(repr(scale_settings)))
+    ctx.logger.info('Scale settings: {}'.format(
+        repr(obfuscate_passwords(scale_settings))))
     return scale_settings
 
 
@@ -639,7 +642,7 @@ def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
         node_field_value = [node_field_value]
 
     ctx.logger.debug("Filter by values list: {}."
-                     .format(repr(node_field_value)))
+                     .format(repr(obfuscate_passwords(node_field_value))))
 
     graph = ctx.graph_mode()
     subgraphs = {}

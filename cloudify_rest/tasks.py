@@ -21,7 +21,8 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.decorators import workflow
 
 from cloudify_rest_sdk import utility
-from cloudify_common_sdk.filters import get_field_value_recursive
+from cloudify_common_sdk.filters import (get_field_value_recursive,
+                                         obfuscate_passwords, )
 
 from cloudify_terminal import operation_cleanup, rerun, workflow_get_resource
 
@@ -58,8 +59,9 @@ def bunch_execute(templates=None, **kwargs):
                 _get_params_attributes(ctx,
                                        ctx.instance.runtime_properties,
                                        params_attributes))
-        ctx.logger.debug('Params: {params}'
-                         .format(params=repr(runtime_properties)))
+        ctx.logger.debug(
+            'Params: {params}'.format(
+                params=repr(obfuscate_passwords(runtime_properties))))
         runtime_properties["ctx"] = ctx
         _execute(params=runtime_properties, template_file=template_file,
                  ctx=ctx, instance_props=ctx.instance.runtime_properties,
@@ -86,7 +88,8 @@ def execute(*argc, **kwargs):
         params = {}
 
     ctx.logger.debug("Execute params: {} template: {}"
-                     .format(repr(params), repr(template_file)))
+                     .format(repr(obfuscate_passwords(params)),
+                             repr(template_file)))
     runtime_properties = ctx.instance.runtime_properties.copy()
 
     runtime_properties.update(params)
@@ -113,7 +116,8 @@ def execute_as_relationship(*argc, **kwargs):
         params = {}
 
     ctx.logger.debug("Execute as relationship params: {} template: {}"
-                     .format(repr(params), repr(template_file)))
+                     .format(repr(obfuscate_passwords(params)),
+                             repr(template_file)))
 
     runtime_properties = ctx.target.instance.runtime_properties.copy()
     runtime_properties.update(ctx.source.instance.runtime_properties)
@@ -165,8 +169,9 @@ def execute_as_workflow(*args, **kwargs):
     if not params:
         params = {}
 
-    ctx.logger.debug("Execute as workflows params: {} template: {}"
-                     .format(repr(params), repr(template_file)))
+    ctx.logger.debug("Execute as workflow params: {} template: {}"
+                     .format(repr(obfuscate_passwords(params)),
+                             repr(template_file)))
 
     params['__inputs__'] = inputs
 
@@ -180,8 +185,8 @@ def execute_as_workflow(*args, **kwargs):
              resource_callback=workflow_get_resource,
              retry_count=kwargs.get('retry_count', 1),
              retry_sleep=kwargs.get('retry_sleep', 15))
-    ctx.logger.debug("Final response: {runtime}"
-                     .format(runtime=repr(runtime_properties)))
+    ctx.logger.debug("Final response: {0}".format(
+        repr(obfuscate_passwords(runtime_properties))))
 
 
 def _execute_in_retry(template, params, instance_props, node_props,

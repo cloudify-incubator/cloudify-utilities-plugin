@@ -20,6 +20,7 @@ from cloudify import ctx
 from cloudify import manager
 from cloudify.decorators import workflow
 from cloudify.workflows import ctx as workflow_ctx
+from cloudify_common_sdk.filters import obfuscate_passwords
 
 LIFECYCLE_OPERATION_UPDATE = 'cloudify.interfaces.lifecycle.update'
 LIFECYCLE_OPERATION_CONFIGURE = 'cloudify.interfaces.lifecycle.configure'
@@ -103,11 +104,14 @@ def load_configuration_to_runtime_properties(source_config=None, **kwargs):
     params[DIFF_PARAMS] = diff_params
 
     ctx.logger.info("Show params for instance {}: {}"
-                    .format(ctx.source.instance.id, params))
+                    .format(ctx.source.instance.id,
+                            obfuscate_passwords(params)))
     ctx.logger.info("Show old params for instance {}: {}"
-                    .format(ctx.source.instance.id, old_params))
+                    .format(ctx.source.instance.id,
+                            obfuscate_passwords(old_params)))
     ctx.logger.info("Show diff params for instance {}: {}"
-                    .format(ctx.source.instance.id, diff_params))
+                    .format(ctx.source.instance.id,
+                            obfuscate_passwords(diff_params)))
 
     # update params to runtime properties
     ctx.source.instance.runtime_properties[PARAMS] = params
@@ -205,7 +209,7 @@ def execute_update(restcli, sequence, instance, ctx):
     params = currentinstance.runtime_properties[PARAMS]
     ctx.logger.info(
         "Updating instance ID: {} with diff_params {}".format(
-            instance.id, params[DIFF_PARAMS]
+            instance.id, obfuscate_passwords(params[DIFF_PARAMS])
         )
     )
     operation_task = instance.execute_operation(
