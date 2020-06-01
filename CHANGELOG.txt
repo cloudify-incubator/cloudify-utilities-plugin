@@ -1,5 +1,7 @@
 releases:
-
+  v1.23.4:
+  -Fix a bug in the custom_workflow code and add ftp_module to setup.py
+  -Move all the examples to blueprint example repo.
   v1.23.1:
   - Additional Python3 Fixes.
 
