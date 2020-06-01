@@ -249,7 +249,6 @@ hooks:
 
 * [Cisco](examples/cisco.yaml) - show currently assigned ip's.
 * [Cisco](examples/cisco_flash_list.yaml) - list flash contents.
-* [Fortigate](examples/fortigate.yaml) - show assigned ip's with example for
-  error settings.
+* [Fortigate](examples/fortigate.yaml) - run config commands and unknown command("aaa").
 * [SSH to VM](examples/linux-ssh.yaml) - Simple ssh to linux vm with
   `run hostname` and by relationship call `run uptime`.
