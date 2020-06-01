@@ -30,8 +30,7 @@ setuptools.setup(
               'cloudify_cloudinit',
               'cloudify_rest',
               'cloudify_scalelist',
-              'cloudify_secrets',
-              'cloudify_ftp'],
+              'cloudify_secrets'],
     license='LICENSE',
     install_requires=[
         'cloudify-common>=4.4',  # deployment_proxy
