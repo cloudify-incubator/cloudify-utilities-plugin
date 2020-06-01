@@ -285,6 +285,7 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         instances_remove_ids=None,
                         node_sequence=None):
     modification = ctx.deployment.start_modification(scale_settings)
+    ctx.refresh_node_instances()
     graph = ctx.graph_mode()
     try:
         ctx.logger.info('Deployment modification started. '
