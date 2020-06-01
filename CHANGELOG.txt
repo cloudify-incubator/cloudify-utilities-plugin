@@ -1,6 +1,8 @@
 releases:
   v1.23.4:
-  -Fix a bug in the custom_workflow code and add ftp_module to setup.py.
+  -Fix bug in custom_workflow code and add ftp_module to setup.py.
+  -Fix bug in scalelist module (add refresh_node_instances after start_modification).
+  
   v1.23.1:
   - Additional Python3 Fixes.
 
