@@ -1,6 +1,6 @@
 releases:
   v1.23.4:
-  -Fix a bug in the custom_workflow code and add ftp_module to setup.py
+  -Fix a bug in the custom_workflow code and add ftp_module to setup.py.
   v1.23.1:
   - Additional Python3 Fixes.
 
