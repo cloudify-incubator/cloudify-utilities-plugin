@@ -143,7 +143,7 @@ class TestScaleList(unittest.TestCase):
         modification.finish = Mock()
         _ctx.deployment.start_modification = Mock(return_value=modification)
         _ctx._get_modification = modification
-
+        _ctx.refresh_node_instances = Mock(return_value=None)
         current_ctx.set(_ctx)
         return _ctx
 

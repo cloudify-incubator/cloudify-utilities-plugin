@@ -45,7 +45,9 @@ def customwf(nodes_to_runon, operations_to_execute, **kwargs):
     ctx.logger.info("Nodes {} on Operations {}".format(nodes, operations))
     # update interface on the config node
     graph = ctx.graph_mode()
-
+    # If ctx is left in the kwargs it will cause exceptions
+    # It will be injected for the operation being executed anyway
+    kwargs.pop('ctx')
     sequence = graph.sequence()
     for opnode in nodes:
         for node in ctx.nodes:

@@ -75,7 +75,7 @@ class TestWorkflow(unittest.TestCase):
                 tasks.customwf(ctx=_ctx, nodes_to_runon=['node_id'],
                                operations_to_execute=['operation1'])
         _instance.execute_operation.assert_called_with('operation1',
-                                                       kwargs={'ctx': _ctx})
+                                                       kwargs={})
 
 
 if __name__ == '__main__':

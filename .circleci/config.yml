@@ -89,6 +89,25 @@ commands:
           paths:
             - build/*
 
+  generate_rhel_py27_wagon:
+    steps:
+      - run:
+          name: Create Workspace Build directory.
+          command: mkdir -p workspace/build
+      - run:
+          name: Build RHEL 27 Wagon
+          command: |
+              git clone https://github.com/cloudify-cosmo/cloudify-wagon-build-containers.git
+              docker build -t cloudify-redhat-7-wagon-builder cloudify-wagon-build-containers/redhat_7 --build-arg USERNAME="$USERNAME" --build-arg PASSWORD="$PASSWORD"
+              docker run -v ~/project/:/packaging cloudify-redhat-7-wagon-builder
+      - run:
+          name: copy wagon to workspace
+          command: cp *.wgn workspace/build/
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - build/*
+
   generate_py3_wagon:
     steps:
       - run:
@@ -201,6 +220,12 @@ jobs:
       - generate_py27_wagon
       # - generate_py3_wagon  # TODO: When we have Python3 Manager Integration Test.
 
+  rhel_wagon:
+    executor: wagon_generator
+    steps:
+      - checkout
+      - generate_rhel_py27_wagon
+
   integration_tests:
     executor: cloudify-machine
     environment:
@@ -227,9 +252,14 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
+      - rhel_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests:
           requires:
             - wagon
+            - rhel_wagon
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -239,6 +269,7 @@ workflows:
               only: /master/
           requires:
             - wagon
+            - rhel_wagon
             - integration_tests
   nightly:
     triggers:

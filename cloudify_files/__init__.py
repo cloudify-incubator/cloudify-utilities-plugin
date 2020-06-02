@@ -100,13 +100,13 @@ class CloudifyFile(object):
         if self.use_sudo:
             add_shell = {'shell': True}
             cp_out = execute_command([
-                'sudo', 'cp', downloaded_file_path, self.file_path
+                'sudo', 'cp', str(downloaded_file_path), str(self.file_path)
             ], extra_args=add_shell)
             chown_out = execute_command([
-                'sudo', 'chown', self.owner, self.file_path
+                'sudo', 'chown', str(self.owner), str(self.file_path)
             ], extra_args=add_shell)
             chmod_out = execute_command([
-                'sudo', 'chmod', self.mode, self.file_path
+                'sudo', 'chmod', str(self.mode), str(self.file_path)
             ], extra_args=add_shell)
             if cp_out is False or chown_out is False or chmod_out is False:
                 raise NonRecoverableError(
