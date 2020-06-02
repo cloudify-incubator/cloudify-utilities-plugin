@@ -132,7 +132,7 @@ commands:
       - run:
           name: "Pull Submodules"
           command: |
-            git submodule update --init --recursive
+            git submodule update --init --recursive --remote
       - attach_workspace:
           at: workspace
       - run:
