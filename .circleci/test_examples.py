@@ -29,7 +29,7 @@ blueprint_list = [
     'examples/blueprint-examples/utilities-examples/cloudify_cloudinit/simple.yaml',
     'examples/blueprint-examples/utilities-examples/cloudify_ssh_key/create-secret-agent-key.yaml',
     'examples/blueprint-examples/utilities-examples/cloudify_secrets/write-secret-blueprint.yaml',
-    'examples/blueprint-examples/utilities-examples/cloudify_rest/example-2-blueprint.yaml'
+    'examples/blueprint-examples/utilities-examples/cloudify_rest/example-github-status.yaml'
 ]
 
 
