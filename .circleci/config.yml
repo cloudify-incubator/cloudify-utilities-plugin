@@ -132,7 +132,7 @@ commands:
       - run:
           name: "Pull Submodules"
           command: |
-            git submodule update --init --recursive
+            git submodule update --init --recursive --remote
       - attach_workspace:
           at: workspace
       - run:
@@ -248,21 +248,21 @@ workflows:
       - py3_compat
       - unittests_py27
       - unittests_py36
-      - wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
-      - rhel_wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+      - wagon #:
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
+      - rhel_wagon #:
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests:
           requires:
             - wagon
             - rhel_wagon
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
       - release:
           filters:
             branches:
