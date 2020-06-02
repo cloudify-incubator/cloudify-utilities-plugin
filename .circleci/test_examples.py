@@ -26,10 +26,10 @@ from ecosystem_tests.dorkl import (
 prepare_test(secrets={})
 
 blueprint_list = [
-    'cloudify_cloudinit/examples/simple.yaml',
-    'cloudify_ssh_key/examples/create-secret-agent-key.yaml',
-    'cloudify_secrets/examples/write-secret-blueprint.yaml',
-    'cloudify_rest/examples/example-1-blueprint.yaml'
+    'examples/blueprint-examples/utilities-examples/cloudify_cloudinit/simple.yaml',
+    'examples/blueprint-examples/utilities-examples/cloudify_ssh_key/create-secret-agent-key.yaml',
+    'examples/blueprint-examples/utilities-examples/cloudify_secrets/write-secret-blueprint.yaml',
+    'examples/blueprint-examples/utilities-examples/cloudify_rest/example-2-blueprint.yaml'
 ]
 
 
