@@ -212,4 +212,4 @@ class TestKey(testtools.TestCase):
                     # python 3
                     with mock.patch('builtins.open', fake_file):
                         self.assertRaises(NonRecoverableError, _write_key_file,
-                                          'k', 'content'.decode("utf-8"))
+                                          'k', 'content')
