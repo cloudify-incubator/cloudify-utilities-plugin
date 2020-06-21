@@ -97,11 +97,11 @@ def create(**_):
     private_key_export = key_object.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption())
+        encryption_algorithm=serialization.NoEncryption()).decode('utf-8')
     public_key_export = key_object.public_key().public_bytes(
         encoding=serialization.Encoding.OpenSSH,
         format=serialization.PublicFormat.OpenSSH
-    )
+    ).decode('utf-8')
 
     if use_secret_store:
         private_name = '{0}_private'.format(key_name)
@@ -219,7 +219,7 @@ def _write_key_file(_key_file_path,
                     _private_key_permissions=False):
     expanded_key_path = os.path.expanduser(_key_file_path)
     with tempfile.NamedTemporaryFile('wb', delete=False) as temporary_file:
-        temporary_file.write(_key_file_material)
+        temporary_file.write(_key_file_material.encode("utf-8"))
         temporary_file.close()
         try:
             directory = os.path.dirname(expanded_key_path)
