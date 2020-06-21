@@ -2,6 +2,7 @@ releases:
 
   v1.23.5:
   - Updated wagon builders on release to py2py3 wagons.
+  - Fix encode/decode issue in ssh key.
 
   v1.23.4:
   -Fix bug in custom_workflow code and add ftp_module to setup.py.
