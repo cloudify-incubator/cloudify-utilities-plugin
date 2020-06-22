@@ -253,7 +253,7 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - run_integration_tests_505
+#      - run_integration_tests_505
 
   integration_tests_510:
     executor: cloudify-machine-510
@@ -294,6 +294,7 @@ workflows:
           requires:
             - wagon
             - rhel_wagon
+            - integration_tests_505
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev|replace-wagon-builder-to-py2py3-builder)/
