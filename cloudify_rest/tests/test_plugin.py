@@ -43,7 +43,7 @@ class TestPlugin(unittest.TestCase):
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template1.yaml'), 'r') as f:
             template = f.read()
-        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.get_resource = MagicMock(return_value=template.encode('utf-8'))
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
 
@@ -100,7 +100,7 @@ class TestPlugin(unittest.TestCase):
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template1.yaml'), 'r') as f:
             template = f.read()
-        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.get_resource = MagicMock(return_value=template.encode('utf-8'))
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock(
@@ -161,7 +161,7 @@ class TestPlugin(unittest.TestCase):
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template1.yaml'), 'r') as f:
             template = f.read()
-        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.get_resource = MagicMock(return_value=template.encode('utf-8'))
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         params = {'USER': 'testuser'}
@@ -216,7 +216,7 @@ class TestPlugin(unittest.TestCase):
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template2.yaml'), 'r') as f:
             template = f.read()
-        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.get_resource = MagicMock(return_value=template.encode('utf-8'))
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
             m.delete('https://test123.test:12345/v1/delete',
@@ -239,7 +239,7 @@ class TestPlugin(unittest.TestCase):
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template3.yaml'), 'r') as f:
             template = f.read()
-        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.get_resource = MagicMock(return_value=template.encode('utf-8'))
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
@@ -270,7 +270,7 @@ class TestPlugin(unittest.TestCase):
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template4.yaml'), 'r') as f:
             template = f.read()
-        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.get_resource = MagicMock(return_value=template.encode("utf-8"))
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
@@ -299,7 +299,7 @@ class TestPlugin(unittest.TestCase):
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template5.yaml'), 'r') as f:
             template = f.read()
-        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.get_resource = MagicMock(return_value=template.encode("utf-8"))
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         with requests_mock.mock() as m:
@@ -328,7 +328,7 @@ class TestPlugin(unittest.TestCase):
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
         with open(os.path.join(__location__, 'template6.yaml'), 'r') as f:
             template = f.read()
-        _ctx.get_resource = MagicMock(return_value=template)
+        _ctx.get_resource = MagicMock(return_value=template.encode("utf-8"))
         _ctx.logger.setLevel(logging.DEBUG)
         current_ctx.set(_ctx)
         custom_list = [{'key1': 'val1'},
