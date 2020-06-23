@@ -40,7 +40,7 @@ def blueprint_examples(request):
         basic_blueprint_test(
             request.param,
             test_name,
-            inputs=json.dumps({}),
+            inputs=json.dumps({})
         )
     except:
         cleanup_on_failure(test_name)
