@@ -11,6 +11,7 @@ PyYAML==5.1.1
 # for blueprints validate
 nose-exclude
 
+# for integration tests
 git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master
 git+https://github.com/cloudify-cosmo/cloudify-cli@master#egg=cloudify-cli==master
 pytest==4.6.3
