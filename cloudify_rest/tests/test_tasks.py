@@ -46,7 +46,7 @@ class TestTasks(unittest.TestCase):
         _ctx._execution_id = "execution_id"
         _ctx.instance.host_ip = None
         _ctx.instance._runtime_properties = DirtyTrackingDict({})
-        _ctx.get_resource = mock.Mock(return_value=TEMPLATE)
+        _ctx.get_resource = mock.Mock(return_value=TEMPLATE.encode("utf-8"))
         current_ctx.set(_ctx)
         return _ctx
 

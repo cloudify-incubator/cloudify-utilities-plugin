@@ -23,7 +23,7 @@ from ecosystem_tests.dorkl import (
     cleanup_on_failure, prepare_test
 )
 
-prepare_test(secrets={})
+prepare_test(secrets={}, execute_bundle_upload=False)
 
 blueprint_list = [
     'examples/blueprint-examples/utilities-examples/cloudify_cloudinit/simple.yaml',
