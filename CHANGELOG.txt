@@ -1,4 +1,6 @@
 releases:
+  v1.23.6:
+  - Bump version in order to release and use the new centos wagon builder.
 
   v1.23.5:
   - Updated wagon builders on release to py2py3 wagons.
