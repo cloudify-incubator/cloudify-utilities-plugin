@@ -15,11 +15,13 @@
 from os import getenv
 import time
 import logging
-from six import string_types
+
+from cloudify_common_sdk._compat import text_type
 
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
+
 from .constants import POLLING_INTERVAL
 
 
@@ -55,9 +57,9 @@ def resource_by_id(_client, _id, _type):
         _resources = _resources_client.list(_include=['id'])
     except CloudifyClientError as ex:
         raise NonRecoverableError(
-            '{0} list failed {1}.'.format(_type, str(ex)))
+            '{0} list failed {1}.'.format(_type, text_type(ex)))
     else:
-        return [str(_r['id']) == _id for _r in _resources]
+        return [text_type(_r['id']) == _id for _r in _resources]
 
 
 def poll_with_timeout(pollster,
@@ -72,7 +74,7 @@ def poll_with_timeout(pollster,
     timeout = float('infinity') if timeout == -1 else timeout
     current_time = time.time()
 
-    ctx.logger.debug('Timeout value is {}'.format(timeout))
+    ctx.logger.debug('Timeout value is {0}'.format(timeout))
 
     while time.time() <= current_time + timeout:
         if pollster(**pollster_args) != expected_result:
@@ -130,7 +132,7 @@ def dep_logs_redirect(_client, execution_id):
             # If the event dict had a 'level' key, then the value is
             # a string. In that case, convert it to uppercase and get
             # the matching Python logging constant.
-            if isinstance(level, string_types):
+            if isinstance(level, text_type):
                 level = logging.getLevelName(level.upper())
 
             # In the (very) odd case that the level is still not an int
@@ -168,18 +170,22 @@ def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
                 _size=_size)
         except CloudifyClientError as ex:
             raise NonRecoverableError(
-                'Executions list failed {0}.'.format(str(ex)))
+                'Executions list failed {0}.'.format(text_type(ex)))
 
         for _exec in _execs:
 
             if _exec.get('is_system_workflow'):
-                if _exec.get('status') not in ('terminated', 'failed',
+                if _exec.get('status') not in ('terminated',
+                                               'completed'
+                                               'failed',
                                                'cancelled'):
                     return False
 
             if _check_all_in_deployment:
                 if _check_all_in_deployment == _exec.get('deployment_id'):
-                    if _exec.get('status') not in ('terminated', 'failed',
+                    if _exec.get('status') not in ('terminated',
+                                                   'completed'
+                                                   'failed',
                                                    'cancelled'):
                         return False
 
@@ -212,7 +218,7 @@ def dep_workflow_in_state_pollster(_client,
 
     except CloudifyClientError as ex:
         raise NonRecoverableError(
-            'Executions get failed {0}.'.format(str(ex)))
+            'Executions get failed {0}.'.format(text_type(ex)))
 
     if _log_redirect and _exec.get('id'):
         ctx.logger.debug(
@@ -227,7 +233,7 @@ def dep_workflow_in_state_pollster(_client,
         return True
     elif _exec.get('status') == 'failed':
         raise NonRecoverableError(
-            'Execution {0} failed.'.format(str(_exec)))
+            'Execution {0} failed.'.format(text_type(_exec)))
 
     return False
 

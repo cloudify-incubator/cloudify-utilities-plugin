@@ -18,12 +18,13 @@ from cloudify.state import current_ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .client_mock import MockCloudifyRestClient
-from .base import DeploymentProxyTestBase
 from ..tasks import execute_start
+from .. import DeploymentProxyBase
+from .base import DeploymentProxyTestBase
+from .client_mock import MockCloudifyRestClient
 from ..constants import EXTERNAL_RESOURCE, NIP_TYPE, DEP_TYPE
 
-from .. import DeploymentProxyBase
+from cloudify_common_sdk._compat import text_type
 
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
@@ -61,7 +62,7 @@ class TestExecute(DeploymentProxyTestBase):
                                       execute_start,
                                       deployment_id=test_name,
                                       workflow_id='install')
-            self.assertIn('action start failed', str(error))
+            self.assertIn('action start failed', text_type(error))
         del _ctx, mock_client
 
     def test_execute_start_timeout(self):
@@ -83,7 +84,7 @@ class TestExecute(DeploymentProxyTestBase):
                                           deployment_id=test_name,
                                           workflow_id='install',
                                           timeout=.001)
-                self.assertIn('Execution timeout', str(error))
+                self.assertIn('Execution timeout', text_type(error))
         del _ctx, mock_client
 
     def test_execute_start_succeeds(self):

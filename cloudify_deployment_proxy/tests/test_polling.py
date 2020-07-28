@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import mock
 
 from cloudify.state import current_ctx
@@ -30,6 +31,8 @@ from ..polling import (
     dep_workflow_in_state_pollster,
     dep_system_workflows_finished,
     poll_workflow_after_execute)
+
+from cloudify_common_sdk._compat import text_type
 
 
 class TestPolling(DeploymentProxyTestBase):
@@ -165,7 +168,7 @@ class TestPolling(DeploymentProxyTestBase):
                     cfy_mock_client,
                     test_name,
                     'deployments')
-            self.assertIn('failed', str(output))
+            self.assertIn('failed', text_type(output))
 
     # Test that failed polling raises an error
     def test_poll_with_timeout_timeout(self):
@@ -276,7 +279,7 @@ class TestPolling(DeploymentProxyTestBase):
                     NonRecoverableError,
                     dep_system_workflows_finished,
                     cfy_mock_client)
-            self.assertIn('failed', str(output))
+            self.assertIn('failed', text_type(output))
 
     # Test that no matching executions returns False
     def test_dep_workflow_in_state_pollster_no_executions(self):
@@ -407,7 +410,7 @@ class TestPolling(DeploymentProxyTestBase):
                     test_name,
                     'terminated',
                     0)
-            self.assertIn('failed', str(output))
+            self.assertIn('failed', text_type(output))
 
     # test that success=False raises exception
     def test_poll_workflow_after_execute_failed(self):
@@ -424,7 +427,7 @@ class TestPolling(DeploymentProxyTestBase):
                     NonRecoverableError,
                     poll_workflow_after_execute,
                     None, None, None, None, None, None, None)
-            self.assertIn('Execution timeout', str(output))
+            self.assertIn('Execution timeout', text_type(output))
 
     # test that success=True returns True
     def test_poll_workflow_after_execute_success(self):
@@ -449,7 +452,7 @@ class TestPolling(DeploymentProxyTestBase):
 
         cfy_mock_client = MockCloudifyRestClient()
 
-        cfy_mock_client.events._set([{
+        cfy_mock_client.events._set(json.loads(json.dumps([{
             "node_instance_id": "vm_ke9e2d",
             "operation": "cloudify.interfaces.cloudify_agent.create",
             "blueprint_id": "linuxbp1",
@@ -463,7 +466,7 @@ class TestPolling(DeploymentProxyTestBase):
             "type": "cloudify_log",
             "execution_id": "19ce78d6-babc-4a18-ba8e-74b853f2b387",
             "logger": "22e710c6-18b8-4e96-b8a3-2104b81c5bfc"
-        }])
+        }])))
 
         dep_logs_redirect(cfy_mock_client, 'some_execution_id')
         _ctx.logger.log.assert_called_with(

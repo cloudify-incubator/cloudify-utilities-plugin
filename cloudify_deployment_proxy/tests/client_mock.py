@@ -107,7 +107,7 @@ class MockEventsClient(BaseMockClient):
         if full_count:
             self.count = len(self.list_events)
 
-    def get(self, *args, **_):
+    def get(self, *_, **__):
         return self.list_events, self.count
 
 

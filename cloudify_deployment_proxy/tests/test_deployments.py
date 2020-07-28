@@ -18,11 +18,12 @@ from cloudify.state import current_ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .client_mock import MockCloudifyRestClient
+from .. import DeploymentProxyBase
 from .base import DeploymentProxyTestBase
+from .client_mock import MockCloudifyRestClient
 from ..tasks import create_deployment, delete_deployment
-from cloudify_deployment_proxy import DeploymentProxyBase
 
+from cloudify_common_sdk._compat import text_type
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
 
@@ -127,7 +128,7 @@ class TestDeployment(DeploymentProxyTestBase):
                         mock.call('_zip')])
 
             get_local_path = mock.Mock(return_value="some_path")
-            zip_files = mock.Mock(return_value="_zip")
+            # zip_files = mock.Mock(return_value="_zip")
             with mock.patch(
                 'cloudify_deployment_proxy.get_local_path',
                 get_local_path
@@ -167,7 +168,7 @@ class TestDeployment(DeploymentProxyTestBase):
             error = self.assertRaises(NonRecoverableError,
                                       deployment._upload_plugins)
             self.assertIn("You should provide both values wagon_path: '' "
-                          "and plugin_yaml_path: ''", str(error))
+                          "and plugin_yaml_path: ''", text_type(error))
 
     def test_delete_deployment_success(self):
         # Tests that deployments delete succeeds
