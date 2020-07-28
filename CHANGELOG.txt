@@ -1,4 +1,7 @@
 releases:
+  v1.23.7:
+  - Deployment proxy python 3
+
   v1.23.6:
   - Bump version in order to release and use the new centos wagon builder.
 
