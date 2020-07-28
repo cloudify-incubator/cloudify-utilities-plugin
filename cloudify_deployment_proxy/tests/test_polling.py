@@ -471,8 +471,8 @@ class TestPolling(DeploymentProxyTestBase):
         dep_logs_redirect(cfy_mock_client, 'some_execution_id')
         _ctx.logger.log.assert_called_with(
             40,
-            b'2017-03-22T11:41:59.169Z [vm_ke9e2d.create] Successfully '
-            b'configured cfy-agent')
+            '2017-03-22T11:41:59.169Z [vm_ke9e2d.create] Successfully '
+            'configured cfy-agent')
 
     def test_dep_logs_redirect_unknown_level(self):
         test_name = "dep_logs_redirect_predefined_level"
@@ -503,8 +503,8 @@ class TestPolling(DeploymentProxyTestBase):
         dep_logs_redirect(cfy_mock_client, 'some_execution_id')
         _ctx.logger.log.assert_called_with(
             20,
-            b"2017-03-22T11:42:00.083Z [vm_ke9e2d.create] Task succeeded "
-            b"'cloudify_agent.installer.operations.create'")
+            "2017-03-22T11:42:00.083Z [vm_ke9e2d.create] Task succeeded "
+            "'cloudify_agent.installer.operations.create'")
 
     def test_dep_logs_empty_infinity(self):
         test_name = "dep_logs_redirect_predefined_level"

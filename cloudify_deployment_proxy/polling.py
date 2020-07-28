@@ -121,7 +121,7 @@ def dep_logs_redirect(_client, execution_id):
                 instance_prompt if instance_prompt else "",
                 event.get('message', "")
             )
-            message = message.encode('utf-8')
+            message = text_type(message)
 
             ctx.logger.debug(
                 'Message {0} for Event {1} for execution_id {1}'.format(
