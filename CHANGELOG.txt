@@ -1,4 +1,7 @@
 releases:
+  v1.23.8:
+  - Handle constraints for urllib3
+
   v1.23.7:
   - Deployment proxy python 3
 
