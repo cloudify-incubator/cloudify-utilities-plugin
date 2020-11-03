@@ -134,7 +134,8 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
                 template_params = {}
             # save context for reuse in template
             template_params['ctx'] = ctx
-            operation = render_template(template, template_params)
+            operation = render_template(template.decode('utf-8'),
+                                        template_params)
 
         # incase of template_text
         if not operation and 'template_text' in call:

@@ -367,7 +367,7 @@ node_types:
       resource_config:
         type: cloudify.datatypes.NodeInstanceProxy
         default: {}
-        
+
   cloudify.nodes.CloudInit.CloudConfig:
     derived_from: cloudify.nodes.Root
     properties:

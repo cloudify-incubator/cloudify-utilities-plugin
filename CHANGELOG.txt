@@ -1,5 +1,6 @@
 releases:
   v1.23.8:
+  - Terminal Encoding for template
   - Handle constraints for urllib3
 
   v1.23.7:
@@ -287,4 +288,3 @@ releases:
   - change property structure
   - add data types and property validations
   - unit tests
-
