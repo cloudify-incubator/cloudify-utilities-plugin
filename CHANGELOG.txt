@@ -1,6 +1,7 @@
 releases:
   v1.23.8:
   - Terminal Encoding for template
+  - Handle constraints for urllib3
 
   v1.23.7:
   - Deployment proxy python 3
