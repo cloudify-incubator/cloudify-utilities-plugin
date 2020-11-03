@@ -1,4 +1,7 @@
 releases:
+  v1.23.8:
+  - Terminal Encoding for template
+
   v1.23.7:
   - Deployment proxy python 3
 
@@ -284,4 +287,3 @@ releases:
   - change property structure
   - add data types and property validations
   - unit tests
-

@@ -347,7 +347,7 @@ class TestTasks(unittest.TestCase):
         connection_mock = Mock()
         connection_mock.connect = Mock(return_value="")
         connection_mock.run = Mock(return_value="localhost")
-        _ctx.get_resource = Mock(side_effect=[False, "bb", "{{ aa }}"])
+        _ctx.get_resource = Mock(side_effect=[False, b"bb", b"{{ aa }}"])
 
         with patch("cloudify_terminal_sdk.terminal_connection.RawConnection",
                    Mock(return_value=connection_mock)):
