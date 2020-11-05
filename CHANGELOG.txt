@@ -1,4 +1,7 @@
 releases:
+  v1.23.9:
+  - Bump version in order to use latest cloudify-utilities-plugins-sdk
+
   v1.23.8:
   - Terminal Encoding for template
   - Handle constraints for urllib3
