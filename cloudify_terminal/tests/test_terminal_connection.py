@@ -308,7 +308,7 @@ class TestTasks(unittest.TestCase):
 
     def test_connect(self):
         conn_mock = MagicMock()
-        conn_mock.recv = MagicMock(return_value="some_prompt#")
+        conn_mock.recv = MagicMock(return_value=b"some_prompt#")
         ssh_mock = MagicMock()
         ssh_mock.connect = MagicMock()
         ssh_mock.invoke_shell = MagicMock(return_value=conn_mock)
@@ -486,7 +486,7 @@ class TestTasks(unittest.TestCase):
 
             conn.conn.call_count += 1
 
-            return "+"
+            return b"+"
 
         conn.conn.send = MagicMock(return_value=5)
         conn.conn.recv = _recv
@@ -507,7 +507,7 @@ class TestTasks(unittest.TestCase):
                 return len(text)
 
             def recv(self, size):
-                return "+\n"
+                return b"+\n"
 
             def close(self):
                 pass
@@ -528,7 +528,7 @@ class TestTasks(unittest.TestCase):
         conn.conn = MagicMock()
         conn.conn.closed = False
         conn.conn.send = MagicMock(return_value=5)
-        conn.conn.recv = MagicMock(return_value="\nmessage\n#")
+        conn.conn.recv = MagicMock(return_value=b"\nmessage\n#")
 
         self.assertEqual(conn.run("test"), "message")
 
@@ -540,7 +540,7 @@ class TestTasks(unittest.TestCase):
         conn.conn = MagicMock()
         conn.conn.closed = False
         conn.conn.send = MagicMock(side_effect=[5, 2])
-        conn.conn.recv = MagicMock(side_effect=["\nmessage, yes?", "ok\n#"])
+        conn.conn.recv = MagicMock(side_effect=[b"\nmessage, yes?", b"ok\n#"])
 
         self.assertEqual(
             conn.run("test", responses=[{
