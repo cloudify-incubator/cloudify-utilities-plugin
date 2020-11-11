@@ -117,8 +117,8 @@ class TestScaleList(unittest.TestCase):
         _graph.tasks_iter = Mock(return_value=[_task_mock])
         _graph.remove_task = Mock(return_value=None)
         _graph.subgraph = _subgraph
-        _graph._is_execution_cancelled.return_value = execution_cancelled
-        _graph._terminated_tasks.return_value = [_task_mock]
+        # _graph._is_execution_cancelled.return_value = execution_cancelled
+        _graph._finished_tasks.return_value = [_task_mock]
         _ctx.nodes = []
         _ctx.get_node = Mock(return_value=[])
         _ctx.graph_mode = Mock(return_value=_graph)
@@ -533,8 +533,8 @@ class TestScaleList(unittest.TestCase):
                     fake_uninstall_instances
                 ):
                     with patch(
-                        "cloudify.workflows.tasks_graph."
-                        "TaskDependencyGraph._is_execution_cancelled",
+                        "cloudify.workflows.api."
+                        "has_cancel_request",
                         return_value=True
                     ):
                         with self.assertRaises(ExecutionCancelled):
@@ -618,8 +618,8 @@ class TestScaleList(unittest.TestCase):
                     fake_uninstall_instances
                 ):
                     with patch(
-                        "cloudify.workflows.tasks_graph."
-                        "TaskDependencyGraph._is_execution_cancelled",
+                        "cloudify.workflows.api."
+                        "has_cancel_request",
                         return_value=False
                     ):
                         with patch(
