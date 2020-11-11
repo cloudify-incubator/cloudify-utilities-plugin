@@ -406,9 +406,17 @@ def _wait_for_sent_tasks(ctx, graph):
     except AttributeError:
         deadline = time.time() + 1800
     while deadline > time.time():
-        if graph._is_execution_cancelled():
+        try:
+            cancelled = api.has_cancel_request()
+        except AttributeError:
+            cancelled = graph._is_execution_cancelled()
+        if cancelled:
             raise api.ExecutionCancelled()
-        for task in graph._terminated_tasks():
+        try:
+            finished_tasks = graph._finished_tasks()
+        except AttributeError:
+            finished_tasks = graph._terminated_tasks()
+        for task in finished_tasks:
             try:
                 graph._handle_terminated_task(task)
             except RuntimeError:
