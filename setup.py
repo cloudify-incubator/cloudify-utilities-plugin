@@ -16,7 +16,7 @@ import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.23.9',
+    version='1.23.10',
     author='Cloudify Platform Ltd.',
     author_email='hello@cloudify.co',
     description='Utilities for extending Cloudify',
@@ -34,7 +34,7 @@ setuptools.setup(
               'cloudify_secrets'],
     license='LICENSE',
     install_requires=[
-        'cloudify-common>=4.4',  # deployment_proxy
-        'cloudify-utilities-plugins-sdk>=0.0.25',  # terminal, rest
+        'cloudify-common>=4.5.5',  # deployment_proxy
+        'cloudify-utilities-plugins-sdk>=0.0.34',  # terminal, rest
         'ruamel.yaml']  # cloudinit
 )
