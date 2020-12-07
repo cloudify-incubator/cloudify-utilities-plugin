@@ -1,0 +1,41 @@
+rest_calls:
+  - path: /{{USER}}/test_rest/get
+    method: GET
+    response_format: json
+    response_translation:
+        - id: [ id0 ]
+          nested: {
+            nested_key: [ nested_key0 ]
+          }
+        - id: [ id1 ]
+          nested: {
+            nested_key: [ nested_key1 ]
+          }
+    recoverable_codes: [400]
+    response_expectation:
+      - [0,'status',"active|ready"]
+      - [1,'status','activating']
+
+  - path: /test_rest/posts
+    method: POST
+    headers: {
+      Content-type : test/type
+    }
+    payload: >
+      {{id1}}
+    response_format: raw
+
+  - path: /get
+    method: GET
+#    response_format: json  is default
+    response_translation:
+        items:
+          - colour: [owner0, colour]
+            name:   [owner0, name]
+          - {}
+          - colour: [owner2, colour]
+            name:   [owner2, name]
+        owners:
+          - []
+          - [owner1, id]
+          - [owner2, id]

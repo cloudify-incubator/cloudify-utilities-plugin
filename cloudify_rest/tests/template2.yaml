@@ -1,0 +1,7 @@
+rest_calls:
+  - path: /v1/delete
+    method: DELETE
+    payload: >
+      Delete immediately
+    response_format: raw
+    recoverable_codes: [477]

@@ -1,0 +1,6 @@
+rest_calls:
+  - path: /v1/get_response1
+    method: GET
+    payload:
+    response_format: json
+    nonrecoverable_response: [0, "status", "active"]

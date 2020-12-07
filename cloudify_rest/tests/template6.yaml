@@ -1,0 +1,10 @@
+rest_calls:
+  - path: /v1/post_jinja_block
+    method: POST
+    headers:
+      Content-type: test/type
+    payload:
+      key: value
+      jinja_block:
+        "{% if custom_list is not string %}{{custom_list}}{% endif %}"
+    response_format: raw

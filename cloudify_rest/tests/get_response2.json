@@ -1,0 +1,18 @@
+{
+    "items": [
+      {
+        "colour" : "black",
+        "name" : "book"
+      },
+      {
+        "colour" : "white",
+        "name" : "board"
+      },
+      {
+        "colour" : "red",
+        "name" : "bed"
+      }
+    ],
+    "owners": ["Alice","Bob","Carol"],
+    "file_name": "get_response1.json"
+}

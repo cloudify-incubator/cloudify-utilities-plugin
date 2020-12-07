@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,20 +8,22 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+import json
 import mock
 import testtools
 
+from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
 
-DEPLOYMENT_PROXY_PROPS = {
+DEPLOYMENT_PROXY_PROPS = json.loads(json.dumps({
     'resource_config': {
         'blueprint': {
             'id': '',
@@ -36,12 +38,16 @@ DEPLOYMENT_PROXY_PROPS = {
             }
         }
     }
-}
+}))
 
 DEPLOYMENT_PROXY_TYPE = 'cloudify.nodes.DeploymentProxy'
 
 
 class DeploymentProxyTestBase(testtools.TestCase):
+
+    def tearDown(self):
+        current_ctx.clear()
+        super(DeploymentProxyTestBase, self).tearDown()
 
     def get_mock_ctx(self,
                      test_name,
@@ -52,9 +58,9 @@ class DeploymentProxyTestBase(testtools.TestCase):
         test_node_id = test_name
         test_properties = test_properties
 
-        operation = {
+        operation = json.loads(json.dumps({
             'retry_number': retry_number
-        }
+        }))
         ctx = MockCloudifyContext(
             node_id=test_node_id,
             deployment_id=test_name,
@@ -62,8 +68,13 @@ class DeploymentProxyTestBase(testtools.TestCase):
             properties=test_properties
         )
 
-        ctx.operation._operation_context = {'name': 'some.test'}
-        ctx.node.type_hierarchy = ['cloudify.nodes.Root', node_type]
-        ctx.node.type = node_type
+        ctx.operation._operation_context = json.loads(json.dumps(
+            {'name': 'some.test'}))
+        ctx.node.type_hierarchy = \
+            json.loads(json.dumps(['cloudify.nodes.Root', node_type]))
+        try:
+            ctx.node.type = node_type
+        except AttributeError:
+            ctx.logger.error('Failed to set node type attribute.')
 
         return ctx

@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,9 +8,9 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import datetime
 from mock import MagicMock
@@ -83,6 +83,15 @@ class MockExecutionsClient(BaseMockClient):
         del args
         return MagicMock(_return_value)
 
+    def get(self, *args, **_):
+        del args
+        return {
+            'id': MagicMock,
+            'deployment_id': MagicMock,
+            'status': MagicMock,
+            'workflow_id': MagicMock,
+        }
+
 
 class MockNodeInstancesClient(BaseMockClient):
     pass
@@ -91,12 +100,15 @@ class MockNodeInstancesClient(BaseMockClient):
 class MockEventsClient(BaseMockClient):
 
     list_events = []
+    count = -1
 
-    def _set(self, list_events):
+    def _set(self, list_events, full_count=True):
         self.list_events = list_events
+        if full_count:
+            self.count = len(self.list_events)
 
-    def get(self, *args, **_):
-        return self.list_events, len(self.list_events)
+    def get(self, *_, **__):
+        return self.list_events, self.count
 
 
 class MockCloudifyRestClient(object):
@@ -107,3 +119,5 @@ class MockCloudifyRestClient(object):
         self.executions = MockExecutionsClient()
         self.node_instances = MockNodeInstancesClient()
         self.events = MockEventsClient()
+        self.secrets = MagicMock()
+        self.plugins = MagicMock()
