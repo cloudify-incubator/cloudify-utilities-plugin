@@ -176,7 +176,7 @@ def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
 
             if _exec.get('is_system_workflow'):
                 if _exec.get('status') not in ('terminated',
-                                               'completed'
+                                               'completed',
                                                'failed',
                                                'cancelled'):
                     return False
@@ -184,7 +184,7 @@ def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
             if _check_all_in_deployment:
                 if _check_all_in_deployment == _exec.get('deployment_id'):
                     if _exec.get('status') not in ('terminated',
-                                                   'completed'
+                                                   'completed',
                                                    'failed',
                                                    'cancelled'):
                         return False
