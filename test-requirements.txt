@@ -12,6 +12,4 @@ PyYAML==5.1.1
 nose-exclude
 
 # for integration tests
-git+https://github.com/cloudify-cosmo/cloudify-common@5.1.0#egg=cloudify-common[dispatcher]==5.1.0
-git+https://github.com/cloudify-cosmo/cloudify-cli@5.1.0#egg=cloudify-cli==5.1.0
 pytest==4.6.3
