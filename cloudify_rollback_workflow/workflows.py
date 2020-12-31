@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from cloudify.decorators import workflow
-from cloudify.plugins.workflows import execute_operation
+# from cloudify.plugins.workflows import execute_operation
+from cloudify.workflows.tasks_graph import make_or_get_graph
 
 
 @workflow(resumable=True)
@@ -86,3 +87,95 @@ def postdelete(ctx, operation_parms, run_by_dependency_order, type_names,
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.postdelete',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
+
+
+@workflow(resumable=True)
+def execute_operation(ctx, operation, *args, **kwargs):
+    """ A generic workflow for executing arbitrary operations on nodes """
+    name = 'execute_operation_{0}'.format(operation)
+    graph = _make_execute_operation_graph(
+        ctx, operation, name=name, *args, **kwargs)
+    graph.execute()
+
+
+
+@make_or_get_graph
+def _make_execute_operation_graph(ctx, operation, operation_kwargs,
+                                  allow_kwargs_override,
+                                  run_by_dependency_order, type_names,
+                                  node_ids, node_instance_ids, **kwargs):
+    graph = ctx.graph_mode()
+    subgraphs = {}
+
+    # filtering node instances
+    filtered_node_instances = _filter_node_instances(
+        ctx=ctx,
+        node_ids=node_ids,
+        node_instance_ids=node_instance_ids,
+        type_names=type_names)
+
+    if run_by_dependency_order:
+        # if run by dependency order is set, then create stub subgraphs for the
+        # rest of the instances. This is done to support indirect
+        # dependencies, i.e. when instance A is dependent on instance B
+        # which is dependent on instance C, where A and C are to be executed
+        # with the operation on (i.e. they're in filtered_node_instances)
+        # yet B isn't.
+        # We add stub subgraphs rather than creating dependencies between A
+        # and C themselves since even though it may sometimes increase the
+        # number of dependency relationships in the execution graph, it also
+        # ensures their number is linear to the number of relationships in
+        # the deployment (e.g. consider if A and C are one out of N instances
+        # of their respective nodes yet there's a single instance of B -
+        # using subgraphs we'll have 2N relationships instead of N^2).
+        filtered_node_instances_ids = set(inst.id for inst in
+                                          filtered_node_instances)
+        for instance in ctx.node_instances:
+            if instance.id not in filtered_node_instances_ids:
+                subgraphs[instance.id] = graph.subgraph(instance.id)
+
+    # preparing the parameters to the execute_operation call
+    exec_op_params = {
+        'kwargs': operation_kwargs,
+        'operation': operation
+    }
+    if allow_kwargs_override is not None:
+        exec_op_params['allow_kwargs_override'] = allow_kwargs_override
+
+    # registering actual tasks to sequences
+    for instance in filtered_node_instances:
+        start_event_message = 'Starting operation {0}'.format(operation)
+        if operation_kwargs:
+            start_event_message += ' (Operation parameters: {0})'.format(
+                operation_kwargs)
+        subgraph = graph.subgraph(instance.id)
+        sequence = subgraph.sequence()
+        sequence.add(
+            instance.send_event(start_event_message),
+            instance.execute_operation(**exec_op_params),
+            instance.send_event('Finished operation {0}'.format(operation)))
+        subgraphs[instance.id] = subgraph
+
+    # adding tasks dependencies if required
+    if run_by_dependency_order:
+        for instance in ctx.node_instances:
+            for rel in instance.relationships:
+                graph.add_dependency(subgraphs[instance.id],
+                                     subgraphs[rel.target_id])
+    return graph
+
+
+def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names):
+    filtered_node_instances = []
+    for node in ctx.nodes:
+        if node_ids and node.id not in node_ids:
+            continue
+        if type_names and not next((type_name for type_name in type_names if
+                                    type_name in node.type_hierarchy), None):
+            continue
+
+        for instance in node.instances:
+            if node_instance_ids and instance.id not in node_instance_ids:
+                continue
+            filtered_node_instances.append(instance)
+    return filtered_node_instances
