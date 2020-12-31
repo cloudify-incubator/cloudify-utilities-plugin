@@ -13,8 +13,8 @@
 # limitations under the License.
 
 from cloudify.decorators import workflow
-# from cloudify.plugins.workflows import execute_operation
 from cloudify.workflows.tasks_graph import make_or_get_graph
+from cloudify.plugins.lifecycle import set_send_node_event_on_error_handler
 
 
 @workflow(resumable=True)
@@ -22,7 +22,8 @@ def start(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
           node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.start',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -30,7 +31,8 @@ def stop(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
          node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.stop',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -38,7 +40,8 @@ def precreate(ctx, operation_parms, run_by_dependency_order, type_names,
               node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.precreate',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -46,7 +49,8 @@ def create(ctx, operation_parms, run_by_dependency_order, type_names,
            node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.create',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -54,7 +58,8 @@ def configure(ctx, operation_parms, run_by_dependency_order, type_names,
               node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.configure',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -62,7 +67,8 @@ def poststart(ctx, operation_parms, run_by_dependency_order, type_names,
               node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.poststart',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -70,7 +76,8 @@ def prestop(ctx, operation_parms, run_by_dependency_order, type_names,
             node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.prestop',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -78,7 +85,8 @@ def delete(ctx, operation_parms, run_by_dependency_order, type_names,
            node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.delete',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -86,7 +94,8 @@ def postdelete(ctx, operation_parms, run_by_dependency_order, type_names,
                node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.postdelete',
                       operation_parms, True, run_by_dependency_order,
-                      type_names, node_ids, node_instance_ids, **kwargs)
+                      type_names, node_ids, node_instance_ids, ignore_failure,
+                      **kwargs)
 
 
 @workflow(resumable=True)
@@ -103,7 +112,8 @@ def execute_operation(ctx, operation, *args, **kwargs):
 def _make_execute_operation_graph(ctx, operation, operation_kwargs,
                                   allow_kwargs_override,
                                   run_by_dependency_order, type_names,
-                                  node_ids, node_instance_ids, **kwargs):
+                                  node_ids, node_instance_ids, ignore_failure,
+                                  **kwargs):
     graph = ctx.graph_mode()
     subgraphs = {}
 
@@ -149,6 +159,11 @@ def _make_execute_operation_graph(ctx, operation, operation_kwargs,
             start_event_message += ' (Operation parameters: {0})'.format(
                 operation_kwargs)
         subgraph = graph.subgraph(instance.id)
+        if ignore_failure:
+            set_ignore_handlers(subgraph, instance)
+        # else:
+        #     subgraph.on_failure = get_subgraph_on_failure_handler(
+        #         instance, uninstall_node_instance_subgraph)
         sequence = subgraph.sequence()
         sequence.add(
             instance.send_event(start_event_message),
@@ -179,3 +194,11 @@ def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names):
                 continue
             filtered_node_instances.append(instance)
     return filtered_node_instances
+
+
+def set_ignore_handlers(_subgraph, instance):
+    for task in _subgraph.tasks.itervalues():
+        if task.is_subgraph:
+            set_ignore_handlers(task)
+        else:
+            set_send_node_event_on_error_handler(task, instance)
