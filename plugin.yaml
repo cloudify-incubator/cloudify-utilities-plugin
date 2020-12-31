@@ -30,6 +30,8 @@ plugins:
 
   secrets: *utilities_plugin
 
+  rollback: *utilities_plugin
+
 data_types:
 
   cloudify.datatypes.Blueprint:
@@ -1096,3 +1098,38 @@ workflows:
         description: >
           List of calls to run
         default: []
+
+
+  start:
+    mapping: rollback.cloudify_rollback_workflow.workflows.start
+    is_cascading: false
+    parameters:
+      operation_params:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  stop:
+    mapping: rollback.cloudify_rollback_workflow.workflows.stop
+    is_cascading: false
+    parameters:
+      operation_params:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false

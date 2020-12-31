@@ -15,65 +15,74 @@
 from cloudify.decorators import workflow
 from cloudify.plugins.workflows import execute_operation
 
+
 @workflow(resumable=True)
 def start(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-          node_instance_ids, **kwargs):
+          node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.start',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
 
+
 @workflow(resumable=True)
 def stop(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-         node_instance_ids, **kwargs):
+         node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.stop',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
 
+
 @workflow(resumable=True)
-def precreate(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-          node_instance_ids, **kwargs):
+def precreate(ctx, operation_parms, run_by_dependency_order, type_names,
+              node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.precreate',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
 
+
 @workflow(resumable=True)
-def create(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-          node_instance_ids, **kwargs):
+def create(ctx, operation_parms, run_by_dependency_order, type_names,
+           node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.create',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
 
+
 @workflow(resumable=True)
-def configure(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-          node_instance_ids, **kwargs):
+def configure(ctx, operation_parms, run_by_dependency_order, type_names,
+              node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.configure',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
 
+
 @workflow(resumable=True)
-def poststart(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-          node_instance_ids, **kwargs):
+def poststart(ctx, operation_parms, run_by_dependency_order, type_names,
+              node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.poststart',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
 
+
 @workflow(resumable=True)
-def prestop(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-          node_instance_ids, **kwargs):
+def prestop(ctx, operation_parms, run_by_dependency_order, type_names,
+            node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.prestop',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
 
+
 @workflow(resumable=True)
-def delete(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-          node_instance_ids, **kwargs):
+def delete(ctx, operation_parms, run_by_dependency_order, type_names,
+           node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.delete',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
 
+
 @workflow(resumable=True)
-def postdelete(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
-          node_instance_ids, **kwargs):
+def postdelete(ctx, operation_parms, run_by_dependency_order, type_names,
+               node_ids, node_instance_ids, ignore_failure, **kwargs):
     execute_operation(ctx, 'cloudify.interfaces.lifecycle.postdelete',
                       operation_parms, True, run_by_dependency_order,
                       type_names, node_ids, node_instance_ids, **kwargs)
