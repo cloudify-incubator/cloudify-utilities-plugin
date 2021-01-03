@@ -600,34 +600,34 @@ class TestScaleList(unittest.TestCase):
         related_instance.modification = 'related'
         _ctx._get_modification.added.node_instances = [added_instance,
                                                        related_instance]
-        mocked_task = Mock()
+        # mocked_task = Mock()
         with patch(
-            "cloudify_scalelist.workflows.get_rest_client",
-            Mock(return_value=client)
+                "cloudify_scalelist.workflows.get_rest_client",
+                Mock(return_value=client)
         ):
             fake_install_node_instances = Mock(
                 side_effect=Exception('Failed install'))
             with patch(
-                "cloudify_scalelist.workflows.lifecycle."
-                "install_node_instances",
-                fake_install_node_instances
+                    "cloudify_scalelist.workflows.lifecycle."
+                    "install_node_instances",
+                    fake_install_node_instances
             ):
                 fake_uninstall_instances = Mock(return_value=None)
                 with patch(
-                    "cloudify_scalelist.workflows._uninstall_instances",
-                    fake_uninstall_instances
+                        "cloudify_scalelist.workflows._uninstall_instances",
+                        fake_uninstall_instances
                 ):
                     with patch(
-                        "cloudify.workflows.api."
-                        "has_cancel_request",
-                        return_value=False
+                            "cloudify.workflows.api."
+                            "has_cancel_request",
+                            return_value=False
                     ):
                         # with patch(
                         #     "cloudify.workflows.tasks_graph."
                         #     "TaskDependencyGraph._terminated_tasks",
                         #     return_value=[mocked_task]
                         # ):
-                            self.assertRaises(RuntimeError)
+                        self.assertRaises(RuntimeError)
 
     def test_run_scale_settings_install(self):
         _ctx = self._gen_ctx()
