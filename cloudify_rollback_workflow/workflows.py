@@ -16,6 +16,7 @@ from cloudify.decorators import workflow
 from cloudify.workflows.tasks_graph import make_or_get_graph
 from cloudify.plugins.lifecycle import set_send_node_event_on_error_handler
 
+
 @workflow(resumable=True)
 def start(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
           node_instance_ids, ignore_failure, **kwargs):
@@ -104,7 +105,6 @@ def execute_operation(ctx, operation, *args, **kwargs):
     graph = _make_execute_operation_graph(
         ctx, operation, name=name, *args, **kwargs)
     graph.execute()
-
 
 
 @make_or_get_graph
