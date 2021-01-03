@@ -622,11 +622,11 @@ class TestScaleList(unittest.TestCase):
                         "has_cancel_request",
                         return_value=False
                     ):
-                        with patch(
-                            "cloudify.workflows.tasks_graph."
-                            "TaskDependencyGraph._terminated_tasks",
-                            return_value=[mocked_task]
-                        ):
+                        # with patch(
+                        #     "cloudify.workflows.tasks_graph."
+                        #     "TaskDependencyGraph._terminated_tasks",
+                        #     return_value=[mocked_task]
+                        # ):
                             self.assertRaises(RuntimeError)
 
     def test_run_scale_settings_install(self):
