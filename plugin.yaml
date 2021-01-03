@@ -1251,3 +1251,22 @@ workflows:
         default: [ ]
       ignore_failure:
         default: false
+
+  wrap_restart:
+    mapping: rollback.cloudify_rollback_workflow.workflows.restart
+    is_cascading: false
+    parameters:
+      stop_parms:
+        default: { }
+      start_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false

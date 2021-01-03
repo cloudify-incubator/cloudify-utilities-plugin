@@ -34,6 +34,13 @@ def stop(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
                       type_names, node_ids, node_instance_ids, ignore_failure,
                       **kwargs)
 
+@workflow(resumable=True)
+def restart(ctx, stop_parms, start_parms, run_by_dependency_order, type_names,
+            node_ids, node_instance_ids, ignore_failure, **kwargs):
+    stop(ctx, stop_parms, run_by_dependency_order, type_names,
+         node_ids, node_instance_ids, ignore_failure, **kwargs)
+    start(ctx, start_parms, run_by_dependency_order, type_names,
+          node_ids, node_instance_ids, ignore_failure=False, **kwargs)
 
 @workflow(resumable=True)
 def precreate(ctx, operation_parms, run_by_dependency_order, type_names,
