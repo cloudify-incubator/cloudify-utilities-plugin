@@ -16,7 +16,6 @@ from cloudify.decorators import workflow
 from cloudify.workflows.tasks_graph import make_or_get_graph
 from cloudify.plugins.lifecycle import set_send_node_event_on_error_handler
 
-
 @workflow(resumable=True)
 def start(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
           node_instance_ids, ignore_failure, **kwargs):
@@ -159,16 +158,13 @@ def _make_execute_operation_graph(ctx, operation, operation_kwargs,
             start_event_message += ' (Operation parameters: {0})'.format(
                 operation_kwargs)
         subgraph = graph.subgraph(instance.id)
-        if ignore_failure:
-            set_ignore_handlers(subgraph, instance)
-        # else:
-        #     subgraph.on_failure = get_subgraph_on_failure_handler(
-        #         instance, uninstall_node_instance_subgraph)
         sequence = subgraph.sequence()
         sequence.add(
             instance.send_event(start_event_message),
             instance.execute_operation(**exec_op_params),
             instance.send_event('Finished operation {0}'.format(operation)))
+        if ignore_failure:
+            set_ignore_handlers(subgraph, instance)
         subgraphs[instance.id] = subgraph
 
     # adding tasks dependencies if required
@@ -197,7 +193,7 @@ def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names):
 
 
 def set_ignore_handlers(_subgraph, instance):
-    for task in _subgraph.tasks.itervalues():
+    for task in _subgraph.tasks.values():
         if task.is_subgraph:
             set_ignore_handlers(task)
         else:
