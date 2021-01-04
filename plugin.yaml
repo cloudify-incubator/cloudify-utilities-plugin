@@ -1099,7 +1099,7 @@ workflows:
           List of calls to run
         default: []
 
-  wrap_start:
+  alt_start:
     mapping: rollback.cloudify_rollback_workflow.workflows.start
     is_cascading: false
     parameters:
@@ -1116,7 +1116,7 @@ workflows:
       ignore_failure:
         default: false
 
-  wrap_stop:
+  alt_stop:
     mapping: rollback.cloudify_rollback_workflow.workflows.stop
     is_cascading: false
     parameters:
@@ -1133,7 +1133,7 @@ workflows:
       ignore_failure:
         default: false
 
-  wrap_precreate:
+  alt_precreate:
     mapping: rollback.cloudify_rollback_workflow.workflows.precreate
     is_cascading: false
     parameters:
@@ -1150,7 +1150,7 @@ workflows:
       ignore_failure:
         default: false
 
-  wrap_create:
+  alt_create:
     mapping: rollback.cloudify_rollback_workflow.workflows.create
     is_cascading: false
     parameters:
@@ -1167,7 +1167,7 @@ workflows:
       ignore_failure:
         default: false
 
-  wrap_configure:
+  alt_configure:
     mapping: rollback.cloudify_rollback_workflow.workflows.configure
     is_cascading: false
     parameters:
@@ -1184,7 +1184,7 @@ workflows:
       ignore_failure:
         default: false
 
-  wrap_poststart:
+  alt_poststart:
     mapping: rollback.cloudify_rollback_workflow.workflows.poststart
     is_cascading: false
     parameters:
@@ -1201,7 +1201,7 @@ workflows:
       ignore_failure:
         default: false
 
-  wrap_prestop:
+  alt_prestop:
     mapping: rollback.cloudify_rollback_workflow.workflows.prestop
     is_cascading: false
     parameters:
@@ -1218,7 +1218,7 @@ workflows:
       ignore_failure:
         default: false
 
-  wrap_delete:
+  alt_delete:
     mapping: rollback.cloudify_rollback_workflow.workflows.delete
     is_cascading: false
     parameters:
@@ -1235,7 +1235,7 @@ workflows:
       ignore_failure:
         default: false
 
-  wrap_postdelete:
+  alt_postdelete:
     mapping: rollback.cloudify_rollback_workflow.workflows.postdelete
     is_cascading: false
     parameters:
