@@ -224,13 +224,34 @@ def rollback(ctx,
     :param node_instance_ids: A list of node instance ids. The operation will
           be executed only on the node instances specified. An empty list
           means no filtering will take place and all node instances are valid.
-    :param rollback_point
+    :param rollback_point Whether to rollback to resolved state, or full uninstall.
     """
 
-    name = 'rollback_workflow'
-    graph = _make_rollback_graph(
-        ctx, name=name, **kwargs)
-    # graph.execute()
+# find the failed workflow??how can i do that?
+
+# Find all node instances in unresolved state
+    unresolved_states = ['creating', 'starting', 'configuring']
+    unresolved_nodes_ids = []
+    ctx.logger.info("ctx: {}".format(ctx))
+    for instance in ctx.node_instances:
+        ctx.logger.info("instance: {}".format(instance))
+        if instance.state in unresolved_states:
+            unresolved_nodes_ids.append(instance.id)
+
+
+
+
+
+def _resolve_creating_nodes(ctx,unresolved_nodes_ids):
+    for id in unresolved_nodes_ids:
+        ctx.get_node_instance
+
+
+
+    # name = 'rollback_workflow'
+    # graph = _make_rollback_graph(
+    #     ctx, name=name, **kwargs)
+    # # graph.execute()
 
 
 # @make_or_get_graph
