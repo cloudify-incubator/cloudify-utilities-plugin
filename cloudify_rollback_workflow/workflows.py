@@ -205,3 +205,55 @@ def set_ignore_handlers(_subgraph, instance):
             set_ignore_handlers(task)
         else:
             set_send_node_event_on_error_handler(task, instance)
+
+
+@workflow(resumable=True)
+def rollback(ctx,
+             type_names,
+             node_ids,
+             node_instance_ids,
+             rollback_point,
+             **kwargs):
+    """Rollback workflow.
+
+    Rollback workflow will look at each node’s state, decide if the node state
+    is unresolved, and for those that are, execute the corresponding node
+    operation that will get us back to a resolved node state, and then
+    execute the unfinished workflow.
+
+    :param type_names: A list of type names. The operation will be executed
+          only on node instances which are of these types or of types which
+          (recursively) derive from them. An empty list means no filtering
+          will take place and all type names are valid.
+    :param node_ids: A list of node ids. The operation will be executed only
+          on node instances which are instances of these nodes. An empty list
+          means no filtering will take place and all nodes are valid.
+    :param node_instance_ids: A list of node instance ids. The operation will
+          be executed only on the node instances specified. An empty list
+          means no filtering will take place and all node instances are valid.
+    :param rollback_point
+    """
+
+    name = 'rollback_workflow'
+    graph = _make_rollback_graph(
+        ctx, name=name, **kwargs)
+    # graph.execute()
+
+
+# @make_or_get_graph
+# def _make_rollback_graph(ctx,
+#                          type_names,
+#                          node_ids,
+#                          node_instance_ids,
+#                          ignore_failure,
+#                          **kwargs):
+#     graph = ctx.graph_mode()
+#     subgraphs = {}
+#
+#     # filtering node instances
+#     filtered_node_instances = _filter_node_instances(
+#         ctx=ctx,
+#         node_ids=node_ids,
+#         node_instance_ids=node_instance_ids,
+#         type_names=type_names)
+#
