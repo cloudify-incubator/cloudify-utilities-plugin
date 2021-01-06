@@ -13,9 +13,16 @@
 # limitations under the License.
 
 from cloudify.decorators import workflow
-from cloudify.workflows.tasks_graph import make_or_get_graph
-from cloudify.plugins.lifecycle import set_send_node_event_on_error_handler
+from cloudify.workflows.tasks_graph import make_or_get_graph, forkjoin
+from cloudify.plugins.lifecycle import \
+    set_send_node_event_on_error_handler, \
+    _skip_nop_operations, \
+    is_host_node, \
+    _host_pre_stop, \
+    _relationships_operations
 
+from cloudify_rollback_workflow  import lifecycle as utilitieslifecycle
+unresolved_states = ['creating', 'configuring', 'starting']
 
 @workflow(resumable=True)
 def start(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
@@ -205,7 +212,7 @@ def rollback(ctx,
              type_names,
              node_ids,
              node_instance_ids,
-             rollback_point,
+             retry_after_rollback,
              **kwargs):
     """Rollback workflow.
 
@@ -214,6 +221,7 @@ def rollback(ctx,
     operation that will get us back to a resolved node state, and then
     execute the unfinished workflow.
 
+    :param ctx : Cloudify context
     :param type_names: A list of type names. The operation will be executed
           only on node instances which are of these types or of types which
           (recursively) derive from them. An empty list means no filtering
@@ -224,27 +232,63 @@ def rollback(ctx,
     :param node_instance_ids: A list of node instance ids. The operation will
           be executed only on the node instances specified. An empty list
           means no filtering will take place and all node instances are valid.
-    :param rollback_point Whether to rollback to resolved state, or full uninstall.
+    :param retry_after_rollback Retry to install after rollback.
     """
 
-# find the failed workflow??how can i do that?
 
 # Find all node instances in unresolved state
-    unresolved_states = ['creating', 'starting', 'configuring']
-    unresolved_nodes_ids = []
-    ctx.logger.info("ctx: {}".format(ctx))
-    for instance in ctx.node_instances:
+    unresolved_node_instances = _find_all_unresolved_node_instances(
+        ctx,
+        node_ids,
+        node_instance_ids,
+        type_names)
+
+    #For debugging
+    for instance in unresolved_node_instances:
+        ctx.logger.info("unresolved node instance:{}".format(instance))
+
+    intact_nodes = set(ctx.node_instances) - set(unresolved_node_instances)
+
+    #For debugging
+    for instance in intact_nodes:
+        ctx.logger.info("intact node instance:{}".format(instance))
+
+#build rollback graph and execute
+    utilitieslifecycle.rollback_node_instances(
+        graph=ctx.graph_mode(),
+        node_instances=set(unresolved_node_instances),
+        related_nodes=intact_nodes
+    )
+
+
+#Handle if resume install after rollback i think it will be inside lifecycle
+
+
+
+
+
+def _find_all_unresolved_node_instances(ctx,
+                                        node_ids,
+                                        node_instance_ids,
+                                        type_names):
+
+    unresolved_node_instances = []
+    filtered_node_instances = _filter_node_instances(
+        ctx=ctx,
+        node_ids=node_ids,
+        node_instance_ids=node_instance_ids,
+        type_names=type_names)
+
+    for instance in filtered_node_instances:
         ctx.logger.info("instance: {}".format(instance))
         if instance.state in unresolved_states:
-            unresolved_nodes_ids.append(instance.id)
+            unresolved_node_instances.append(instance)
 
+    return unresolved_node_instances
 
-
-
-
-def _resolve_creating_nodes(ctx,unresolved_nodes_ids):
-    for id in unresolved_nodes_ids:
-        ctx.get_node_instance
+# def _resolve_creating_nodes(ctx,unresolved_nodes_ids):
+#     for id in unresolved_nodes_ids:
+#         ctx.get_node_instance
 
 
 
@@ -254,20 +298,3 @@ def _resolve_creating_nodes(ctx,unresolved_nodes_ids):
     # # graph.execute()
 
 
-# @make_or_get_graph
-# def _make_rollback_graph(ctx,
-#                          type_names,
-#                          node_ids,
-#                          node_instance_ids,
-#                          ignore_failure,
-#                          **kwargs):
-#     graph = ctx.graph_mode()
-#     subgraphs = {}
-#
-#     # filtering node instances
-#     filtered_node_instances = _filter_node_instances(
-#         ctx=ctx,
-#         node_ids=node_ids,
-#         node_instance_ids=node_instance_ids,
-#         type_names=type_names)
-#
