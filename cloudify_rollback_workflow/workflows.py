@@ -13,13 +13,9 @@
 # limitations under the License.
 
 from cloudify.decorators import workflow
-from cloudify.workflows.tasks_graph import make_or_get_graph, forkjoin
+from cloudify.workflows.tasks_graph import make_or_get_graph
 from cloudify.plugins.lifecycle import uninstall_node_instances, \
-    set_send_node_event_on_error_handler, \
-    _skip_nop_operations, \
-    is_host_node, \
-    _host_pre_stop, \
-    _relationships_operations
+    set_send_node_event_on_error_handler
 
 from cloudify_rollback_workflow import lifecycle as utilitieslifecycle
 
