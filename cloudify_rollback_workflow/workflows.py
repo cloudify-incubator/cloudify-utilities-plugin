@@ -14,8 +14,8 @@
 
 from cloudify.decorators import workflow
 from cloudify.workflows.tasks_graph import make_or_get_graph, forkjoin
-from cloudify.plugins.lifecycle import \
-    set_send_node_event_on_error_handler, \
+from cloudify.plugins.lifecycle import uninstall_node_instances,\
+    set_send_node_event_on_error_handler,\
     _skip_nop_operations, \
     is_host_node, \
     _host_pre_stop, \
@@ -212,7 +212,7 @@ def rollback(ctx,
              type_names,
              node_ids,
              node_instance_ids,
-             retry_after_rollback,
+             full_rollback,
              **kwargs):
     """Rollback workflow.
 
@@ -232,7 +232,7 @@ def rollback(ctx,
     :param node_instance_ids: A list of node instance ids. The operation will
           be executed only on the node instances specified. An empty list
           means no filtering will take place and all node instances are valid.
-    :param retry_after_rollback Retry to install after rollback.
+    :param full_rollback Whether to rollback to resolved state or full uninstall.
     """
 
 
@@ -245,26 +245,41 @@ def rollback(ctx,
 
     #For debugging
     for instance in unresolved_node_instances:
-        ctx.logger.info("unresolved node instance:{}".format(instance))
+        ctx.logger.info("unresolved node instance:{}".format(instance.id))
+
 
     intact_nodes = set(ctx.node_instances) - set(unresolved_node_instances)
 
     #For debugging
     for instance in intact_nodes:
-        ctx.logger.info("intact node instance:{}".format(instance))
+        ctx.logger.info("intact node instance:{}".format(instance.id))
 
-#build rollback graph and execute
-    utilitieslifecycle.rollback_node_instances(
-        graph=ctx.graph_mode(),
-        node_instances=set(unresolved_node_instances),
-        related_nodes=intact_nodes
-    )
+    if full_rollback:
+        # The first uninstall is because a bug in the uninstall workflow:
+        # if node in `configured` state the uninstall try's to run stop so
+        # until then we need rollback always to `deleted`.
+        ctx.logger.debug("Start full rollback")
+        uninstall_node_instances(ctx.graph_mode(),
+                                 node_instances=set(unresolved_node_instances),
+                                 related_nodes=intact_nodes,
+                                 ignore_failure=True,
+                                 name_prefix='uninstall-a'
+                                 )
+        # For older than 5.1 Cloudify versions.
+        ctx.refresh_node_instances()
+        uninstall_node_instances(
+            graph=ctx.graph_mode(),
+            node_instances=ctx.node_instances,
+            ignore_failure=False,
+            name_prefix='uninstall-b')
 
-
-#Handle if resume install after rollback i think it will be inside lifecycle
-
-
-
+    # Build rollback graph and execute
+    else:
+        utilitieslifecycle.rollback_node_instances(
+            graph=ctx.graph_mode(),
+            node_instances=set(unresolved_node_instances),
+            related_nodes=intact_nodes
+        )
 
 
 def _find_all_unresolved_node_instances(ctx,
@@ -283,18 +298,9 @@ def _find_all_unresolved_node_instances(ctx,
         ctx.logger.info("instance: {}".format(instance))
         if instance.state in unresolved_states:
             unresolved_node_instances.append(instance)
+        else:
+            ctx.logger.info(
+                "Can't choose {id} node-instance as unresolved node due to "
+                "valid state.".format(id=instance.id))
 
     return unresolved_node_instances
-
-# def _resolve_creating_nodes(ctx,unresolved_nodes_ids):
-#     for id in unresolved_nodes_ids:
-#         ctx.get_node_instance
-
-
-
-    # name = 'rollback_workflow'
-    # graph = _make_rollback_graph(
-    #     ctx, name=name, **kwargs)
-    # # graph.execute()
-
-

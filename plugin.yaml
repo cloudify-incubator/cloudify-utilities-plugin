@@ -1251,3 +1251,16 @@ workflows:
         default: [ ]
       ignore_failure:
         default: false
+
+  rollback:
+    mapping: rollback.cloudify_rollback_workflow.workflows.rollback
+    is_cascading: false
+    parameters:
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      full_rollback:
+        default: false
