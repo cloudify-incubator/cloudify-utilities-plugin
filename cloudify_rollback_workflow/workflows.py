@@ -14,15 +14,17 @@
 
 from cloudify.decorators import workflow
 from cloudify.workflows.tasks_graph import make_or_get_graph, forkjoin
-from cloudify.plugins.lifecycle import uninstall_node_instances,\
-    set_send_node_event_on_error_handler,\
+from cloudify.plugins.lifecycle import uninstall_node_instances, \
+    set_send_node_event_on_error_handler, \
     _skip_nop_operations, \
     is_host_node, \
     _host_pre_stop, \
     _relationships_operations
 
-from cloudify_rollback_workflow  import lifecycle as utilitieslifecycle
+from cloudify_rollback_workflow import lifecycle as utilitieslifecycle
+
 unresolved_states = ['creating', 'configuring', 'starting']
+
 
 @workflow(resumable=True)
 def start(ctx, operation_parms, run_by_dependency_order, type_names, node_ids,
@@ -232,27 +234,24 @@ def rollback(ctx,
     :param node_instance_ids: A list of node instance ids. The operation will
           be executed only on the node instances specified. An empty list
           means no filtering will take place and all node instances are valid.
-    :param full_rollback Whether to rollback to resolved state or full uninstall.
+    :param full_rollback Whether to rollback to resolved state or full
+    uninstall.
     """
 
-
-# Find all node instances in unresolved state
+    # Find all node instances in unresolved state
     unresolved_node_instances = _find_all_unresolved_node_instances(
         ctx,
         node_ids,
         node_instance_ids,
         type_names)
 
-    #For debugging
     for instance in unresolved_node_instances:
-        ctx.logger.info("unresolved node instance:{}".format(instance.id))
-
+        ctx.logger.debug("unresolved node instance:{}".format(instance.id))
 
     intact_nodes = set(ctx.node_instances) - set(unresolved_node_instances)
 
-    #For debugging
     for instance in intact_nodes:
-        ctx.logger.info("intact node instance:{}".format(instance.id))
+        ctx.logger.debug("intact node instance:{}".format(instance.id))
 
     if full_rollback:
         # The first uninstall is because a bug in the uninstall workflow:
@@ -286,7 +285,6 @@ def _find_all_unresolved_node_instances(ctx,
                                         node_ids,
                                         node_instance_ids,
                                         type_names):
-
     unresolved_node_instances = []
     filtered_node_instances = _filter_node_instances(
         ctx=ctx,
@@ -295,11 +293,10 @@ def _find_all_unresolved_node_instances(ctx,
         type_names=type_names)
 
     for instance in filtered_node_instances:
-        ctx.logger.info("instance: {}".format(instance))
         if instance.state in unresolved_states:
             unresolved_node_instances.append(instance)
         else:
-            ctx.logger.info(
+            ctx.logger.debug(
                 "Can't choose {id} node-instance as unresolved node due to "
                 "valid state.".format(id=instance.id))
 
