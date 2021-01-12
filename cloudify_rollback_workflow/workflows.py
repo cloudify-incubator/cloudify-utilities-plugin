@@ -214,7 +214,7 @@ def rollback(ctx,
              **kwargs):
     """Rollback workflow.
 
-    Rollback workflow will look at each node’s state, decide if the node state
+    Rollback workflow will look at each node state, decide if the node state
     is unresolved, and for those that are, execute the corresponding node
     operation that will get us back to a resolved node state, and then
     execute the unfinished workflow.
