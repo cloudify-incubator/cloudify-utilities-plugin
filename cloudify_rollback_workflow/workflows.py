@@ -233,7 +233,6 @@ def rollback(ctx,
     :param full_rollback Whether to rollback to resolved state or full
     uninstall.
     """
-
     # Find all node instances in unresolved state
     unresolved_node_instances = _find_all_unresolved_node_instances(
         ctx,
