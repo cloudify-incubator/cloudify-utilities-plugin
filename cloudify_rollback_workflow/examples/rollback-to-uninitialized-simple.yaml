@@ -1,0 +1,21 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://cloudify.co/spec/cloudify/5.1.0/types.yaml
+  - plugin:cloudify-utilities-plugin?version= >=1.24.0
+
+
+inputs:
+
+node_templates:
+
+  node_one:
+    type: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: 
+          implementation: resources/install_fail.py
+          executor: central_deployment_agent
+        delete: 
+          implementation: resources/uninstall.py
+          executor: central_deployment_agent

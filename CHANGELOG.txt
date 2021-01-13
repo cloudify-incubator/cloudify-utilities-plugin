@@ -1,4 +1,5 @@
 releases:
+  v1.24.0: Add operations wrappers workflows and rollback workflow.
   v1.23.11: Tag urllib3 version
   v1.23.10: Make sure that we are using the latest cloudify-utlitities-sdk
   v1.23.9:
