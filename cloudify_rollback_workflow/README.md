@@ -9,8 +9,6 @@ Also, wrappers workflows for cloudify lifecycle operations introduced.
 
 ## Supported workflows
 
-The plugin supports:
-
 ### Rollback workflow
 
 Rollback workflow will look at each node state, decide if the node state
@@ -49,52 +47,50 @@ If `full_rollback` chosen, so after rollback of unresolved nodes the rest of the
 
 ### Example
 
-[Example](examples/rollback_to_configured_and_uninitialized.yaml) demonstrates rollback of two node instances.
+[Example](examples/rollback-to-configured-and-uninitialized.yaml) demonstrates rollback of two node instances.
 
 
 
 #### Install the example blueprint 
 
-install [blueprint](examples/rollback_to_configured_and_uninitialized.yaml).
+install [blueprint](examples/rollback-to-configured-and-uninitialized.yaml).
 ```shell
-[root@9fbb5f2b0d4b offcial_examples]# cfy install rollback_to_configured_and_uninitialized.yaml -b rollback_to_configured_and_uninitialized -d rollback_to_configured_and_uninitialized
-Uploading blueprint rollback_to_configured_and_uninitialized.yaml...
- rollback_to_confi... |################################################| 100.0%
-Blueprint uploaded. The blueprint's id is rollback_to_configured_and_uninitialized
-Creating new deployment from blueprint rollback_to_configured_and_uninitialized...
-Deployment created. The deployment's id is rollback_to_configured_and_uninitialized
-Executing workflow `install` on deployment `rollback_to_configured_and_uninitialized` [timeout=900 seconds]
+[root@9fbb5f2b0d4b offcial_examples]# cfy install rollback-to-configured-and-uninitialized.yaml  -b rollback-example -d rollback-example
+Uploading blueprint rollback-to-configured-and-uninitialized.yaml...
+ rollback-to-confi... |################################################| 100.0%
+Blueprint uploaded. The blueprint's id is rollback-example
+Creating new deployment from blueprint rollback-example...
+Deployment created. The deployment's id is rollback-example
+Executing workflow `install` on deployment `rollback-example` [timeout=900 seconds]
 Deployment environment creation is pending...
-2021-01-12 13:43:06.111  CFY <rollback_to_configured_and_uninitialized> Starting 'create_deployment_environment' workflow execution
-2021-01-12 13:43:06.113  LOG <rollback_to_configured_and_uninitialized> INFO: Creating deployment work directory
-2021-01-12 13:43:06.151  CFY <rollback_to_configured_and_uninitialized> 'create_deployment_environment' workflow execution succeeded
-2021-01-12 13:43:09.810  CFY <rollback_to_configured_and_uninitialized> Starting 'install' workflow execution
-2021-01-12 13:43:09.985  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n] Validating node instance before creation: nothing to do
-2021-01-12 13:43:09.987  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n] Precreating node instance: nothing to do
-2021-01-12 13:43:09.987  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n] Creating node instance: nothing to do
-2021-01-12 13:43:09.988  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n] Configuring node instance: nothing to do
-2021-01-12 13:43:09.990  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n] Starting node instance
-2021-01-12 13:43:10.266  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n.start] Sending task 'script_runner.tasks.run'
-2021-01-12 13:43:10.888  LOG <rollback_to_configured_and_uninitialized> [node_three_tmjr2n.start] INFO: Downloaded resources/install.py to /tmp/NC2GQ/install.py
-2021-01-12 13:43:10.888  LOG <rollback_to_configured_and_uninitialized> [node_three_tmjr2n.start] INFO: log without fail during install
-2021-01-12 13:43:11.164  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n.start] Task succeeded 'script_runner.tasks.run'
-2021-01-12 13:43:11.164  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n] Poststarting node instance: nothing to do
-2021-01-12 13:43:11.166  CFY <rollback_to_configured_and_uninitialized> [node_three_tmjr2n] Node instance started
-2021-01-12 13:43:11.414  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt] Validating node instance before creation: nothing to do
-2021-01-12 13:43:11.415  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt] Precreating node instance: nothing to do
-2021-01-12 13:43:11.417  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt] Creating node instance
-2021-01-12 13:43:11.421  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Validating node instance before creation: nothing to do
-2021-01-12 13:43:11.423  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Precreating node instance: nothing to do
-2021-01-12 13:43:11.486  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Creating node instance: nothing to do
-2021-01-12 13:43:11.489  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Configuring node instance: nothing to do
-2021-01-12 13:43:11.497  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Starting node instance
-2021-01-12 13:43:11.783  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt.create] Sending task 'script_runner.tasks.run'
-2021-01-12 13:43:12.034  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj.start] Sending task 'script_runner.tasks.run'
-2021-01-12 13:43:12.413  LOG <rollback_to_configured_and_uninitialized> [node_two_y7fcvt.create] INFO: Downloaded resources/install_fail.py to /tmp/M4Z9Y/install_fail.py
-2021-01-12 13:43:12.414  LOG <rollback_to_configured_and_uninitialized> [node_two_y7fcvt.create] INFO: log and fail during install!
-2021-01-12 13:43:12.651  LOG <rollback_to_configured_and_uninitialized> [node_one_j5jqtj.start] INFO: Downloaded resources/install_fail.py to /tmp/285JO/install_fail.py
-2021-01-12 13:43:12.651  LOG <rollback_to_configured_and_uninitialized> [node_one_j5jqtj.start] INFO: log and fail during install!
-2021-01-12 13:43:12.668  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt.create] Task failed 'script_runner.tasks.run'
+2021-01-13 07:59:05.353  CFY <rollback-example> Starting 'create_deployment_environment' workflow execution
+2021-01-13 07:59:05.354  LOG <rollback-example> INFO: Creating deployment work directory
+2021-01-13 07:59:05.389  CFY <rollback-example> 'create_deployment_environment' workflow execution succeeded
+2021-01-13 07:59:08.956  CFY <rollback-example> Starting 'install' workflow execution
+2021-01-13 07:59:09.103  CFY <rollback-example> [node_three_j9y2wc] Validating node instance before creation: nothing to do
+2021-01-13 07:59:09.104  CFY <rollback-example> [node_three_j9y2wc] Precreating node instance: nothing to do
+2021-01-13 07:59:09.105  CFY <rollback-example> [node_three_j9y2wc] Creating node instance: nothing to do
+2021-01-13 07:59:09.106  CFY <rollback-example> [node_three_j9y2wc] Configuring node instance: nothing to do
+2021-01-13 07:59:09.107  CFY <rollback-example> [node_three_j9y2wc] Starting node instance
+2021-01-13 07:59:09.375  CFY <rollback-example> [node_three_j9y2wc.start] Sending task 'script_runner.tasks.run'
+2021-01-13 07:59:09.927  LOG <rollback-example> [node_three_j9y2wc.start] INFO: Downloaded resources/install.py to /tmp/M5HA0/install.py
+2021-01-13 07:59:09.927  LOG <rollback-example> [node_three_j9y2wc.start] INFO: log without fail during install
+2021-01-13 07:59:10.193  CFY <rollback-example> [node_three_j9y2wc.start] Task succeeded 'script_runner.tasks.run'
+2021-01-13 07:59:10.194  CFY <rollback-example> [node_three_j9y2wc] Poststarting node instance: nothing to do
+2021-01-13 07:59:10.195  CFY <rollback-example> [node_three_j9y2wc] Node instance started
+2021-01-13 07:59:10.362  CFY <rollback-example> [node_one_ivbz80] Validating node instance before creation: nothing to do
+2021-01-13 07:59:10.363  CFY <rollback-example> [node_one_ivbz80] Precreating node instance: nothing to do
+2021-01-13 07:59:10.363  CFY <rollback-example> [node_one_ivbz80] Creating node instance: nothing to do
+2021-01-13 07:59:10.365  CFY <rollback-example> [node_one_ivbz80] Configuring node instance: nothing to do
+2021-01-13 07:59:10.367  CFY <rollback-example> [node_one_ivbz80] Starting node instance
+2021-01-13 07:59:10.410  CFY <rollback-example> [node_two_wrbed2] Validating node instance before creation: nothing to do
+2021-01-13 07:59:10.412  CFY <rollback-example> [node_two_wrbed2] Precreating node instance: nothing to do
+2021-01-13 07:59:10.419  CFY <rollback-example> [node_two_wrbed2] Creating node instance
+2021-01-13 07:59:10.653  CFY <rollback-example> [node_one_ivbz80.start] Sending task 'script_runner.tasks.run'
+2021-01-13 07:59:10.963  CFY <rollback-example> [node_two_wrbed2.create] Sending task 'script_runner.tasks.run'
+2021-01-13 07:59:11.241  LOG <rollback-example> [node_one_ivbz80.start] INFO: Downloaded resources/install_fail.py to /tmp/UURZS/install_fail.py
+2021-01-13 07:59:11.241  LOG <rollback-example> [node_one_ivbz80.start] INFO: log and fail during install!
+2021-01-13 07:59:11.440  CFY <rollback-example> [node_one_ivbz80.start] Task failed 'script_runner.tasks.run'
 Traceback (most recent call last):
   File "/opt/mgmtworker/env/lib64/python3.6/site-packages/cloudify/dispatch.py", line 793, in main
     payload = handler.handle()
@@ -108,11 +104,13 @@ Traceback (most recent call last):
     script_func(script_path, ctx, process)
   File "/opt/mgmtworker/env/lib64/python3.6/site-packages/script_runner/tasks.py", line 323, in eval_script
     exec(compile(open(script_path).read(), script_path, 'exec'), eval_globals)
-  File "/tmp/M4Z9Y/install_fail.py", line 4, in <module>
+  File "/tmp/UURZS/install_fail.py", line 4, in <module>
     raise Exception
 Exception
 
-2021-01-12 13:43:12.969  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj.start] Task failed 'script_runner.tasks.run'
+2021-01-13 07:59:11.498  LOG <rollback-example> [node_two_wrbed2.create] INFO: Downloaded resources/install_fail.py to /tmp/L0VUJ/install_fail.py
+2021-01-13 07:59:11.499  LOG <rollback-example> [node_two_wrbed2.create] INFO: log and fail during install!
+2021-01-13 07:59:11.753  CFY <rollback-example> [node_two_wrbed2.create] Task failed 'script_runner.tasks.run'
 Traceback (most recent call last):
   File "/opt/mgmtworker/env/lib64/python3.6/site-packages/cloudify/dispatch.py", line 793, in main
     payload = handler.handle()
@@ -126,9 +124,12 @@ Traceback (most recent call last):
     script_func(script_path, ctx, process)
   File "/opt/mgmtworker/env/lib64/python3.6/site-packages/script_runner/tasks.py", line 323, in eval_script
     exec(compile(open(script_path).read(), script_path, 'exec'), eval_globals)
-  File "/tmp/285JO/install_fail.py", line 4, in <module>
+  File "/tmp/L0VUJ/install_fail.py", line 4, in <module>
     raise Exception
 Exception
+
+2021-01-13 07:59:26.673  CFY <rollback-example> [node_one_ivbz80.start] Sending task 'script_runner.tasks.run' [retry 1/60]
+
 
 ```
 Cancel the `install` workflow (or wait until it will fail).
@@ -140,37 +141,36 @@ Check node instances states:
 Listing all instances...
 
 Node-instances:
-+-------------------+------------------------------------------+---------+------------+----------+------------+----------------+------------+
-|         id        |              deployment_id               | host_id |  node_id   |  state   | visibility |  tenant_name   | created_by |
-+-------------------+------------------------------------------+---------+------------+----------+------------+----------------+------------+
-|  node_one_j5jqtj  | rollback_to_configured_and_uninitialized |         |  node_one  | starting |   tenant   | default_tenant |   admin    |
-| node_three_tmjr2n | rollback_to_configured_and_uninitialized |         | node_three | started  |   tenant   | default_tenant |   admin    |
-|  node_two_y7fcvt  | rollback_to_configured_and_uninitialized |         |  node_two  | creating |   tenant   | default_tenant |   admin    |
-+-------------------+------------------------------------------+---------+------------+----------+------------+----------------+------------+
++-------------------+------------------+---------+------------+----------+------------+----------------+------------+
+|         id        |  deployment_id   | host_id |  node_id   |  state   | visibility |  tenant_name   | created_by |
++-------------------+------------------+---------+------------+----------+------------+----------------+------------+
+|  node_one_ivbz80  | rollback-example |         |  node_one  | starting |   tenant   | default_tenant |   admin    |
+| node_three_j9y2wc | rollback-example |         | node_three | started  |   tenant   | default_tenant |   admin    |
+|  node_two_wrbed2  | rollback-example |         |  node_two  | creating |   tenant   | default_tenant |   admin    |
++-------------------+------------------+---------+------------+----------+------------+----------------+------------+
 
 Showing 3 of 3 node-instances
 
 ```
 
-See that `node_one_j5jqtj` state is `starting` and  `node_two_y7fcvt` state is `creating`.
+See that `node_one_ivbz80` state is `starting` and  `node_two_wrbed2` state is `creating`.
 
 #### Run rollback workflow
 
 ```shell
-[root@9fbb5f2b0d4b offcial_examples]# cfy executions start rollback -d rollback_to_configured_and_uninitialized
-Executing workflow `rollback` on deployment `rollback_to_configured_and_uninitialized` [timeout=900 seconds]
-2021-01-12 14:31:03.130  LOG <rollback_to_configured_and_uninitialized> INFO: Installing managed plugin: 1f11c61f-1771-4096-9745-685c211b2683 [package_name: cloudify-utilities-plugin, package_version: 1.24.0, supported_platform: linux_x86_64, distribution: centos, distribution_release: core]
-2021-01-12 14:31:05.604  CFY <rollback_to_configured_and_uninitialized> Starting 'rollback' workflow execution
-2021-01-12 14:31:05.723  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt] Validating node instance after deletion: nothing to do
-2021-01-12 14:31:05.747  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Stopping node instance
-2021-01-12 14:31:05.749  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt] Rollback Stop: nothing to do, instance state is creating
-2021-01-12 14:31:05.752  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt] Deleting node instance
-2021-01-12 14:31:06.006  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt.delete] Sending task 'script_runner.tasks.run'
-2021-01-12 14:31:06.108  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Validating node instance after deletion: nothing to do
-2021-01-12 14:31:06.297  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj.stop] Sending task 'script_runner.tasks.run'
-2021-01-12 14:31:06.607  LOG <rollback_to_configured_and_uninitialized> [node_two_y7fcvt.delete] INFO: Downloaded resources/uninstall_fail.py to /tmp/922GU/uninstall_fail.py
-2021-01-12 14:31:06.608  LOG <rollback_to_configured_and_uninitialized> [node_two_y7fcvt.delete] INFO: log and fail during uninstall!
-2021-01-12 14:31:06.826  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt.delete] Task failed 'script_runner.tasks.run'
+[root@9fbb5f2b0d4b offcial_examples]# cfy executions start rollback -d rollback-example
+Executing workflow `rollback` on deployment `rollback-example` [timeout=900 seconds]
+2021-01-13 08:02:25.044  CFY <rollback-example> Starting 'rollback' workflow execution
+2021-01-13 08:02:25.142  CFY <rollback-example> [node_two_wrbed2] Validating node instance after deletion: nothing to do
+2021-01-13 08:02:25.172  CFY <rollback-example> [node_one_ivbz80] Stopping node instance
+2021-01-13 08:02:25.173  CFY <rollback-example> [node_two_wrbed2] Rollback Stop: nothing to do, instance state is creating
+2021-01-13 08:02:25.176  CFY <rollback-example> [node_two_wrbed2] Deleting node instance
+2021-01-13 08:02:25.425  CFY <rollback-example> [node_two_wrbed2.delete] Sending task 'script_runner.tasks.run'
+2021-01-13 08:02:25.478  CFY <rollback-example> [node_one_ivbz80] Validating node instance after deletion: nothing to do
+2021-01-13 08:02:25.678  CFY <rollback-example> [node_one_ivbz80.stop] Sending task 'script_runner.tasks.run'
+2021-01-13 08:02:26.023  LOG <rollback-example> [node_two_wrbed2.delete] INFO: Downloaded resources/uninstall_fail.py to /tmp/HCURA/uninstall_fail.py
+2021-01-13 08:02:26.024  LOG <rollback-example> [node_two_wrbed2.delete] INFO: log and fail during uninstall!
+2021-01-13 08:02:26.313  CFY <rollback-example> [node_two_wrbed2.delete] Task failed 'script_runner.tasks.run'
 Traceback (most recent call last):
   File "/opt/mgmtworker/env/lib64/python3.6/site-packages/cloudify/dispatch.py", line 793, in main
     payload = handler.handle()
@@ -184,15 +184,15 @@ Traceback (most recent call last):
     script_func(script_path, ctx, process)
   File "/opt/mgmtworker/env/lib64/python3.6/site-packages/script_runner/tasks.py", line 323, in eval_script
     exec(compile(open(script_path).read(), script_path, 'exec'), eval_globals)
-  File "/tmp/922GU/uninstall_fail.py", line 4, in <module>
+  File "/tmp/HCURA/uninstall_fail.py", line 4, in <module>
     raise Exception
 Exception
 
-2021-01-12 14:31:06.826  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt] Ignoring task script_runner.tasks.run failure
-2021-01-12 14:31:06.844  LOG <rollback_to_configured_and_uninitialized> [node_one_j5jqtj.stop] INFO: Downloaded resources/uninstall_fail.py to /tmp/U1DMY/uninstall_fail.py
-2021-01-12 14:31:06.845  LOG <rollback_to_configured_and_uninitialized> [node_one_j5jqtj.stop] INFO: log and fail during uninstall!
-2021-01-12 14:31:06.875  CFY <rollback_to_configured_and_uninitialized> [node_two_y7fcvt] Rollbacked node instance
-2021-01-12 14:31:07.119  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj.stop] Task failed 'script_runner.tasks.run'
+2021-01-13 08:02:26.314  CFY <rollback-example> [node_two_wrbed2] Ignoring task script_runner.tasks.run failure
+2021-01-13 08:02:26.374  LOG <rollback-example> [node_one_ivbz80.stop] INFO: Downloaded resources/uninstall_fail.py to /tmp/1CWIY/uninstall_fail.py
+2021-01-13 08:02:26.374  LOG <rollback-example> [node_one_ivbz80.stop] INFO: log and fail during uninstall!
+2021-01-13 08:02:26.386  CFY <rollback-example> [node_two_wrbed2] Rollbacked node instance
+2021-01-13 08:02:26.714  CFY <rollback-example> [node_one_ivbz80.stop] Task failed 'script_runner.tasks.run'
 Traceback (most recent call last):
   File "/opt/mgmtworker/env/lib64/python3.6/site-packages/cloudify/dispatch.py", line 793, in main
     payload = handler.handle()
@@ -206,20 +206,20 @@ Traceback (most recent call last):
     script_func(script_path, ctx, process)
   File "/opt/mgmtworker/env/lib64/python3.6/site-packages/script_runner/tasks.py", line 323, in eval_script
     exec(compile(open(script_path).read(), script_path, 'exec'), eval_globals)
-  File "/tmp/U1DMY/uninstall_fail.py", line 4, in <module>
+  File "/tmp/1CWIY/uninstall_fail.py", line 4, in <module>
     raise Exception
 Exception
 
-2021-01-12 14:31:07.119  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Ignoring task script_runner.tasks.run failure
-2021-01-12 14:31:07.119  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Stopped node instance
-2021-01-12 14:31:07.170  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Rollback Delete: nothing to do, instance state is starting
-2021-01-12 14:31:07.171  CFY <rollback_to_configured_and_uninitialized> [node_one_j5jqtj] Rollbacked node instance
-2021-01-12 14:31:07.256  CFY <rollback_to_configured_and_uninitialized> 'rollback' workflow execution succeeded
-Finished executing workflow rollback on deployment rollback_to_configured_and_uninitialized
-* Run 'cfy events list 2296d271-f26f-47b9-94be-c5b0333bf538' to retrieve the execution's events/logs
+2021-01-13 08:02:26.714  CFY <rollback-example> [node_one_ivbz80] Ignoring task script_runner.tasks.run failure
+2021-01-13 08:02:26.714  CFY <rollback-example> [node_one_ivbz80] Stopped node instance
+2021-01-13 08:02:26.801  CFY <rollback-example> [node_one_ivbz80] Rollback Delete: nothing to do, instance state is starting
+2021-01-13 08:02:26.804  CFY <rollback-example> [node_one_ivbz80] Rollbacked node instance
+2021-01-13 08:02:26.946  CFY <rollback-example> 'rollback' workflow execution succeeded
+Finished executing workflow rollback on deployment rollback-example
+* Run 'cfy events list 31c4189b-6404-430f-8839-5c933e058769' to retrieve the execution's events/logs
 
 ```
-See that even though `node_one_j5jqtj.stop` and `node_two_y7fcvt.delete` still the rollback succeeded (ignore failures during rollback as explained above).
+See that even though `node_one_ivbz80.stop` and `node_two_wrbed2.delete` still the rollback succeeded (ignore failures during rollback as explained above).
 
 Check node instances states:
 
@@ -228,13 +228,13 @@ Check node instances states:
 Listing all instances...
 
 Node-instances:
-+-------------------+------------------------------------------+---------+------------+---------------+------------+----------------+------------+
-|         id        |              deployment_id               | host_id |  node_id   |     state     | visibility |  tenant_name   | created_by |
-+-------------------+------------------------------------------+---------+------------+---------------+------------+----------------+------------+
-|  node_one_j5jqtj  | rollback_to_configured_and_uninitialized |         |  node_one  |   configured  |   tenant   | default_tenant |   admin    |
-| node_three_tmjr2n | rollback_to_configured_and_uninitialized |         | node_three |    started    |   tenant   | default_tenant |   admin    |
-|  node_two_y7fcvt  | rollback_to_configured_and_uninitialized |         |  node_two  | uninitialized |   tenant   | default_tenant |   admin    |
-+-------------------+------------------------------------------+---------+------------+---------------+------------+----------------+------------+
++-------------------+------------------+---------+------------+---------------+------------+----------------+------------+
+|         id        |  deployment_id   | host_id |  node_id   |     state     | visibility |  tenant_name   | created_by |
++-------------------+------------------+---------+------------+---------------+------------+----------------+------------+
+|  node_one_ivbz80  | rollback-example |         |  node_one  |   configured  |   tenant   | default_tenant |   admin    |
+| node_three_j9y2wc | rollback-example |         | node_three |    started    |   tenant   | default_tenant |   admin    |
+|  node_two_wrbed2  | rollback-example |         |  node_two  | uninitialized |   tenant   | default_tenant |   admin    |
++-------------------+------------------+---------+------------+---------------+------------+----------------+------------+
 
 Showing 3 of 3 node-instances
 
@@ -276,3 +276,40 @@ All the wrapper workflows share the same parameters:
   filtering will take place and all node instances are valid (Default: []).
 * `ignore_failure`: Whether to ignore failure during execution of the operation.
 
+### Example
+
+This example demonstrates how to call `alt_stop` workflow.
+
+```shell
+[root@9fbb5f2b0d4b offcial_examples]# cfy executions start alt_stop -d rollback-example -p node_instance_ids=[node_one_ivbz80] -p ignore_failure=true
+Executing workflow `alt_stop` on deployment `rollback-example` [timeout=900 seconds]
+2021-01-13 08:40:47.049  CFY <rollback-example> Starting 'alt_stop' workflow execution
+2021-01-13 08:40:47.163  CFY <rollback-example> [node_one_ivbz80] Starting operation cloudify.interfaces.lifecycle.stop
+2021-01-13 08:40:47.353  CFY <rollback-example> [node_one_ivbz80.stop] Sending task 'script_runner.tasks.run'
+2021-01-13 08:40:48.015  LOG <rollback-example> [node_one_ivbz80.stop] INFO: Downloaded resources/uninstall_fail.py to /tmp/TQ3V7/uninstall_fail.py
+2021-01-13 08:40:48.016  LOG <rollback-example> [node_one_ivbz80.stop] INFO: log and fail during uninstall!
+2021-01-13 08:40:48.241  CFY <rollback-example> [node_one_ivbz80.stop] Task failed 'script_runner.tasks.run'
+Traceback (most recent call last):
+  File "/opt/mgmtworker/env/lib64/python3.6/site-packages/cloudify/dispatch.py", line 793, in main
+    payload = handler.handle()
+  File "/opt/mgmtworker/env/lib64/python3.6/site-packages/cloudify/dispatch.py", line 456, in handle
+    result = self._run_operation_func(ctx, kwargs)
+  File "/opt/mgmtworker/env/lib64/python3.6/site-packages/cloudify/dispatch.py", line 509, in _run_operation_func
+    return self.func(*self.args, **kwargs)
+  File "/opt/mgmtworker/env/lib64/python3.6/site-packages/script_runner/tasks.py", line 80, in run
+    script_result = process_execution(script_func, script_path, ctx, process)
+  File "/opt/mgmtworker/env/lib64/python3.6/site-packages/script_runner/tasks.py", line 156, in process_execution
+    script_func(script_path, ctx, process)
+  File "/opt/mgmtworker/env/lib64/python3.6/site-packages/script_runner/tasks.py", line 323, in eval_script
+    exec(compile(open(script_path).read(), script_path, 'exec'), eval_globals)
+  File "/tmp/TQ3V7/uninstall_fail.py", line 4, in <module>
+    raise Exception
+Exception
+
+2021-01-13 08:40:48.242  CFY <rollback-example> [node_one_ivbz80] Ignoring task script_runner.tasks.run failure
+2021-01-13 08:40:48.242  CFY <rollback-example> [node_one_ivbz80] Finished operation cloudify.interfaces.lifecycle.stop
+2021-01-13 08:40:48.303  CFY <rollback-example> 'alt_stop' workflow execution succeeded
+
+```
+See that `cloudify.interfaces.lifecycle.stop` operation executed on the node instance, which was given as a parameter,
+failed, but the whole workflow didn't.
