@@ -51,7 +51,8 @@ setup(
               'cloudify_rest',
               'cloudify_scalelist',
               'cloudify_secrets',
-              'cloudify_rollback_workflow'],
+              'cloudify_rollback_workflow',
+              'cloudify_resources'],
     license='LICENSE',
     install_requires=[
         'cloudify-common>=4.5.5',  # deployment_proxy
