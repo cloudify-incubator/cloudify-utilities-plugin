@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.23.12.zip
-    package_version: '1.23.12'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.23.13.zip
+    package_version: '1.23.13'
 
   cfy_files: *utilities_plugin
 
@@ -29,6 +29,8 @@ plugins:
   scalelist: *utilities_plugin
 
   secrets: *utilities_plugin
+
+  resources: *utilities_plugin
 
 data_types:
 
@@ -761,6 +763,24 @@ node_types:
         update:
           implementation: secrets.cloudify_secrets.tasks.read
 
+  # cloudify.nodes.resources.Manager
+  cloudify.nodes.resources.List:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        default: []
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: resources.cloudify_resources.tasks.create_list
+
+  # cloudify.nodes.resources.List
+  cloudify.nodes.resources.ListItem:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: resources.cloudify_resources.tasks.create_list_item
+
+
 relationships:
 
   load_from_config:
@@ -772,6 +792,15 @@ relationships:
           inputs:
             source_config:
               default: { get_attribute: [TARGET , params ]  }
+  
+  # reserve/reserve_item
+  cloudify.relationships.resources.reserve_list_item:
+    derived_from: cloudify.relationships.connected_to
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: resources.cloudify_resources.tasks.reserve_list_item
+        unlink: resources.cloudify_resources.tasks.return_list_item
+
 
 workflows:
 

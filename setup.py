@@ -16,7 +16,7 @@ import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.23.12',
+    version='1.23.13',
     author='Cloudify Platform Ltd.',
     author_email='hello@cloudify.co',
     description='Utilities for extending Cloudify',
@@ -31,7 +31,8 @@ setuptools.setup(
               'cloudify_cloudinit',
               'cloudify_rest',
               'cloudify_scalelist',
-              'cloudify_secrets'],
+              'cloudify_secrets',
+              'cloudify_resources'],
     license='LICENSE',
     install_requires=[
         'cloudify-common>=4.5.5',  # deployment_proxy
