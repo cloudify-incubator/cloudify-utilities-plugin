@@ -35,7 +35,7 @@ def get_version(rel_file='plugin.yaml'):
 
 setup(
     name='cloudify-utilities-plugin',
-    version='1.24.0',
+    version=get_version(),
     author='Cloudify Platform Ltd.',
     author_email='hello@cloudify.co',
     description='Utilities for extending Cloudify',
