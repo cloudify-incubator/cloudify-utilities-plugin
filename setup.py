@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-import setuptools
+from setuptools import setup
 
 
 def read(rel_path):
@@ -32,9 +32,10 @@ def get_version(rel_file='plugin.yaml'):
             return line_no_quotes.strip('\n')
     raise RuntimeError('Unable to find version string.')
 
-setuptools.setup(
+
+setup(
     name='cloudify-utilities-plugin',
-    version=get_version(),
+    version='1.24.0',
     author='Cloudify Platform Ltd.',
     author_email='hello@cloudify.co',
     description='Utilities for extending Cloudify',
