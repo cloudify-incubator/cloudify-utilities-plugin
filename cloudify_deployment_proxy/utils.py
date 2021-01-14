@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,9 +8,9 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import os
 import sys
@@ -18,7 +18,6 @@ import shutil
 import zipfile
 import tempfile
 from shutil import copy
-from urlparse import urlparse
 
 import requests
 
@@ -26,6 +25,8 @@ from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify.exceptions import OperationRetry
 from cloudify.utils import exception_to_error_cause
+
+from cloudify_common_sdk._compat import urlparse, text_type
 
 
 def generate_traceback_exception():
@@ -62,8 +63,8 @@ def proxy_operation(operation):
                         response['traceback'], response['message']))
 
                 raise OperationRetry(
-                    'Error: {0} while trying to run proxy task {1}'
-                    ''.format(response['message'], operation))
+                    'Error: {0} while trying to run proxy task {1}'.format(
+                        response['message'], operation))
 
             except Exception:
                 response = generate_traceback_exception()
@@ -73,8 +74,8 @@ def proxy_operation(operation):
                         response['traceback'], response['message']))
 
                 raise NonRecoverableError(
-                    'Error: {0} while trying to run proxy task {1}'
-                    ''.format(response['message'], operation))
+                    'Error: {0} while trying to run proxy task {1}'.format(
+                        response['message'], operation))
 
         return wrapper
     return decorator
@@ -110,7 +111,7 @@ def download_file(url, destination=None, keep_name=False):
         response = requests.get(url, stream=True)
     except requests.exceptions.RequestException as ex:
         raise NonRecoverableError(
-            'Failed to download {0}. ({1})'.format(url, str(ex)))
+            'Failed to download {0}. ({1})'.format(url, text_type(ex)))
 
     final_url = response.url
     if final_url != url:
@@ -122,7 +123,7 @@ def download_file(url, destination=None, keep_name=False):
                 destination_file.write(chunk)
     except IOError as ex:
         raise NonRecoverableError(
-            'Failed to download {0}. ({1})'.format(url, str(ex)))
+            'Failed to download {0}. ({1})'.format(url, text_type(ex)))
 
     return destination
 
@@ -147,14 +148,14 @@ def get_local_path(source, destination=None, create_temp=False):
             'using one of the allowed schemes: {0}'.format(allowed_schemes))
 
 
-def zip(source, destination, include_folder=True):
+def zip_folder(source, destination, include_folder=True):
     ctx.logger.debug('Creating zip archive: {0}...'.format(destination))
     with zipfile.ZipFile(destination, 'w') as zip_file:
         for root, _, files in os.walk(source):
             for filename in files:
                 file_path = os.path.join(root, filename)
-                source_dir = os.path.dirname(source) if include_folder\
-                    else source
+                source_dir = os.path.dirname(source) \
+                    if include_folder else source
                 zip_file.write(
                     file_path, os.path.relpath(file_path, source_dir))
     return destination
@@ -165,6 +166,6 @@ def zip_files(files):
     destination_zip = source_folder + '.zip'
     for path in files:
         copy(path, source_folder)
-    zip(source_folder, destination_zip, include_folder=False)
+    zip_folder(source_folder, destination_zip, include_folder=False)
     shutil.rmtree(source_folder)
     return destination_zip

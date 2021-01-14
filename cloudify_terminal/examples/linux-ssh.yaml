@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.0/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/5.0.0/types.yaml
+  - plugin:cloudify-utilities-plugin
 
 inputs:
 
@@ -60,22 +60,27 @@ node_templates:
 
   linux_impl:
     type: cloudify.terminal.raw
+    properties:
+      terminal_auth:
+        user: { get_input: terminal_user }
+        password: { get_input: terminal_password }
+        ip: { get_input: terminal_ip }
+        key_content: { get_input: terminal_key_content }
+        port: { get_input: terminal_port }
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           inputs:
             terminal_auth:
-              user: { get_input: terminal_user }
-              password: { get_input: terminal_password }
-              ip: { get_input: terminal_ip }
-              key_content: { get_input: terminal_key_content }
-              port: { get_input: terminal_port }
+              smart_device: true
               promt_check:
                 - '#'
                 - '$'
             calls:
               - action: hostname
                 save_to: domain
+              - action: uname -a
+                save_to: uname
 
 outputs:
   responses:

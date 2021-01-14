@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2019 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,35 +8,33 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import setuptools
 
 setuptools.setup(
     name='cloudify-utilities-plugin',
-    version='1.9.8',
-    author='Gigaspaces.com',
-    author_email='hello@getcloudify.org',
+    version='1.23.12',
+    author='Cloudify Platform Ltd.',
+    author_email='hello@cloudify.co',
     description='Utilities for extending Cloudify',
-    packages=['cloudify_deployment_proxy',
-              'cloudify_ssh_key',
+    packages=['cloudify_ssh_key',
               'cloudify_files',
+              'cloudify_deployment_proxy',
               'cloudify_terminal',
               'cloudify_configuration',
+              'cloudify_hooks_workflow',
               'cloudify_custom_workflow',
               'cloudify_suspend',
               'cloudify_cloudinit',
-              'cloudify_rest', 'cloudify_rest/rest_sdk',
-              'cloudify_scalelist'],
+              'cloudify_rest',
+              'cloudify_scalelist',
+              'cloudify_secrets'],
     license='LICENSE',
     install_requires=[
-        'cloudify-plugins-common>=3.4.2',
-        'cloudify-rest-client>=4.0',  # deployment_proxy
-        'paramiko',  # terminal
-        "Jinja2>=2.7.2",  # terminal
-        'pycrypto',  # ssh_key
-        'pyyaml',  # cloudinit and rest
-        'xmltodict']  # rest
+        'cloudify-common>=4.5.5',  # deployment_proxy
+        'cloudify-utilities-plugins-sdk>=0.0.34',  # terminal, rest
+        'ruamel.yaml']  # cloudinit
 )

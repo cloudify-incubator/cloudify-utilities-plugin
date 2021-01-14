@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,21 +8,21 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import sys
 import time
 import os
-from urlparse import urlparse
 
 from cloudify import ctx
 from cloudify import manager
+from cloudify.utils import exception_to_error_cause
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify.utils import exception_to_error_cause
+from cloudify_common_sdk._compat import text_type, urlparse
 
 from .constants import (
     EXECUTIONS_TIMEOUT,
@@ -70,9 +70,9 @@ class DeploymentProxyBase(object):
 
         # These should not make their way into the Operation inputs.
         os.environ['_PAGINATION_OFFSET'] = \
-            str(operation_inputs.pop('pagination_offset', 0))
+            text_type(operation_inputs.pop('pagination_offset', 0))
         os.environ['_PAGINATION_SIZE'] = \
-            str(operation_inputs.pop('pagination_size', 1000))
+            text_type(operation_inputs.pop('pagination_size', 1000))
 
         # cloudify client
         self.client_config = get_desired_value(
@@ -116,7 +116,8 @@ class DeploymentProxyBase(object):
         self.deployment = self.config.get('deployment', {})
         self.deployment_id = self.deployment.get('id') or ctx.instance.id
         self.deployment_inputs = self.deployment.get('inputs', {})
-        self.deployment_outputs = self.deployment.get('outputs', {})
+        self.deployment_outputs = self.deployment.get('outputs')
+        self.deployment_all_outputs = self.deployment.get('all_outputs', True)
         self.deployment_logs = self.deployment.get('logs', {})
 
         # Node-instance-related properties
@@ -159,13 +160,14 @@ class DeploymentProxyBase(object):
             response = _special_client(**_client_args)
         except CloudifyClientError as ex:
             raise NonRecoverableError(
-                'Client action {0} failed: {1}.'.format(_client_attr, str(ex)))
+                'Client action {0} failed: {1}.'.format(_client_attr,
+                                                        text_type(ex)))
         else:
             return response
 
     def upload_blueprint(self):
 
-        if 'blueprint' not in ctx.instance.runtime_properties.keys():
+        if 'blueprint' not in ctx.instance.runtime_properties:
             ctx.instance.runtime_properties['blueprint'] = dict()
 
         update_attributes('blueprint', 'id', self.blueprint_id)
@@ -220,12 +222,29 @@ class DeploymentProxyBase(object):
     def _upload_plugins(self):
         # plugins
         if self.plugins:
-            if 'plugins' not in ctx.instance.runtime_properties.keys():
+            if 'plugins' not in ctx.instance.runtime_properties:
                 ctx.instance.runtime_properties['plugins'] = []
 
-            for plugin in self.plugins:
+            if isinstance(self.plugins, list):
+                plugins_list = self.plugins
+            elif isinstance(self.plugins, dict):
+                plugins_list = self.plugins.values()
+            else:
+                raise NonRecoverableError(
+                    'Wrong type in plugins: {}'.format(repr(self.plugins)))
+            for plugin in plugins_list:
                 ctx.logger.info('Creating plugin zip archive..')
+                wagon_path = None
+                yaml_path = None
+                zip_path = None
                 try:
+                    if not plugin.get('wagon_path') or \
+                            not plugin.get('plugin_yaml_path'):
+                        raise NonRecoverableError(
+                            'You should provide both values wagon_path: {}'
+                            ' and plugin_yaml_path: {}'
+                            .format(repr(plugin.get('wagon_path')),
+                                    repr(plugin.get('plugin_yaml_path'))))
                     wagon_path = get_local_path(plugin['wagon_path'],
                                                 create_temp=True)
                     yaml_path = get_local_path(plugin['plugin_yaml_path'],
@@ -236,11 +255,14 @@ class DeploymentProxyBase(object):
                         'plugins', PLUGIN_UPLOAD, {'plugin_path': zip_path})
                     ctx.instance.runtime_properties['plugins'].append(
                         plugin.id)
-                    ctx.logger.info('Uploaded {}'.format(repr(plugin.id)))
+                    ctx.logger.info('Uploaded {0}'.format(repr(plugin.id)))
                 finally:
-                    os.remove(wagon_path)
-                    os.remove(yaml_path)
-                    os.remove(zip_path)
+                    if wagon_path:
+                        os.remove(wagon_path)
+                    if yaml_path:
+                        os.remove(yaml_path)
+                    if zip_path:
+                        os.remove(zip_path)
 
     def _set_secrets(self):
         # secrets set
@@ -250,7 +272,7 @@ class DeploymentProxyBase(object):
                     'key': secret_name,
                     'value': self.secrets[secret_name],
                 })
-                ctx.logger.info('Created secret {}'.format(repr(secret_name)))
+                ctx.logger.info('Created secret {0}'.format(repr(secret_name)))
 
     def create_deployment(self):
 
@@ -262,7 +284,7 @@ class DeploymentProxyBase(object):
                  deployment_id=self.deployment_id,
                  inputs=self.deployment_inputs)
 
-        if 'deployment' not in ctx.instance.runtime_properties.keys():
+        if 'deployment' not in ctx.instance.runtime_properties:
             ctx.instance.runtime_properties['deployment'] = dict()
 
         update_attributes('deployment', 'id', self.deployment_id)
@@ -327,12 +349,11 @@ class DeploymentProxyBase(object):
 
     def _delete_plugins(self):
         # remove uploaded plugins
-        plugins = ctx.instance.runtime_properties.get('plugins', [])
-        for plugin_id in plugins:
+        for plugin_id in ctx.instance.runtime_properties.get('plugins', []):
             self.dp_get_client_response('plugins', PLUGIN_DELETE, {
                 'plugin_id': plugin_id
             })
-            ctx.logger.info('Removed plugin {}'.format(repr(plugin_id)))
+            ctx.logger.info('Removed plugin {0}'.format(repr(plugin_id)))
 
     def _delete_secrets(self):
         # secrets delete
@@ -341,14 +362,19 @@ class DeploymentProxyBase(object):
                 self.dp_get_client_response('secrets', SECRETS_DELETE, {
                     'key': secret_name,
                 })
-                ctx.logger.info('Removed secret {}'.format(repr(secret_name)))
+                ctx.logger.info('Removed secret {0}'.format(repr(secret_name)))
 
-    def _delete_properties(self):
+    @staticmethod
+    def _delete_properties():
         # remove properties
-        for property_name in ['deployment', 'executions', 'blueprint',
+        for property_name in ['deployment',
+                              'executions',
+                              'blueprint',
                               'plugins']:
-            if property_name in ctx.instance.runtime_properties:
+            try:
                 del ctx.instance.runtime_properties[property_name]
+            except KeyError:
+                pass
 
     def delete_deployment(self):
 
@@ -397,8 +423,7 @@ class DeploymentProxyBase(object):
             expected_result=True)
 
         if not self.blueprint.get(EXTERNAL_RESOURCE):
-            ctx.logger.info("Delete blueprint {0}."
-                            .format(self.blueprint_id))
+            ctx.logger.info("Delete blueprint {0}.".format(self.blueprint_id))
             client_args = dict(blueprint_id=self.blueprint_id)
             self.dp_get_client_response('blueprints', BP_DELETE, client_args)
 
@@ -410,7 +435,7 @@ class DeploymentProxyBase(object):
 
     def execute_workflow(self):
 
-        if 'executions' not in ctx.instance.runtime_properties.keys():
+        if 'executions' not in ctx.instance.runtime_properties:
             ctx.instance.runtime_properties['executions'] = dict()
 
         update_attributes('executions', 'workflow_id', self.workflow_id)
@@ -428,9 +453,8 @@ class DeploymentProxyBase(object):
                 'The deployment is not ready for execution.')
 
         # we must to run some execution
-        if (
-            self.deployment.get(EXTERNAL_RESOURCE) and self.reexecute
-        ) or not self.deployment.get(EXTERNAL_RESOURCE):
+        if not self.deployment.get(EXTERNAL_RESOURCE) or \
+                self.deployment.get(EXTERNAL_RESOURCE) and self.reexecute:
 
             execution_args = self.config.get('executions_start_args', {})
             client_args = \
@@ -450,12 +474,11 @@ class DeploymentProxyBase(object):
 
             ctx.logger.debug('Polling execution succeeded')
 
-        type_hierarchy = ctx.node.type_hierarchy
-        if NIP_TYPE in type_hierarchy:
+        if NIP_TYPE in ctx.node.type_hierarchy:
             ctx.logger.info('Start post execute node proxy')
             return self.post_execute_node_instance_proxy()
 
-        elif DEP_TYPE in type_hierarchy:
+        elif DEP_TYPE in ctx.node.type_hierarchy:
             ctx.logger.info('Start post execute deployment proxy')
             return self.post_execute_deployment_proxy()
 
@@ -486,32 +509,35 @@ class DeploymentProxyBase(object):
     def post_execute_deployment_proxy(self):
         runtime_prop = ctx.instance.runtime_properties['deployment']
         ctx.logger.debug(
-            'Runtime  deployment properties {0}'.format(runtime_prop))
+            'Runtime deployment properties: {0}'.format(runtime_prop))
 
-        if 'outputs' \
-                not in ctx.instance.runtime_properties['deployment'].keys():
+        if 'outputs' not in runtime_prop:
             update_attributes('deployment', 'outputs', dict())
             ctx.logger.debug('No deployment proxy outputs exist.')
 
         try:
-            ctx.logger.debug('Deployment Id is {0}'.format(self.deployment_id))
+            ctx.logger.debug('Deployment ID is {0}'.format(self.deployment_id))
             response = self.client.deployments.outputs.get(self.deployment_id)
             ctx.logger.debug(
-                'Deployment outputs response {0}'.format(response))
-
+                'Deployment outputs response: {0}'.format(response))
         except CloudifyClientError as ex:
             _, _, tb = sys.exc_info()
             raise NonRecoverableError(
-                'Failed to query deployment outputs: {0}'
-                ''.format(self.deployment_id),
+                'Failed to query deployment outputs: {0}'.format(
+                    self.deployment_id),
                 causes=[exception_to_error_cause(ex, tb)])
         else:
             dep_outputs = response.get('outputs')
             ctx.logger.debug('Deployment outputs: {0}'.format(dep_outputs))
-            for key, val in self.deployment_outputs.items():
-                ctx.instance.runtime_properties[
-                    'deployment']['outputs'][val] = \
-                    dep_outputs.get(key, '')
+            if self.deployment_outputs:
+                output_mapping = self.deployment_outputs
+            elif self.deployment_all_outputs:
+                output_mapping = {key: key for key, _ in dep_outputs.items()}
+            else:
+                output_mapping = {}
+            for key, val in output_mapping.items():
+                ctx.instance.runtime_properties['deployment']['outputs'][val] \
+                    = dep_outputs.get(key, '')
         return True
 
     def verify_execution_successful(self):

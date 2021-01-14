@@ -3,12 +3,16 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.9.8.zip
-    package_version: '1.9.8'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.23.12.zip
+    package_version: '1.23.12'
 
   cfy_files: *utilities_plugin
 
+  cfy_ftp: *utilities_plugin
+
   cloudify_custom_workflow: *utilities_plugin
+
+  cloudify_hooks_workflow: *utilities_plugin
 
   cloudinit: *utilities_plugin
 
@@ -23,6 +27,8 @@ plugins:
   rest: *utilities_plugin
 
   scalelist: *utilities_plugin
+
+  secrets: *utilities_plugin
 
 data_types:
 
@@ -68,6 +74,14 @@ data_types:
           Get "key" the deployment.
           Set "value" runtime property to the value of the output.
         required: false
+      all_outputs:
+        description: >
+          Ignored if "outputs" is specified.
+          Otherwise, if true (the default), then all outputs from the remote
+          deployment are exposed. If false, then no output is exposed.
+        type: boolean
+        required: false
+        default: true
       logs:
         description: >
           Logs redirect settings, by default {redirect: true}
@@ -154,11 +168,38 @@ data_types:
           Unvalidated parameters.
         required: false
 
+  cloudify.datatypes.ftp_auth:
+    properties:
+      user:
+        description: >
+          The login credentials for ftp server.
+        default: ''
+      password:
+        description: >
+          optional, ftp password
+        default: ''
+      ip:
+        description: >
+          optional, device ip
+        default: ''
+      port:
+        description: >
+          optional, ftp port
+        default: 21
+      ignore_host:
+        description: >
+          optional, ignore host in ftp response
+        default: false
+      tls:
+        description: >
+          optional, use tls connection to ftp
+        default: false
+
   cloudify.datatypes.terminal_auth:
     properties:
       user:
         description: >
-          The login credentials for ios server.
+          The login credentials for ssh server.
         default: ''
       password:
         description: >
@@ -184,14 +225,26 @@ data_types:
         description: >
           optional, list of prompts accepted from device, default is "#/$"
         default: []
+      warnings:
+        description: >
+          optional, list of possible warnings without new line
+        default: []
       errors:
         description: >
           optional, list of possible errors without new line
+        default: []
+      criticals:
+        description: >
+          optional, list of possible criticals without new line
         default: []
       exit_command:
         description: >
           optional, command for close connection, default 'exit'
         default: exit
+      smart_device:
+        description: >
+          optional, use shell extension
+        default: false
 
   cloudify.datatypes.File:
     properties:
@@ -235,6 +288,7 @@ data_types:
         default: false
 
 node_types:
+
 
   cloudify.nodes.DeploymentProxy:
     derived_from: cloudify.nodes.Root
@@ -334,7 +388,7 @@ node_types:
         stop:
           implementation: cloudinit.cloudify_cloudinit.tasks.update
         delete:
-          implementation: cloudinit.cloudify_cloudinit.tasks.update
+          implementation: cloudinit.cloudify_cloudinit.tasks.delete
 
   configuration_loader:
     derived_from: cloudify.nodes.ApplicationServer
@@ -357,6 +411,15 @@ node_types:
       use_secret_store:
         type: boolean
         default: true
+      use_secrets_if_exist:
+        type: boolean
+        description: >
+          this flag is able to be true only if use_secret_store is true
+          if this property is false the secret for the key value will be
+          created, if true then the existing secrets of an existing node
+          with same key_name will be used as a key, if this property is true
+          and the secrets does not exist they will be created.
+        default: false
       key_name:
         type: string
         description: Deprecated. Use resource_config.key_name.
@@ -390,6 +453,11 @@ node_types:
     derived_from: cloudify.nodes.Root
     properties:
       terminal_auth:
+        description: >
+          terminal credentials, like example:
+            user: <user name>
+            password: <user password>
+            ip: <host name>
         type: cloudify.datatypes.terminal_auth
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -422,6 +490,37 @@ node_types:
         delete:
           implementation: cfy_files.cloudify_files.tasks.delete
 
+  cloudify.nodes.ftp:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        type: cloudify.datatypes.ftp_auth
+        required: true
+      raw_files:
+        default: {}
+        description: >
+          list files from blueprint to upload
+      files:
+        default: {}
+        description: >
+          list files with content from blueprint to upload
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_ftp.cloudify_ftp.tasks.create
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+            raw_files:
+              default: { get_property: [ SELF, raw_files ] }
+            files:
+              default: { get_property: [ SELF, files ] }
+        delete:
+          implementation: cfy_ftp.cloudify_ftp.tasks.delete
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+
   cloudify.rest.Requests:
     derived_from: cloudify.nodes.Root
     properties:
@@ -449,46 +548,218 @@ node_types:
       verify:
         description: >
           A boolean which controls whether we verify the server's TLS
-          certificate.
-        type: boolean
+          certificate. Supported such values:
+          * `True`: default value, check certificaties,
+          * `False`: ignore server certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
         default: true
+      cert:
+        description: >
+          Supported such values:
+          * `None`: default value, ignore client certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: null
+      timeout:
+        description: >
+          Timeout value for requests.
+        default: null
+      proxies:
+        description: >
+          List of proxies.
+        default: {}
+      params:
+        description: >
+          Template parameters. Default is empty dictionary.
+        default: {}
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
+          inputs: &rest_template_inputs
             params:
+              description: >
+                Template parameters. Default is empty dictionary. Merged
+                with params from node properties and has 'ctx' key for
+                current action context.
               default: {}
             template_file:
+              description: >
+                Template path in blueprint directory
               default: ''
+            save_path:
+              description: >
+                Save result to runtime properties key. Default is directly
+                save to runtime properties.
+              default: false
+            prerender:
+              description: >
+                Prerender template before run calls jinja render=>yaml parse.
+                Default is yaml parse=>jinja render.
+              default: false
+            remove_calls:
+              description: >
+                Remove calls list from results. Default: save calls in
+                runtime properties.
+              default: false
+            force_rerun:
+              description: >
+                Rerun operation if on next operation rerun
+              default: false
+            retry_count:
+              description: >
+                Rerun count on warning on catched warnigs
+              default: 1
+            retry_sleep:
+              description: >
+                Sleep between rerun
+              default: 15
         configure:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
-            params:
-              default: {}
-            template_file:
-              default: ''
+          inputs: *rest_template_inputs
         start:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
-            params:
-              default: {}
-            template_file:
-              default: ''
+          inputs: *rest_template_inputs
         stop:
           implementation: rest.cloudify_rest.tasks.execute
-          inputs:
-            params:
-              default: {}
-            template_file:
-              default: ''
+          inputs: *rest_template_inputs
         delete:
           implementation: rest.cloudify_rest.tasks.execute
+          inputs: *rest_template_inputs
+
+  cloudify.rest.BunchRequests:
+    derived_from: cloudify.nodes.Root
+    properties:
+      hosts:
+        description: >
+          list of hosts name or IP addresses of Rest Servers
+        default: []
+      host:
+        description: >
+          host name or IP addresses of Rest Servers
+          if list of hosts is not needed single host can be provided by this
+          property. NOTE: the 'hosts' property overwirte the 'host' property
+        default: []
+      port:
+        description: >
+          port number. When -1 default ports are used
+          (80 for ssl = false and 443 for ssl = true)
+        type: integer
+        default: -1
+      ssl:
+        description: >
+          http or https
+        type: boolean
+        default: false
+      verify:
+        description: >
+          A boolean which controls whether we verify the server's TLS
+          certificate. Supported such values:
+          * `True`: default value, check certificaties,
+          * `False`: ignore server certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: true
+      cert:
+        description: >
+          Supported such values:
+          * `None`: default value, ignore client certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: null
+      timeout:
+        description: >
+          Timeout value for requests.
+        default: null
+      proxies:
+        description: >
+          List of proxies.
+        default: {}
+      params:
+        description: >
+          Template parameters. Default is empty dictionary.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
           inputs:
-            params:
+            auth:
               default: {}
-            template_file:
-              default: ''
+            templates:
+              default: {}
+        configure:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+        start:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+        stop:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+        delete:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+
+  cloudify.nodes.secrets.Writer:
+    derived_from: cloudify.nodes.Root
+    properties:
+      entries:
+        default: {}
+      do_not_delete:
+        type: boolean
+        default: false
+      variant:
+        type: string
+        required: false
+      separator:
+        type: string
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: secrets.cloudify_secrets.tasks.create
+        delete:
+          implementation: secrets.cloudify_secrets.tasks.delete
+      cloudify.interfaces.operations:
+        update:
+          implementation: secrets.cloudify_secrets.tasks.update
+
+  cloudify.nodes.secrets.Reader:
+    derived_from: cloudify.nodes.Root
+    properties:
+      keys:
+        default: []
+      variant:
+        type: string
+        required: false
+      separator:
+        type: string
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: secrets.cloudify_secrets.tasks.read
+      cloudify.interfaces.operations:
+        update:
+          implementation: secrets.cloudify_secrets.tasks.read
 
 relationships:
 
@@ -609,6 +880,10 @@ workflows:
         default: ""
         description: >
            Optional, transaction value.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   scaledownlist:
     mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
@@ -652,10 +927,15 @@ workflows:
         description: >
           Run DB cleanup directly if instances can't be deleted in one
           transaction.
+          **This flag will do nothing as of 1.11.0. Deprecated feature.**
       all_results:
         default: false
         description: >
           Get all instances for filter. Required 4.3+ manager.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
@@ -715,3 +995,104 @@ workflows:
         description: >
          Node runtime properties field value for search. Can be provided as
          list of possible values.
+
+  hook_workflow_run_filtered:
+    mapping: cloudify_hooks_workflow.cloudify_hooks_workflow.tasks.run_workflow
+    parameters:
+      inputs:
+        description: >
+          Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+          cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+        default: {}
+      logger_file:
+        description: >
+          duplicate logger output to separate file
+        default: ""
+      client_config:
+        description: >
+          custom credentials for manager, by default is not required for use
+        default: {}
+      filter_by:
+        description: >
+          key-value list, where:
+            path is path to field for validate,
+            values is list of possible values
+          example:
+          - path: ["workflow_id"]
+            values: ["install"]
+          - path: ["deployment_capabilities", "autouninstall", "value"]
+            values: [true, "yes"]
+      workflow_for_run:
+        description: >
+          name workflow to run on deployment
+        default: uninstall
+      workflow_params:
+        description: >
+          additional workflow parameters
+        default: {}
+
+  hook_workflow_rest:
+    mapping: rest.cloudify_rest.tasks.execute_as_workflow
+    parameters:
+      inputs:
+        description: >
+          Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+          cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+        default: {}
+      logger_file:
+        description: >
+          duplicate logger output to separate file
+        default: ""
+      properties:
+        description: >
+          connection properties(same as properties in `cloudify.rest.Requests`)
+        default: {}
+      params:
+        description: >
+          Template parameters. Default is empty dictionary. Merged
+          with params from node properties and has 'ctx' key for
+          current action context.
+        default: {}
+      template_file:
+        description: >
+          Absolute path to template file
+        default: ''
+      save_path:
+        description: >
+          Save result to runtime properties key. Default is directly
+          save to runtime properties.
+        default: false
+      prerender:
+        description: >
+          Prerender template before run calls jinja render=>yaml parse.
+          Default is yaml parse=>jinja render.
+        default: false
+      remove_calls:
+        description: >
+          Remove calls list from results. Default: save calls in
+          runtime properties.
+        default: false
+
+  hook_workflow_terminal:
+    mapping: terminal.cloudify_terminal.tasks.run_as_workflow
+    parameters:
+      inputs:
+        description: >
+          Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+          cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+        default: {}
+      logger_file:
+        description: >
+          duplicate logger output to separate file
+        default: ""
+      terminal_auth:
+        description: >
+          terminal credentials, like example:
+            user: <user name>
+            password: <user password>
+            ip: <host name>
+        type: cloudify.datatypes.terminal_auth
+      calls:
+        description: >
+          List of calls to run
+        default: []

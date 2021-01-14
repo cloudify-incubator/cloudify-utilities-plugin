@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.0/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/5.0.0/types.yaml
+  - plugin:cloudify-utilities-plugin
 
 inputs:
 
@@ -10,7 +10,6 @@ inputs:
     description: >
       Management IP address
     default: "10.239.1.112"
-
 
 node_templates:
 
@@ -22,13 +21,13 @@ node_templates:
       ssl: true
       verify: false
     interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    inputs:
-                        template_file: templates/get-token-template.yaml
-                        params:
-                          USERNAME: "admin"
-                          PASSWORD: "admin"
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            template_file: templates/get-token-template.yaml
+            params:
+              USERNAME: "admin"
+              PASSWORD: "admin"
 
   baseline_config:
     type: cloudify.rest.Requests
@@ -38,17 +37,17 @@ node_templates:
       ssl: true
       verify: false
     interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    inputs:
-                        template_file: templates/baseline-config-template.yaml
-                        params:
-                          USERNAME: "admin"
-                          PASSWORD: "admin"
-                          TOKEN: { get_attribute: [token, token-content, token] }
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            template_file: templates/baseline-config-template.yaml
+            params:
+              USERNAME: "admin"
+              PASSWORD: "admin"
+              TOKEN: { get_attribute: [token, token-content, token] }
     relationships:
-      - type: cloudify.relationships.depends_on
-        target: token
+    - type: cloudify.relationships.depends_on
+      target: token
 
   baseline_networking:
     type: cloudify.rest.Requests
@@ -58,24 +57,21 @@ node_templates:
       ssl: true
       verify: false
     interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    inputs:
-                        template_file: templates/baseline-networking-START-template.yaml
-                        params:
-                          USERNAME: "admin"
-                          PASSWORD: "admin"
-                          TOKEN: { get_attribute: [token, token-content, token] }
-                stop:
-                    inputs:
-                        template_file: templates/baseline-networking-STOP-template.yaml
-                        params:
-                          USERNAME: "admin"
-                          PASSWORD: "admin"
-                          TOKEN: { get_attribute: [token, token-content, token] }
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            template_file: templates/baseline-networking-START-template.yaml
+            params:
+              USERNAME: "admin"
+              PASSWORD: "admin"
+              TOKEN: { get_attribute: [token, token-content, token] }
+        stop:
+          inputs:
+            template_file: templates/baseline-networking-STOP-template.yaml
+            params:
+              USERNAME: "admin"
+              PASSWORD: "admin"
+              TOKEN: { get_attribute: [token, token-content, token] }
     relationships:
-      - type: cloudify.relationships.depends_on
-        target: baseline_config
-
-
-outputs:
+    - type: cloudify.relationships.depends_on
+      target: baseline_config

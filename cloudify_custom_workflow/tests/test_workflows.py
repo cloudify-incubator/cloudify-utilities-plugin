@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import unittest
 from mock import Mock, patch
 
 from cloudify.state import current_ctx
 
-import cloudify_custom_workflow.tasks as tasks
+from .. import tasks
 
 
 class TestWorkflow(unittest.TestCase):
@@ -74,7 +75,7 @@ class TestWorkflow(unittest.TestCase):
                 tasks.customwf(ctx=_ctx, nodes_to_runon=['node_id'],
                                operations_to_execute=['operation1'])
         _instance.execute_operation.assert_called_with('operation1',
-                                                       kwargs={'ctx': _ctx})
+                                                       kwargs={})
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,21 +8,24 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-from mock import MagicMock
 
 import os
-from pwd import getpwnam
 import tempfile
 import testtools
+from pwd import getpwnam
+from mock import MagicMock
 
 from cloudify.mocks import MockCloudifyContext
-from cloudify_files import tasks as operation_task
 from cloudify.exceptions import NonRecoverableError
 from cloudify.state import current_ctx
+
+from cloudify_common_sdk._compat import text_type
+
+from .. import tasks as operation_task
 
 
 class CloudifyFilesTestBase(testtools.TestCase):
@@ -40,17 +43,15 @@ class CloudifyFilesTestBase(testtools.TestCase):
     @property
     def _owner(self):
         # For circle.ci.
-        _user = os.environ.get('USER', 'circleci')
-        _group = os.environ.get('GROUP', 'circleci')
+        _user = os.environ.get('USER', u'circleci')
+        _group = os.environ.get('GROUP', u'circleci')
         # Toggle these for local testing.
-        # _user = os.environ.get('USER', '_')
-        # _group = os.environ.get('GROUP', '_')
         return ':'.join([_user, _group])
 
     @property
     def _user_id(self):
         _owner = self._owner
-        if not isinstance(_owner, basestring):
+        if not isinstance(_owner, text_type):
             return None
         split_owner = _owner.split(':')
         if not len(split_owner) == 2:
@@ -121,7 +122,7 @@ class CloudifyFilesTestBase(testtools.TestCase):
             resource_config=resource_config)
         self.assertIn(
             'No such file or directory',
-            raised_error.message)
+            str(raised_error))
 
     def test_operation_create_from_inputs(self):
         """Test the create function with inputs"""

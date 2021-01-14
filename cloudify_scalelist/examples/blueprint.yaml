@@ -4,8 +4,8 @@ description: >
   Scale List Workflows checks
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.8/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/5.0.0/types.yaml
+  - plugin:cloudify-utilities-plugin
 
 node_types:
 
@@ -105,6 +105,10 @@ node_templates:
         create:
           inputs:
             defined_in_inputs: { get_attribute: [one,  resource_id]  }
+# Toggle to test wait for failed tasks.
+#        start:
+#          executor: central_deployment_agent
+#          implementation: scripts/start.py
         delete:
           inputs:
             defined_in_inputs: { get_attribute: [one,  resource_id]  }

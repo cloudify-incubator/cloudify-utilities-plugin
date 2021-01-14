@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,14 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import unittest
-from mock import MagicMock, patch, call
+from mock import (
+    MagicMock,
+    patch,
+    call)
 
 from cloudify import constants
-from cloudify import exceptions as cfy_exc
 from cloudify.state import current_ctx
+from cloudify import exceptions as cfy_exc
 
-import cloudify_suspend.workflows as workflows
+from .. import workflows
 
 
 class TestBackups(unittest.TestCase):

@@ -1,6 +1,6 @@
 
 #######
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -10,17 +10,17 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
-
-from cloudify import ctx
-from cloudify.workflows import ctx as workflow_ctx
-from cloudify.decorators import workflow
-
-from cloudify import manager
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import json
+
+from cloudify import ctx
+from cloudify import manager
+from cloudify.decorators import workflow
+from cloudify.workflows import ctx as workflow_ctx
+from cloudify_common_sdk.filters import obfuscate_passwords
 
 LIFECYCLE_OPERATION_UPDATE = 'cloudify.interfaces.lifecycle.update'
 LIFECYCLE_OPERATION_CONFIGURE = 'cloudify.interfaces.lifecycle.configure'
@@ -37,7 +37,7 @@ DIFF_PARAMS = 'diff_params'
 
 def _merge_dicts(d1, d2):
     result = d1.copy()
-    for key, new_val in d2.iteritems():
+    for key, new_val in d2.items():
         current_val = result.get(key)
         if isinstance(current_val, dict) and isinstance(new_val, dict):
             result[key] = _merge_dicts(current_val, new_val)
@@ -84,7 +84,8 @@ def load_configuration_to_runtime_properties(source_config=None, **kwargs):
     params_list = ctx.source.node.properties['params_list']
 
     # populate params from main configuration with only relevant values
-    params = {k: v for k, v in source_config.iteritems() if k in params_list}
+    params = {
+        k: v for k, v in source_config.items() if k in params_list}
     # override params with HARD coded node params
     params.update(ctx.source.node.properties['params'])
 
@@ -93,7 +94,8 @@ def load_configuration_to_runtime_properties(source_config=None, **kwargs):
     params[OLD_PARAMS] = {}
 
     # find changed params between old params and populated params
-    diff_params = [k for k, v in params.iteritems() if v != old_params.get(k)]
+    diff_params = [
+        k for k, v in params.items() if v != old_params.get(k)]
 
     # populate the old params into params
     params[OLD_PARAMS] = old_params
@@ -102,11 +104,14 @@ def load_configuration_to_runtime_properties(source_config=None, **kwargs):
     params[DIFF_PARAMS] = diff_params
 
     ctx.logger.info("Show params for instance {}: {}"
-                    .format(ctx.source.instance.id, params))
+                    .format(ctx.source.instance.id,
+                            obfuscate_passwords(params)))
     ctx.logger.info("Show old params for instance {}: {}"
-                    .format(ctx.source.instance.id, old_params))
+                    .format(ctx.source.instance.id,
+                            obfuscate_passwords(old_params)))
     ctx.logger.info("Show diff params for instance {}: {}"
-                    .format(ctx.source.instance.id, diff_params))
+                    .format(ctx.source.instance.id,
+                            obfuscate_passwords(diff_params)))
 
     # update params to runtime properties
     ctx.source.instance.runtime_properties[PARAMS] = params
@@ -204,7 +209,7 @@ def execute_update(restcli, sequence, instance, ctx):
     params = currentinstance.runtime_properties[PARAMS]
     ctx.logger.info(
         "Updating instance ID: {} with diff_params {}".format(
-            instance.id, params[DIFF_PARAMS]
+            instance.id, obfuscate_passwords(params[DIFF_PARAMS])
         )
     )
     operation_task = instance.execute_operation(

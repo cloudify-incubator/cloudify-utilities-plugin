@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3.2/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/5.0.0/types.yaml
   - plugin:cloudify-utilities-plugin
 
 inputs:
@@ -22,9 +22,9 @@ node_templates:
       ssl: true
       verify: false
     interfaces:
-            cloudify.interfaces.lifecycle:
-                start:
-                    inputs:
-                        template_file: templates/git-get-commit.yaml
-                        params:
-                          COMMIT: { get_input: commit }
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            template_file: templates/git-get-commit.yaml
+            params:
+              COMMIT: { get_input: commit }

@@ -15,10 +15,81 @@ Features:
 - configurable recoverable errors
 - context sensitive "response expectation"
 
+Action inputs in `cloudify.rest.Requests`:
+* `params`: Template parameters. Default is empty dictionary.
+* `params_attributes`: dictionary with list based path to values in
+  `runtime_prioperties`.
+* `template_file`: Template path in blueprint directory. Default is ''.
+* `save_path`: Save result to runtime properties key. Default is directly
+  save to runtime properties.
+* `prerender`: Prerender template before run calls `jinja render` =>
+  `yaml parse`. Default is `yaml parse` => `jinja render`.
+* `remove_calls`: Remove calls list from results. Default: save calls in
+  runtime properties.
+
+Action inputs in `cloudify.rest.BunchRequests` is list of inputs from
+`cloudify.rest.Requests`.
+
+Node properties for `cloudify.rest.Requests` and `cloudify.rest.BunchRequests`:
+* `hosts`: list of hosts name or IP addresses of Rest Servers
+* `host`: host name or IP addresses of Rest Servers if list of hosts is not
+  needed single host can be provided by this property. NOTE: the 'hosts'
+  property overwirte the 'host' property
+* `port`: port number. When -1 default ports are used (80 for ssl = false
+  and 443 for ssl = true). Default: -1
+* `ssl`: http or https. Default: `false`
+* `verify`: A boolean which controls whether we verify the server's TLS
+  certificate. Default: `true`.
+  Supported such values:
+  * `True`: default value, check certificaties,
+  * `False`: ignore server certificates,
+  * `<file path>`: path to certificate on local system,
+  * `<certificate content>`: certificate content.
+* `timeout`: Optional, timeout value for requests.
+* `cert`: Optional, provide https client certificates. Default: `None`.
+  Supported such values:
+  * `None`: default value, ignore client certificates,
+  * `<file path>`: path to certificate on local system,
+  * `<certificate content>`: certificate content.
+* `proxies`: proxies dictionary. By default: empty.
+* `params`: Common params for all calls, will be merged with params from
+each call/action.
+
+## Use rest calls actionable events
+Add such event handler to `/opt/mgmtworker/config/hooks.conf`
+[Look to documentation for more information](https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/).
+```yaml
+hooks:
+- event_type: workflow_succeeded
+  implementation: cloudify-utilities-plugin.cloudify_rest.tasks.execute_as_workflow
+  inputs:
+    logger_file: /tmp/hooks_log.log
+    properties:
+      hosts: ["jsonplaceholder.typicode.com"]
+      port: 443
+      ssl: true
+      verify: false
+    template_file: /opt/manager/resources/blueprints/default_tenant/examples/templates/get-user-all-properties-template.yaml
+  description: A hook for workflow_succeeded
+```
+
+Supported parameters:
+* `inputs`: passed from cloudify hooks (or first param hooks)
+* `logger_file`: duplicate logger output to separate file
+* `properties`: connection properties(same as properties in `cloudify.rest.Requests`)
+* `template_file`: absolute path to template file
+* `params`: Template parameters, additionally providided `__inputs__` from hooks.
+  Default is empty dictionary.
+* `save_path`: Save result to runtime properties key. Default is directly
+  save to runtime properties.
+* `prerender`: Prerender template before run calls `jinja render` =>
+  `yaml parse`. Default is `yaml parse` => `jinja render`.
+* `remove_calls`: Remove calls list from results. Default: dump only final
+  responses.
 
 ### Blueprint
 
-**Example Node Template:**
+**Example Node Template single call:**
 
 ```yaml
   user:
@@ -36,29 +107,33 @@ Features:
             template_file: templates/get-user-all-properties-template.yaml
 ```
 
+**Example Node Template bunch calls:**
+
+```yaml
+  user:
+    cloudify.rest.BunchRequests
+    properties:
+      # hosts:
+      # - { get_input: rest_endpoint }
+      port: 443
+      ssl: true
+      verify: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            auth: # combine with properties
+              hosts:
+                - { get_input: rest_endpoint }
+            templates:
+            - template_file: templates/get-user-all-properties-template.yaml
+```
+
 ### Templates
 
-Templates are a place where we can place multiple REST calls
-
-Template parameters:
-
-- **path** - represents URI of REST call
-- **method** - REST emethods (GET/PUT/POST/PATCH/DELETE)
-- **headers** - REST headers
-- **payload** - YAML representation of data that is to be sent as payload in
-  REST call
-- **response_format** - JSON/XML
-- **recoverable_codes** - recoverable codes allow to triger operation retry
-- **response_translation** - translates response into runtime properties
-  (please see example)
-- **response_expectation** - what we expect in a response content. If response
-  is different than specified, system is raising recoverable error and trying
-  until response is equal to specified
-- **nonrecoverable_response** - response which is raising non-recoverable error
-  and triggers workflow to stop (give up)
-- **retry_on_connection_error** - try to send request again even in case when
-  REST endpoint is not available (ConnectionError). It may be useful in cases
-  that we need to wait for some REST service to be up.
+Templates are a place where we can place multiple
+[REST template](https://github.com/cloudify-incubator/cloudify-utilities-plugins-sdk/blob/master/README.md#rest-yaml-template-format)
+calls.
 
 **Example content of REST template:**
 
@@ -198,3 +273,11 @@ details in order to create user post with POST method.
 blueprint: [example-2-blueprint.yaml](examples/example-2-blueprint.yaml)
 
 Real life example how F5 BigIP can be provisioned with REST API
+
+### Example 4
+
+blueprint: [example-5-blueprint.yaml](examples/example-5-blueprint.yaml)
+
+Example for get users list, create new user based on first result and than
+remove new created user. Have used `cloudify.rest.BunchRequests` with
+`params_attributes`.

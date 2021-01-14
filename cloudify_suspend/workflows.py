@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import time
 
-from cloudify.decorators import workflow
 from cloudify import constants
+from cloudify.decorators import workflow
 from cloudify import exceptions as cfy_exc
+from cloudify_common_sdk.filters import obfuscate_passwords
 
 
 def _check_type(node, include_node_types, exclude_node_types):
@@ -37,7 +39,8 @@ def _check_type(node, include_node_types, exclude_node_types):
 
 
 def _run_operation(ctx, sequence, operation, **kwargs):
-    ctx.logger.debug("Run {}({})".format(operation, repr(kwargs)))
+    ctx.logger.debug("Run {}({})".format(operation,
+                                         repr(obfuscate_passwords(kwargs))))
 
     include_node_types = kwargs.get('include_node_types', [])
     exclude_node_types = kwargs.get('exclude_node_types', [])

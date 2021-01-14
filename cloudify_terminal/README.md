@@ -28,6 +28,7 @@ ip you can use contained_in relationship.
       cloudify.interfaces.lifecycle:
         create:
           inputs:
+            logger_file: <duplicate logger output to separate file>
             terminal_auth:
               user: <user for instance>
               password: <optional, password for instance>
@@ -177,13 +178,22 @@ node_templates:
         ip: <optional, instance ip, plugin can get such ip from parent node>
         key_content: <optional, ssh key content for instance>
         port: <optional, by default 22>
+        warnings: <list strings that must rerun if contained in output>
         errors: <list strings that must raise error if contained in output>
+        criticals: <list strings that must raise non recoverable error if contained in output>
+        responses: <optional, list for possible question that required action after login from user with answers on>
+        - question: <sequence on chars that required some response>
+          answer: <response from plugin>
+          newline: <optional, send new line after response, by default false>
         promt_check: <optional, list of prompt's>
         exit_command: <optional, command for run if connection alive after all commands, by default: exit>
+        smart_device: <optional, use shell extension in ssh, by default: false>
     interfaces:
       cloudify.interfaces.lifecycle:
         start: # can be create/configure/start/stop/delete
           inputs:
+            logger_file: <duplicate logger output to separate file>
+            force_rerun: <optional, rerun operation if have already called before>
             terminal_auth: <optional, overwrite values from properties>
               user: <user for instance>
               password: <optional, password for instance>
@@ -200,16 +210,45 @@ node_templates:
                   - question: <sequence on chars that required some response>
                     answer: <response from plugin>
                     newline: <optional, send new line after response, by default false>
+                warnings: <optional, list strings that must rerun last operation if contained in output, will overwrite values from terminal_auth>
                 errors: <optional, list strings that must raise error if contained in output, will overwrite values from terminal_auth>
+                criticals: <optional, list strings that must raise NonRecoverableError if contained in output, will overwrite values from terminal_auth>
                 promt_check: <optional, list of prompt's, will overwrite values from terminal_auth>
-
+                retry_count: <optional, rerun count on warning, by default 10>
+                retry_sleep: <optional, sleep between rerun, by default 15>
 ```
+
+**Example 7: Use terminal as hooks**
+
+```yaml
+hooks:
+- event_type: workflow_succeeded
+  implementation: cloudify-utilities-plugin.cloudify_terminal.tasks.run_as_workflow
+  inputs:
+    logger_file: /tmp/hooks_log.log
+    terminal_auth:
+      user: centos
+      password: passw0rd
+      ip: localhost
+      port: 22
+      smart_device: true
+      promt_check:
+        - '#'
+        - '$'
+    calls:
+      - action: hostname
+        save_to: domain
+      - action: uname -a
+        save_to: uname
+
+  description: A hook for workflow_succeeded
+```
+
 
 # Examples
 
 * [Cisco](examples/cisco.yaml) - show currently assigned ip's.
 * [Cisco](examples/cisco_flash_list.yaml) - list flash contents.
-* [Fortigate](examples/fortigate.yaml) - show assigned ip's with example for
-  error settings.
+* [Fortigate](examples/fortigate.yaml) - run config commands and unknown command("aaa").
 * [SSH to VM](examples/linux-ssh.yaml) - Simple ssh to linux vm with
   `run hostname` and by relationship call `run uptime`.

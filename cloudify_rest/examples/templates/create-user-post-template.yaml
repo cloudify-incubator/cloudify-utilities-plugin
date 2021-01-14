@@ -17,8 +17,8 @@ rest_calls:
     headers:
       Content-type: application/json
     payload:
-      title: '{{ USERNAME }}'
-      body: '{{ WEBSITE }}'
+      {% if USERNAME %}title: '{{ USERNAME }}'{% endif %}
+      {% if WEBSITE %}body: '{{ WEBSITE }}'{% endif %}
       userId: '{{ USER_ID }}'
     response_format: json
     recoverable_codes: [400]

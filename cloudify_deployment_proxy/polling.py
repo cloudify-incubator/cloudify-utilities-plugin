@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,16 +8,20 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from os import getenv
 import time
+import logging
+
+from cloudify_common_sdk._compat import text_type
 
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
+
 from .constants import POLLING_INTERVAL
 
 
@@ -53,9 +57,9 @@ def resource_by_id(_client, _id, _type):
         _resources = _resources_client.list(_include=['id'])
     except CloudifyClientError as ex:
         raise NonRecoverableError(
-            '{0} list failed {1}.'.format(_type, str(ex)))
+            '{0} list failed {1}.'.format(_type, text_type(ex)))
     else:
-        return [str(_r['id']) == _id for _r in _resources]
+        return [text_type(_r['id']) == _id for _r in _resources]
 
 
 def poll_with_timeout(pollster,
@@ -70,7 +74,7 @@ def poll_with_timeout(pollster,
     timeout = float('infinity') if timeout == -1 else timeout
     current_time = time.time()
 
-    ctx.logger.debug('Timeout value is {}'.format(timeout))
+    ctx.logger.debug('Timeout value is {0}'.format(timeout))
 
     while time.time() <= current_time + timeout:
         if pollster(**pollster_args) != expected_result:
@@ -117,24 +121,27 @@ def dep_logs_redirect(_client, execution_id):
                 instance_prompt if instance_prompt else "",
                 event.get('message', "")
             )
-            message = message.encode('utf-8')
+            message = text_type(message)
 
             ctx.logger.debug(
                 'Message {0} for Event {1} for execution_id {1}'.format(
                     message, event))
 
-            level = event.get('level')
-            predefined_levels = {
-                'critical': 50,
-                'error': 40,
-                'warning': 30,
-                'info': 20,
-                'debug': 10
-            }
-            if level in predefined_levels:
-                ctx.logger.log(predefined_levels[level], message)
-            else:
-                ctx.logger.log(20, message)
+            level = event.get('level', logging.INFO)
+
+            # If the event dict had a 'level' key, then the value is
+            # a string. In that case, convert it to uppercase and get
+            # the matching Python logging constant.
+            if isinstance(level, text_type):
+                level = logging.getLevelName(level.upper())
+
+            # In the (very) odd case that the level is still not an int
+            # (can happen if the original level value wasn't recognized
+            # by Python's logging library), then use 'INFO'.
+            if not isinstance(level, int):
+                level = logging.INFO
+
+            ctx.logger.log(level, message)
 
         last_event += len(events)
         # returned infinite count
@@ -142,7 +149,8 @@ def dep_logs_redirect(_client, execution_id):
             full_count = last_event + 100
         # returned nothing, let's do it next time
         if len(events) == 0:
-            ctx.logger.log(20, "Returned nothing, let's get logs next time.")
+            ctx.logger.log(20, "Waiting for log messages "
+                               "(execution: {0})...".format(execution_id))
             break
 
     ctx.instance.runtime_properties[COUNT_EVENTS][execution_id] = last_event
@@ -162,18 +170,22 @@ def dep_system_workflows_finished(_client, _check_all_in_deployment=False):
                 _size=_size)
         except CloudifyClientError as ex:
             raise NonRecoverableError(
-                'Executions list failed {0}.'.format(str(ex)))
+                'Executions list failed {0}.'.format(text_type(ex)))
 
         for _exec in _execs:
 
             if _exec.get('is_system_workflow'):
-                if _exec.get('status') not in ('terminated', 'failed',
+                if _exec.get('status') not in ('terminated',
+                                               'completed',
+                                               'failed',
                                                'cancelled'):
                     return False
 
             if _check_all_in_deployment:
                 if _check_all_in_deployment == _exec.get('deployment_id'):
-                    if _exec.get('status') not in ('terminated', 'failed',
+                    if _exec.get('status') not in ('terminated',
+                                                   'completed',
+                                                   'failed',
                                                    'cancelled'):
                         return False
 
@@ -206,7 +218,12 @@ def dep_workflow_in_state_pollster(_client,
 
     except CloudifyClientError as ex:
         raise NonRecoverableError(
-            'Executions get failed {0}.'.format(str(ex)))
+            'Executions get failed {0}.'.format(text_type(ex)))
+
+    if _log_redirect and _exec.get('id'):
+        ctx.logger.debug(
+            '_exec info for _log_redirect is {0}'.format(_exec))
+        dep_logs_redirect(_client, _exec.get('id'))
 
     if _exec.get('status') == _state:
         ctx.logger.debug(
@@ -216,7 +233,7 @@ def dep_workflow_in_state_pollster(_client,
         return True
     elif _exec.get('status') == 'failed':
         raise NonRecoverableError(
-            'Execution {0} failed.'.format(str(_exec)))
+            'Execution {0} failed.'.format(text_type(_exec)))
 
     return False
 

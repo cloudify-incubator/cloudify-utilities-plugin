@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,9 +8,9 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import mock
 
@@ -18,10 +18,10 @@ from cloudify.state import current_ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .client_mock import MockCloudifyRestClient
-from .base import DeploymentProxyTestBase
 from ..tasks import upload_blueprint
+from .base import DeploymentProxyTestBase
 from ..constants import EXTERNAL_RESOURCE
+from .client_mock import MockCloudifyRestClient
 
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
@@ -59,7 +59,7 @@ class TestBlueprint(DeploymentProxyTestBase):
                                       operation='upload_blueprint',
                                       **self.resource_config)
 
-            self.assertIn('_upload failed', error.message)
+            self.assertIn('_upload failed', str(error))
 
     def test_upload_blueprint_exists(self):
         # Test that if the blueprint ID exists
@@ -104,8 +104,8 @@ class TestBlueprint(DeploymentProxyTestBase):
         with mock.patch('cloudify.manager.get_rest_client') as mock_client:
             mock_client.return_value = MockCloudifyRestClient()
 
-            blueprint_params = {}
-            blueprint_params['blueprint'] = {}
+            blueprint_params = dict()
+            blueprint_params['blueprint'] = dict()
             blueprint_params['blueprint']['blueprint_id'] = test_name
             blueprint_params['blueprint']['blueprint_archive'] = archive
             self.resource_config['resource_config'] = blueprint_params

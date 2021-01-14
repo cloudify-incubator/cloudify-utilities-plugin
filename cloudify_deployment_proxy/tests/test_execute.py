@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,9 +8,9 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import mock
 
@@ -18,10 +18,13 @@ from cloudify.state import current_ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .client_mock import MockCloudifyRestClient
-from .base import DeploymentProxyTestBase
 from ..tasks import execute_start
+from .. import DeploymentProxyBase
+from .base import DeploymentProxyTestBase
+from .client_mock import MockCloudifyRestClient
 from ..constants import EXTERNAL_RESOURCE, NIP_TYPE, DEP_TYPE
+
+from cloudify_common_sdk._compat import text_type
 
 REST_CLIENT_EXCEPTION = \
     mock.MagicMock(side_effect=CloudifyClientError('Mistake'))
@@ -59,8 +62,7 @@ class TestExecute(DeploymentProxyTestBase):
                                       execute_start,
                                       deployment_id=test_name,
                                       workflow_id='install')
-            self.assertIn('action start failed',
-                          error.message)
+            self.assertIn('action start failed', text_type(error))
         del _ctx, mock_client
 
     def test_execute_start_timeout(self):
@@ -82,9 +84,7 @@ class TestExecute(DeploymentProxyTestBase):
                                           deployment_id=test_name,
                                           workflow_id='install',
                                           timeout=.001)
-                self.assertIn(
-                    'Execution timeout',
-                    error.message)
+                self.assertIn('Execution timeout', text_type(error))
         del _ctx, mock_client
 
     def test_execute_start_succeeds(self):
@@ -272,3 +272,68 @@ class TestExecute(DeploymentProxyTestBase):
                                        timeout=.001)
                 self.assertTrue(output)
         del _ctx, mock_client
+
+    def _test_output_mapping(self, all_outputs, output_mapping,
+                             deployment_outputs, expected_outputs):
+        _ctx = self.get_mock_ctx('test_post_execute_deployment_proxy',
+                                 node_type=NIP_TYPE)
+        _ctx.node.properties['resource_config']['deployment']['outputs'] = \
+            output_mapping
+        _ctx.node.properties['resource_config']['deployment']['all_outputs'] =\
+            all_outputs
+        _ctx.instance.runtime_properties['deployment'] = {}
+
+        cfy_mock_client = MockCloudifyRestClient()
+        cfy_mock_client.deployments.outputs.get = \
+            mock.MagicMock(return_value={'outputs': deployment_outputs})
+
+        with mock.patch('cloudify.manager.get_rest_client') as mock_client:
+            mock_client.return_value = cfy_mock_client
+            current_ctx.set(_ctx)
+            self.addCleanup(current_ctx.clear)
+            d = DeploymentProxyBase({})
+            d.post_execute_deployment_proxy()
+            self.assertEqual(
+                expected_outputs,
+                _ctx.instance.runtime_properties['deployment']['outputs'])
+
+    def test_post_execute_deployment_proxy_with_mapping_full(self):
+        self._test_output_mapping(
+            all_outputs=False,
+            output_mapping={
+                'key1': 'key1',
+                'key2': 'key2'
+                }, deployment_outputs={
+                'key1': 'value1',
+                'key2': 'value2'},
+            expected_outputs={
+                'key1': 'value1',
+                'key2': 'value2'
+            }
+        )
+
+    def test_post_execute_deployment_proxy_with_mapping_partial(self):
+        self._test_output_mapping(
+            all_outputs=False,
+            output_mapping={
+                'key1': 'key1'
+                }, deployment_outputs={
+                'key1': 'value1',
+                'key2': 'value2'},
+            expected_outputs={
+                'key1': 'value1'
+            }
+        )
+
+    def test_post_execute_deployment_proxy_all_outputs(self):
+        self._test_output_mapping(
+            all_outputs=True,
+            output_mapping={},
+            deployment_outputs={
+                'key1': 'value1',
+                'key2': 'value2'},
+            expected_outputs={
+                'key1': 'value1',
+                'key2': 'value2'
+            }
+        )

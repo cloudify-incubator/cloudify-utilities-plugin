@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,13 +8,22 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-import yaml
 import base64
-import copy
+import json
+try:
+    import ruamel.yaml
+except ImportError:
+    # hack for import namespaced modules
+    from cloudify_common_sdk import importer
+    importer.register_callback(
+        base_dir="/opt/mgmtworker/env/plugins",
+        package_name="ruamel.yaml")
+    import ruamel.yaml
+
 from cloudify import ctx
 
 
@@ -28,16 +37,24 @@ class CloudInit(object):
 
         self.config = self.get_config(operation_inputs)
 
-    def get_external_resource(self, config):
+    @staticmethod
+    def get_external_resource(config):
         for f in config.get('write_files', []):
             if not isinstance(f, dict):
                 break
             try:
-                resource_type = f['content'].get('resource_type', '')
-                resource_name = f['content'].get('resource_name', '')
-                template_variables = f['content'].get('template_variables', {})
-                if 'file_resource' == resource_type:
-                    f['content'] = ctx.get_resource_and_render(resource_name, template_variables)
+                content = f.get('content')
+                if isinstance(content, dict):
+                    resource_type = content.get('resource_type', '')
+                    resource_name = content.get('resource_name', '')
+                    template_variables = content.get('template_variables', {})
+                    if 'file_resource' == resource_type:
+                        if template_variables:
+                            new_content = ctx.get_resource_and_render(
+                                resource_name, template_variables)
+                        else:
+                            new_content = ctx.get_resource(resource_name)
+                        f['content'] = new_content
             except ValueError:
                 ctx.logger.debug('No external resource recognized.')
                 pass
@@ -53,11 +70,16 @@ class CloudInit(object):
 
         return config
 
+    def json(self):
+        """Dump json representaion of config"""
+        return json.dumps(self.config)
+
     @property
     def __str__(self):
         """Override the string implementation of object."""
 
-        cloud_init = yaml.dump(self.config)
+        cloud_init = ruamel.yaml.dump(
+            self.config, Dumper=ruamel.yaml.RoundTripDumper)
         cloud_init_string = str(cloud_init).replace('!!python/unicode ', '')
         header = ctx.node.properties.get('header')
         if header:
@@ -65,9 +87,10 @@ class CloudInit(object):
                 header + '\n' + cloud_init_string
         if ctx.node.properties.get('encode_base64'):
             cloud_init_string = \
-                base64.encodestring(cloud_init_string)
+                base64.encodestring(cloud_init_string.encode())
         return cloud_init_string
 
     def update(self, **_):
         ctx.instance.runtime_properties['resource_config'] = self.config
         ctx.instance.runtime_properties['cloud_config'] = self.__str__
+        ctx.instance.runtime_properties['json_config'] = self.json()

@@ -1,4 +1,4 @@
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,37 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import subprocess
 
-from cloudify.decorators import workflow
+import time
+
+from cloudify.workflows import api
+from cloudify.workflows import tasks
 from cloudify.plugins import lifecycle
+from cloudify.decorators import workflow
 from cloudify.manager import get_rest_client
 
-
-def _execute_command(ctx, command):
-
-    ctx.logger.debug('command: {0}.'.format(repr(command)))
-
-    subprocess_args = {
-        'args': command,
-        'stdout': subprocess.PIPE,
-        'stderr': subprocess.PIPE
-    }
-    ctx.logger.debug('subprocess_args {0}.'.format(subprocess_args))
-
-    process = subprocess.Popen(**subprocess_args)
-    output, error = process.communicate()
-
-    ctx.logger.debug('command: {0} '.format(repr(command)))
-    ctx.logger.debug('output: {0} '.format(output))
-    ctx.logger.debug('error: {0} '.format(error))
-    ctx.logger.debug('process.returncode: {0} '.format(process.returncode))
-
-    if process.returncode:
-        ctx.logger.error(
-            'Running `{0}` returns {1} with message {2} and error: {3}.'
-            .format(repr(command), process.returncode, repr(output),
-                    repr(error)))
+from cloudify_common_sdk._compat import text_type
+from cloudify_common_sdk.filters import (get_field_value_recursive,
+                                         obfuscate_passwords, )
 
 
 def _update_runtime_properties(ctx, instance_id, properties_updates):
@@ -49,7 +30,7 @@ def _update_runtime_properties(ctx, instance_id, properties_updates):
 
     resulted_state = manager.node_instances.get(instance_id)
     ctx.logger.debug('State before update: {}'
-                     .format(repr(resulted_state)))
+                     .format(repr(obfuscate_passwords(resulted_state))))
     ctx.logger.info("Update node: {}".format(instance_id))
     runtime_properties = resulted_state.runtime_properties or {}
     runtime_properties.update(properties_updates)
@@ -58,7 +39,7 @@ def _update_runtime_properties(ctx, instance_id, properties_updates):
                                   version=resulted_state.version + 1)
     resulted_state = manager.node_instances.get(instance_id)
     ctx.logger.debug('State after update: {}'
-                     .format(repr(resulted_state)))
+                     .format(repr(obfuscate_passwords(resulted_state))))
 
 
 def _cleanup_instances(ctx, instance_ids):
@@ -67,7 +48,7 @@ def _cleanup_instances(ctx, instance_ids):
     for instance_id in instance_ids:
         resulted_state = manager.node_instances.get(instance_id)
         ctx.logger.debug('State before update: {}'
-                         .format(repr(resulted_state)))
+                         .format(repr(obfuscate_passwords(resulted_state))))
         ctx.logger.info("Cleanup node: {}".format(instance_id))
         manager.node_instances.update(node_instance_id=instance_id,
                                       runtime_properties={},
@@ -75,7 +56,7 @@ def _cleanup_instances(ctx, instance_ids):
                                       version=resulted_state.version + 1)
         resulted_state = manager.node_instances.get(instance_id)
         ctx.logger.debug('State after update: {}'
-                         .format(repr(resulted_state)))
+                         .format(repr(obfuscate_passwords(resulted_state))))
 
 
 def _deployments_get_groups(ctx):
@@ -83,34 +64,6 @@ def _deployments_get_groups(ctx):
     deployment = client.deployments.get(
         ctx.deployment.id, _include=['groups'])
     return deployment['groups']
-
-
-def _get_field_value_recursive(ctx, properties, path):
-    if not path:
-        return properties
-    key = path[0]
-    if isinstance(properties, list):
-        try:
-            return _get_field_value_recursive(
-                ctx,
-                properties[int(key)],
-                path[1:]
-            )
-        except Exception as e:
-            ctx.logger.debug('Can filter by {}'.format(repr(e)))
-            return None
-    elif isinstance(properties, dict):
-        try:
-            return _get_field_value_recursive(
-                ctx,
-                properties[key],
-                path[1:]
-            )
-        except Exception as e:
-            ctx.logger.debug('Can filter by {}'.format(repr(e)))
-            return None
-    else:
-        return None
 
 
 def _get_transaction_instances(ctx, scale_transaction_field,
@@ -135,9 +88,9 @@ def _get_transaction_instances(ctx, scale_transaction_field,
         if scale_node_names and instance.node_id not in scale_node_names:
             continue
         # check that we have such values in properties
-        value = _get_field_value_recursive(ctx,
-                                           runtime_properties,
-                                           scale_node_field_path)
+        value = get_field_value_recursive(ctx.logger,
+                                          runtime_properties,
+                                          scale_node_field_path)
         if value not in scale_node_field_values:
             continue
         # save instances to scale "settings", for case when instances created
@@ -257,22 +210,66 @@ def _get_scale_list(ctx, scalable_entity_properties, property_type):
                 scalable_entity_properties[node_name]
             )
 
-    ctx.logger.info("Scale rules: {}".format(repr(scalable_entity_dict)))
+    ctx.logger.info("Scale rules: {}".format(
+        repr(obfuscate_passwords(scalable_entity_dict))))
     return scalable_entity_dict
 
 
-def _uninstall_instances(ctx, graph, removed, related, ignore_failure):
+def _process_node_instances(ctx, graph, node_instances, ignore_failure,
+                            node_instance_subgraph_func, node_sequence):
+    ctx.logger.info("Scale sequence: {}".format(repr(node_sequence)))
+    subgraphs = {}
+    node_graphs = {}
+    for node_instance in node_instances:
+        node_id = node_instance._node_instance.node_id
+        if node_id not in node_graphs:
+            node_graphs[node_id] = []
+        node_graphs[node_id].append(node_instance)
+        subgraphs[node_instance.id] = node_instance_subgraph_func(
+            node_instance, graph, ignore_failure=ignore_failure)
+
+    ctx.logger.info("Scale levels: {}".format(repr(node_graphs)))
+    previous_level = []
+    for node_id in node_sequence:
+        # use get for skip instances with unknow type
+        if not node_graphs.get(node_id, []):
+            continue
+        current_level_instances = node_graphs[node_id]
+        for target_instance in current_level_instances:
+            for source_instance in previous_level:
+                ctx.logger.info("Scale dependency: {}->{}"
+                                .format(source_instance.id,
+                                        target_instance.id))
+                graph.add_dependency(subgraphs[source_instance.id],
+                                     subgraphs[target_instance.id])
+        # replace previous with current instances
+        previous_level = current_level_instances
+    graph.execute()
+
+
+def _uninstall_instances(ctx, graph, removed, related, ignore_failure,
+                         node_sequence):
 
     # cleanup tasks
     for task in graph.tasks_iter():
         graph.remove_task(task)
 
     if removed:
-        lifecycle.uninstall_node_instances(
-            graph=graph,
-            node_instances=removed,
-            related_nodes=related,
-            ignore_failure=ignore_failure)
+        if node_sequence:
+            subgraph_func = lifecycle.uninstall_node_instance_subgraph
+            _process_node_instances(
+                ctx=ctx,
+                graph=graph,
+                node_instances=removed,
+                ignore_failure=ignore_failure,
+                node_instance_subgraph_func=subgraph_func,
+                node_sequence=node_sequence[::-1])
+        else:
+            lifecycle.uninstall_node_instances(
+                graph=graph,
+                node_instances=removed,
+                related_nodes=related,
+                ignore_failure=ignore_failure)
 
         # clean up properties
         instance_ids = [node_instance._node_instance.id
@@ -285,8 +282,10 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_value=None,
                         ignore_failure=False,
                         ignore_rollback_failure=True,
-                        instances_remove_ids=None):
+                        instances_remove_ids=None,
+                        node_sequence=None):
     modification = ctx.deployment.start_modification(scale_settings)
+    ctx.refresh_node_instances()
     graph = ctx.graph_mode()
     try:
         ctx.logger.info('Deployment modification started. '
@@ -328,18 +327,33 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                             "{}: Updating {} runtime properties by {}".format(
                                 node_instance._node_instance.node_id,
                                 node_instance._node_instance.id,
-                                repr(properties)))
+                                repr(obfuscate_passwords(properties))))
                         _update_runtime_properties(
                             ctx, node_instance._node_instance.id, properties)
-                lifecycle.install_node_instances(
-                    graph=graph,
-                    node_instances=added,
-                    related_nodes=related)
+                if node_sequence:
+                    subgraph_func = lifecycle.install_node_instance_subgraph
+                    _process_node_instances(
+                        ctx=ctx,
+                        graph=graph,
+                        node_instances=added,
+                        ignore_failure=ignore_failure,
+                        node_instance_subgraph_func=subgraph_func,
+                        node_sequence=node_sequence)
+                else:
+                    lifecycle.install_node_instances(
+                        graph=graph,
+                        node_instances=added,
+                        related_nodes=related)
             except Exception as ex:
                 ctx.logger.error('Scale out failed, scaling back in. {}'
                                  .format(repr(ex)))
-                _uninstall_instances(ctx, graph, added, related,
-                                     ignore_rollback_failure)
+                _wait_for_sent_tasks(ctx, graph)
+                _uninstall_instances(ctx=ctx,
+                                     graph=graph,
+                                     removed=added,
+                                     related=related,
+                                     ignore_failure=ignore_rollback_failure,
+                                     node_sequence=node_sequence)
                 raise ex
 
         if len(set(modification.removed.node_instances)):
@@ -363,19 +377,55 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                             )
                         )
             related = removed_and_related - removed
-            lifecycle.uninstall_node_instances(
-                graph=graph,
-                node_instances=removed,
-                ignore_failure=ignore_failure,
-                related_nodes=related)
+            _uninstall_instances(ctx=ctx,
+                                 graph=graph,
+                                 removed=removed,
+                                 ignore_failure=ignore_failure,
+                                 related=related,
+                                 node_sequence=node_sequence)
     except Exception as ex:
         ctx.logger.warn('Rolling back deployment modification. '
                         '[modification_id={0}]: {1}'
                         .format(modification.id, repr(ex)))
+        _wait_for_sent_tasks(ctx, graph)
         modification.rollback()
         raise ex
     else:
         modification.finish()
+
+
+def _wait_for_sent_tasks(ctx, graph):
+    """Wait for tasks that are in the SENT state to return"""
+    for task in graph.tasks_iter():
+        # Check type.
+        ctx.logger.debug(
+            'Parallel task to failed task: {0}. State: {1}'.format(
+                task.id, task.get_state()))
+    try:
+        deadline = time.time() + ctx.wait_after_fail
+    except AttributeError:
+        deadline = time.time() + 1800
+    while deadline > time.time():
+        try:
+            cancelled = api.has_cancel_request()
+        except AttributeError:
+            cancelled = graph._is_execution_cancelled()
+        if cancelled:
+            raise api.ExecutionCancelled()
+        try:
+            finished_tasks = graph._finished_tasks()
+        except AttributeError:
+            finished_tasks = graph._terminated_tasks()
+        for task in finished_tasks:
+            try:
+                graph._handle_terminated_task(task)
+            except RuntimeError:
+                ctx.logger.error('Unhandled Failed task: {0}'.format(task))
+        if not any(task.get_state() == tasks.TASK_SENT
+                   for task in graph.tasks_iter()):
+            break
+        else:
+            time.sleep(0.1)
 
 
 def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
@@ -411,11 +461,11 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
 
         scale_settings[scale_id] = {
             'instances': planned_num_instances,
-            # need to run sorted only for tests and have same sequence of id's
-            'removed_ids_include_hint': sorted(instances_remove),
+            'removed_ids_include_hint': instances_remove,
         }
 
-    ctx.logger.info('Scale settings: {}'.format(repr(scale_settings)))
+    ctx.logger.info(
+        'Scale settings: {}'.format(repr(obfuscate_passwords(scale_settings))))
     return scale_settings
 
 
@@ -423,32 +473,31 @@ def _scaledown_group_to_settings(ctx, list_scale_groups, scale_compute):
 def scaledownlist(ctx, scale_compute=False,
                   ignore_failure=False,
                   force_db_cleanup=False,
-                  scale_transaction_field="",
+                  scale_transaction_field=u'',
                   scale_node_name=None,
-                  scale_node_field="",
-                  scale_node_field_value="",
+                  scale_node_field=u'',
+                  scale_node_field_value=u'',
                   all_results=False,
-                  **kwargs):
-    if (
-        not scale_node_field
-    ):
+                  node_sequence=None,
+                  **_):
+    if not scale_node_field:
         raise ValueError('You should provide `scale_node_field` for correct'
                          'downscale.')
 
-    if isinstance(scale_node_field_value, basestring):
+    if isinstance(scale_node_field_value, text_type):
         scale_node_field_value = [scale_node_field_value]
 
-    ctx.logger.debug("Filter by values list: {}."
-                     .format(repr(scale_node_field_value)))
+    ctx.logger.debug("Filter by values list: {}.".format(
+        repr(obfuscate_passwords(scale_node_field_value))))
 
     if not scale_node_name:
         scale_node_name = None
         ctx.logger.debug("Will be searched by all instances.")
 
-    if isinstance(scale_node_name, basestring):
+    if isinstance(scale_node_name, text_type):
         scale_node_name = [scale_node_name]
 
-    if isinstance(scale_node_field, basestring):
+    if isinstance(scale_node_field, text_type):
         scale_node_field = [scale_node_field]
 
     instances, instance_ids = _get_transaction_instances(
@@ -465,12 +514,13 @@ def scaledownlist(ctx, scale_compute=False,
 
     # we have list of instances_id(string) as part of scale dictionary
     scale_settings = _scaledown_group_to_settings(
-        ctx, _get_scale_list(ctx, instances, basestring), scale_compute)
+        ctx, _get_scale_list(ctx, instances, text_type), scale_compute)
 
     try:
         _run_scale_settings(ctx, scale_settings, {},
                             instances_remove_ids=instance_ids,
-                            ignore_failure=ignore_failure)
+                            ignore_failure=ignore_failure,
+                            node_sequence=node_sequence)
     except Exception as e:
         ctx.logger.info('Scale down based on transaction failed: {}'
                         .format(repr(e)))
@@ -480,16 +530,16 @@ def scaledownlist(ctx, scale_compute=False,
             for instance in node.instances:
                 if instance.id in instance_ids:
                     removed.append(instance)
-        _uninstall_instances(ctx, ctx.graph_mode(), removed, [],
-                             ignore_failure)
+        _uninstall_instances(ctx=ctx,
+                             graph=ctx.graph_mode(),
+                             removed=removed,
+                             related=[],
+                             ignore_failure=ignore_failure,
+                             node_sequence=node_sequence)
 
         # remove from DB
         if force_db_cleanup:
-            ctx.logger.info('Force cleanup in DB.')
-            _execute_command(ctx, [
-                "sudo", "/opt/manager/env/bin/python",
-                '/opt/manager/scripts/cleanup_deployments.py',
-                ctx.deployment.id, 'all' if all_results else 'page'])
+            ctx.logger.warn('Ignoring force_db_cleanup. Deprecated feature.')
 
 
 def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):
@@ -526,7 +576,8 @@ def _scaleup_group_to_settings(ctx, scalable_entity_dict, scale_compute):
             'instances': planned_num_instances,
         }
 
-    ctx.logger.info('Scale settings: {}'.format(repr(scale_settings)))
+    ctx.logger.info('Scale settings: {}'.format(
+        repr(obfuscate_passwords(scale_settings))))
     return scale_settings
 
 
@@ -537,6 +588,7 @@ def scaleuplist(ctx, scalable_entity_properties,
                 ignore_rollback_failure=True,
                 scale_transaction_field="",
                 scale_transaction_value="",
+                node_sequence=None,
                 **kwargs):
 
     if not scalable_entity_properties:
@@ -550,7 +602,8 @@ def scaleuplist(ctx, scalable_entity_properties,
 
     _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field, scale_transaction_value,
-                        ignore_failure, ignore_rollback_failure)
+                        ignore_failure, ignore_rollback_failure,
+                        node_sequence=node_sequence)
 
 
 def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
@@ -577,9 +630,9 @@ def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
             if node_field_path:
                 # check that we have such values in properties
                 runtime_properties = instance._node_instance.runtime_properties
-                value = _get_field_value_recursive(ctx,
-                                                   runtime_properties,
-                                                   node_field_path)
+                value = get_field_value_recursive(ctx.logger,
+                                                  runtime_properties,
+                                                  node_field_path)
                 if value not in node_field_value:
                     continue
             # looks as good instance
@@ -594,16 +647,16 @@ def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
                       **kwargs):
     """ A generic workflow for executing arbitrary operations on nodes """
 
-    if isinstance(node_field_value, basestring):
+    if isinstance(node_field_value, text_type):
         node_field_value = [node_field_value]
 
     ctx.logger.debug("Filter by values list: {}."
-                     .format(repr(node_field_value)))
+                     .format(repr(obfuscate_passwords(node_field_value))))
 
     graph = ctx.graph_mode()
     subgraphs = {}
 
-    if isinstance(node_field, basestring):
+    if isinstance(node_field, text_type):
         node_field = [node_field]
 
     # filtering node instances

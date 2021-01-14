@@ -1,4 +1,4 @@
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017-2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,13 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest
-from mock import Mock, patch
 
-from cloudify.mocks import MockCloudifyContext
+import json
+import unittest
+from mock import Mock, patch, call
+
 from cloudify.state import current_ctx
+from cloudify.mocks import MockCloudifyContext
+from cloudify.workflows.workflow_api import ExecutionCancelled
 
 import cloudify_scalelist.workflows as workflows
+
+# add filter check
+import cloudify_common_sdk.filters as filters
 
 
 class TestScaleList(unittest.TestCase):
@@ -28,37 +34,37 @@ class TestScaleList(unittest.TestCase):
 
     def _gen_rest_client(self):
         instance_a = Mock()
-        instance_a.id = 'a_id'
-        instance_a.node_id = 'a_type'
-        instance_a.runtime_properties = {
+        instance_a.id = u'a_id'
+        instance_a.node_id = u'a_type'
+        instance_a.runtime_properties = json.loads(json.dumps({
             'name': 'value',
             '_transaction': '1'
-        }
+        }))
         instance_b = Mock()
-        instance_b.id = 'b_id'
-        instance_b.node_id = 'b_type'
-        instance_b.runtime_properties = {
+        instance_b.id = u'b_id'
+        instance_b.node_id = u'b_type'
+        instance_b.runtime_properties = json.loads(json.dumps({
             'name': 'other',
             '_transaction': '1'
-        }
+        }))
         instance_c = Mock()
-        instance_c.id = 'c_id'
-        instance_c.node_id = 'c_type'
-        instance_c.runtime_properties = {
+        instance_c.id = u'c_id'
+        instance_c.node_id = u'c_type'
+        instance_c.runtime_properties = json.loads(json.dumps({
             'name': 'other',
             '_transaction': '-'
-        }
+        }))
         instance_d = Mock()
-        instance_d.id = 'b_id'
-        instance_d.node_id = 'c_type'
-        instance_d.runtime_properties = {
+        instance_d.id = u'b_id'
+        instance_d.node_id = u'c_type'
+        instance_d.runtime_properties = json.loads(json.dumps({
             'name': 'other',
-        }
+        }))
 
         client = Mock()
         client.node_instances.list = Mock(return_value=[
             instance_a, instance_b, instance_c, instance_d])
-        client.deployments.get = Mock(return_value={
+        client.deployments.get = Mock(return_value=json.loads(json.dumps({
             'groups': {
                 'one_scale': {
                     'members': ['one', 'two']
@@ -70,21 +76,22 @@ class TestScaleList(unittest.TestCase):
                     'members': ['a_type', 'b_type']
                 }
             }
-        })
+        })))
 
         # update instances
         target_node = Mock()
-        target_node.id = 'target'
+        target_node.id = u'target'
         target_node.version = 1
-        target_node.state = 'deleted'
-        target_node.runtime_properties = {'a': 'b', 'd': 'e'}
+        target_node.state = u'deleted'
+        target_node.runtime_properties = json.loads(
+            json.dumps({'a': 'b', 'd': 'e'}))
 
         client.node_instances.update = Mock()
         client.node_instances.get = Mock(return_value=target_node)
 
         return client
 
-    def _gen_ctx(self):
+    def _gen_ctx(self, execution_cancelled=True, task_string=True):
 
         _ctx = MockCloudifyContext(
             deployment_id="deployment_id"
@@ -99,13 +106,25 @@ class TestScaleList(unittest.TestCase):
 
         _graph = Mock()
         _graph.id = 'i_am_graph'
-        _graph.tasks_iter = Mock(return_value=['task1'])
+        if not task_string:
+            _task_mock = Mock()
+            _task_mock.id = 'id'
+            _task_mock.get_state.return_value = 'task_sent'
+        else:
+            _task_mock = Mock()
+            _task_mock.id = 'task1'
+            _task_mock.get_state.return_value = 'task_sent'
+        _graph.tasks_iter = Mock(return_value=[_task_mock])
         _graph.remove_task = Mock(return_value=None)
         _graph.subgraph = _subgraph
+        # _graph._is_execution_cancelled.return_value = execution_cancelled
+        _graph._finished_tasks.return_value = [_task_mock]
         _ctx.nodes = []
+        _ctx.get_node = Mock(return_value=[])
         _ctx.graph_mode = Mock(return_value=_graph)
         _ctx._graph = _graph
-        _ctx.deployment.scaling_groups = {
+        _ctx.wait_after_fail = 5
+        _ctx.deployment.scaling_groups = json.loads(json.dumps({
             'one_scale': {
                 'members': ['one'],
                 'properties': {'current_instances': 10}
@@ -114,7 +133,7 @@ class TestScaleList(unittest.TestCase):
                 'members': ['a_type', 'b_type'],
                 'properties': {'current_instances': 55}
             }
-        }
+        }))
 
         modification = Mock()
         modification.id = "transaction_id"
@@ -124,7 +143,7 @@ class TestScaleList(unittest.TestCase):
         modification.finish = Mock()
         _ctx.deployment.start_modification = Mock(return_value=modification)
         _ctx._get_modification = modification
-
+        _ctx.refresh_node_instances = Mock(return_value=None)
         current_ctx.set(_ctx)
         return _ctx
 
@@ -137,12 +156,13 @@ class TestScaleList(unittest.TestCase):
             workflows._update_runtime_properties(
                 self._gen_ctx(),
                 'target',
-                {'a': 'c'}
+                json.loads(json.dumps({'a': 'c'}))
             )
 
         client.node_instances.update.assert_called_with(
             node_instance_id='target',
-            runtime_properties={'a': 'c', 'd': 'e'}, version=2)
+            runtime_properties=json.loads(json.dumps({'a': 'c', 'd': 'e'})),
+            version=2)
         client.node_instances.get.assert_called_with('target')
 
     def test_cleanup_instances(self):
@@ -213,7 +233,7 @@ class TestScaleList(unittest.TestCase):
         ):
             self.assertEqual(
                 workflows._scaleup_group_to_settings(
-                    _ctx, {
+                    _ctx, json.loads(json.dumps({
                         'one_scale': {
                             'count': 1,
                             'values': [{'name': 'one'},
@@ -224,10 +244,10 @@ class TestScaleList(unittest.TestCase):
                             'values': []
                         },
 
-                    },
+                    })),
                     True
                 ),
-                {'one_scale': {'instances': 11}}
+                json.loads(json.dumps({'one_scale': {'instances': 11}}))
             )
 
         # node names
@@ -248,40 +268,40 @@ class TestScaleList(unittest.TestCase):
             # get parent host
             self.assertEqual(
                 workflows._scaleup_group_to_settings(
-                    _ctx, {
+                    _ctx, json.loads(json.dumps({
                         'one': {
                             'count': 1,
                             'values': [{'name': 'one'}]
                         }
-                    },
+                    })),
                     True
                 ),
-                {'id_34': {'instances': 35}}
+                json.loads(json.dumps({'id_34': {'instances': 35}}))
             )
             _ctx.get_node.assert_called_with('one')
             # get child
             self.assertEqual(
                 workflows._scaleup_group_to_settings(
-                    _ctx, {
+                    _ctx, json.loads(json.dumps({
                         'one': {
                             'count': 1,
                             'values': [{'name': 'one'}]
                         }
-                    },
+                    })),
                     False
                 ),
-                {'id_43': {'instances': 44}}
+                json.loads(json.dumps({'id_43': {'instances': 44}}))
             )
             # no such node
             _ctx.get_node = Mock(return_value=None)
             with self.assertRaises(ValueError):
                 workflows._scaleup_group_to_settings(
-                    _ctx, {
+                    _ctx, json.loads(json.dumps({
                         'one': {
                             'count': 1,
                             'values': [{'name': 'one'}]
                         }
-                    },
+                    })),
                     False
                 )
 
@@ -305,13 +325,14 @@ class TestScaleList(unittest.TestCase):
                     scale_transaction_field="_transaction",
                     scale_transaction_value="transaction_value",
                     ignore_rollback_failure=False,
-                    scalable_entity_properties={
+                    scalable_entity_properties=json.loads(json.dumps({
                         'one': [{'name': 'one'}],
-                    })
+                    })))
             fake_run_scale.assert_called_with(
-                _ctx, {'one_scale': {'instances': 11}},
-                {'one': [{'name': 'one'}]}, '_transaction',
-                'transaction_value', False, False)
+                _ctx, json.loads(json.dumps({'one_scale': {'instances': 11}})),
+                json.loads(json.dumps({'one': [{'name': 'one'}]})),
+                '_transaction',
+                'transaction_value', False, False, node_sequence=None)
             # can downscale without errors, ignore failure
             fake_run_scale = Mock(return_value=None)
             with patch(
@@ -323,13 +344,14 @@ class TestScaleList(unittest.TestCase):
                     scale_compute=True,
                     scale_transaction_field="_transaction",
                     scale_transaction_value="transaction_value",
-                    scalable_entity_properties={
+                    scalable_entity_properties=json.loads(json.dumps({
                         'one': [{'name': 'one'}],
-                    })
+                    })))
             fake_run_scale.assert_called_with(
-                _ctx, {'one_scale': {'instances': 11}},
-                {'one': [{'name': 'one'}]}, '_transaction',
-                'transaction_value', False, True)
+                _ctx, json.loads(json.dumps({'one_scale': {'instances': 11}})),
+                json.loads(json.dumps({'one': [{'name': 'one'}]})),
+                '_transaction',
+                'transaction_value', False, True, node_sequence=None)
 
     def test_run_scale_settings(self):
         _ctx = self._gen_ctx()
@@ -339,9 +361,9 @@ class TestScaleList(unittest.TestCase):
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
-            scale_settings = {'a': {
+            scale_settings = json.loads(json.dumps({'a': {
                 'instances': 0,
-                'removed_ids_include_hint': []}}
+                'removed_ids_include_hint': []}}))
             # check run with empty instances list
             workflows._run_scale_settings(_ctx, scale_settings, {})
         _ctx.deployment.start_modification.assert_called_with(
@@ -366,9 +388,9 @@ class TestScaleList(unittest.TestCase):
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
-            scale_settings = {'a': {
+            scale_settings = json.loads(json.dumps({'a': {
                 'instances': 0,
-                'removed_ids_include_hint': []}}
+                'removed_ids_include_hint': []}}))
             fake_uninstall_node_instances = Mock()
             with patch(
                 "cloudify_scalelist.workflows.lifecycle"
@@ -376,12 +398,12 @@ class TestScaleList(unittest.TestCase):
                 fake_uninstall_node_instances
             ):
                 workflows._run_scale_settings(_ctx, scale_settings, {})
-            fake_uninstall_node_instances.assert_called_with(
-                graph=_ctx.graph_mode(),
-                node_instances=set([delete_instance]),
-                ignore_failure=False,
-                related_nodes=set([related_instance])
-            )
+        fake_uninstall_node_instances.assert_called_with(
+            graph=_ctx.graph_mode(),
+            node_instances=set([delete_instance]),
+            ignore_failure=False,
+            related_nodes=set([related_instance])
+        )
         _ctx.deployment.start_modification.assert_called_with(
             scale_settings
         )
@@ -397,25 +419,26 @@ class TestScaleList(unittest.TestCase):
         delete_instance._node_instance.id = "a"
         delete_instance.modification = 'removed'
         _ctx._get_modification.removed.node_instances = [delete_instance]
+        _ctx.wait_after_fail = 0
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
-            scale_settings = {'a': {
+            scale_settings = json.loads(json.dumps({'a': {
                 'instances': 0,
-                'removed_ids_include_hint': ['b']}}
+                'removed_ids_include_hint': ['b']}}))
             fake_uninstall_node_instances = Mock()
             with patch(
                 "cloudify_scalelist.workflows.lifecycle."
                 "uninstall_node_instances",
                 fake_uninstall_node_instances
             ):
-                with self.assertRaisesRegexp(
-                    Exception,
-                    "Instance 'a' not in proposed list \['b'\]."
-                ):
+                with self.assertRaises(Exception) as error:
                     workflows._run_scale_settings(_ctx, scale_settings, {},
                                                   instances_remove_ids=['b'])
+                self.assertEqual(
+                    "Instance 'a' not in proposed list ['b'].",
+                    str(error.exception))
             fake_uninstall_node_instances.assert_not_called()
         _ctx.deployment.start_modification.assert_called_with(
             scale_settings
@@ -429,18 +452,19 @@ class TestScaleList(unittest.TestCase):
         client = self._gen_rest_client()
 
         added_instance = Mock()
-        added_instance._node_instance.id = "a"
+        added_instance._node_instance.id = u"a"
         added_instance.modification = 'added'
         related_instance = Mock()
-        related_instance._node_instance.id = "f"
+        related_instance._node_instance.id = u"f"
         related_instance.modification = 'related'
         _ctx._get_modification.added.node_instances = [added_instance,
                                                        related_instance]
+        _ctx.wait_after_fail = 0
         with patch(
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
-            scale_settings = {'a': {'instances': 1}}
+            scale_settings = json.loads(json.dumps({'a': {'instances': 1}}))
             fake_install_node_instances = Mock(
                 side_effect=Exception('Failed install'))
             with patch(
@@ -461,9 +485,12 @@ class TestScaleList(unittest.TestCase):
                             _ctx, scale_settings, {},
                             ignore_rollback_failure=False)
                 fake_uninstall_instances.assert_called_with(
-                    _ctx, _ctx.graph_mode(),
-                    set([added_instance]), set([related_instance]),
-                    False)
+                    ctx=_ctx,
+                    graph=_ctx.graph_mode(),
+                    removed=set([added_instance]),
+                    related=set([related_instance]),
+                    ignore_failure=False,
+                    node_sequence=None)
             fake_install_node_instances.assert_called_with(
                 graph=_ctx.graph_mode(),
                 node_instances=set([added_instance]),
@@ -475,18 +502,16 @@ class TestScaleList(unittest.TestCase):
         _ctx._get_modification.rollback.assert_called_with()
         _ctx._get_modification.finish.assert_not_called()
 
-    def test_run_scale_settings_install(self):
-        _ctx = self._gen_ctx()
+    def test_run_scale_settings_install_failed_checking_cancelled(self):
+        _ctx = self._gen_ctx(task_string=False)
 
         client = self._gen_rest_client()
 
         added_instance = Mock()
-        added_instance._node_instance.id = "a"
-        added_instance._node_instance.node_id = "type_a"
+        added_instance._node_instance.id = u"a"
         added_instance.modification = 'added'
         related_instance = Mock()
-        related_instance._node_instance.id = "f"
-        related_instance._node_instance.node_id = "type_f"
+        related_instance._node_instance.id = u"f"
         related_instance.modification = 'related'
         _ctx._get_modification.added.node_instances = [added_instance,
                                                        related_instance]
@@ -494,7 +519,136 @@ class TestScaleList(unittest.TestCase):
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
-            scale_settings = {'a': {'instances': 1}}
+            scale_settings = json.loads(json.dumps({'a': {'instances': 1}}))
+            fake_install_node_instances = Mock(
+                side_effect=Exception('Failed install'))
+            with patch(
+                "cloudify_scalelist.workflows.lifecycle."
+                "install_node_instances",
+                fake_install_node_instances
+            ):
+                fake_uninstall_instances = Mock(return_value=None)
+                with patch(
+                    "cloudify_scalelist.workflows._uninstall_instances",
+                    fake_uninstall_instances
+                ):
+                    with patch(
+                        "cloudify.workflows.api."
+                        "has_cancel_request",
+                        return_value=True
+                    ):
+                        with self.assertRaises(ExecutionCancelled):
+                            workflows._run_scale_settings(
+                                _ctx, scale_settings, {},
+                                ignore_rollback_failure=False)
+        _ctx.deployment.start_modification.assert_called_with(
+            scale_settings
+        )
+        _ctx._get_modification.rollback.assert_not_called()
+        _ctx._get_modification.finish.assert_not_called()
+
+    def test_run_scale_settings_install_failed_checking_tasks(self):
+        _ctx = self._gen_ctx(False, task_string=False)
+
+        client = self._gen_rest_client()
+
+        added_instance = Mock()
+        added_instance._node_instance.id = u"a"
+        added_instance.modification = 'added'
+        related_instance = Mock()
+        related_instance._node_instance.id = u"f"
+        related_instance.modification = 'related'
+        _ctx._get_modification.added.node_instances = [added_instance,
+                                                       related_instance]
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            scale_settings = json.loads(json.dumps({'a': {'instances': 1}}))
+            fake_install_node_instances = Mock(
+                side_effect=Exception('Failed install'))
+            with patch(
+                "cloudify_scalelist.workflows.lifecycle."
+                "install_node_instances",
+                fake_install_node_instances
+            ):
+                fake_uninstall_instances = Mock(return_value=None)
+                with patch(
+                    "cloudify_scalelist.workflows._uninstall_instances",
+                    fake_uninstall_instances
+                ):
+                    with self.assertRaises(Exception):
+                        workflows._run_scale_settings(
+                            _ctx, scale_settings, {},
+                            ignore_rollback_failure=False)
+                    _ctx.deployment.start_modification.assert_called_with(
+                        scale_settings
+                    )
+                    _ctx._get_modification.rollback.assert_called_with()
+                    _ctx._get_modification.finish.assert_not_called()
+
+    def test_run_scale_settings_install_failed_handle_tasks(self):
+        _ctx = self._gen_ctx(task_string=False)
+
+        client = self._gen_rest_client()
+
+        added_instance = Mock()
+        added_instance._node_instance.id = u"a"
+        added_instance.modification = 'added'
+        related_instance = Mock()
+        related_instance._node_instance.id = u"f"
+        related_instance.modification = 'related'
+        _ctx._get_modification.added.node_instances = [added_instance,
+                                                       related_instance]
+        mocked_task = Mock()
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            fake_install_node_instances = Mock(
+                side_effect=Exception('Failed install'))
+            with patch(
+                "cloudify_scalelist.workflows.lifecycle."
+                "install_node_instances",
+                fake_install_node_instances
+            ):
+                fake_uninstall_instances = Mock(return_value=None)
+                with patch(
+                    "cloudify_scalelist.workflows._uninstall_instances",
+                    fake_uninstall_instances
+                ):
+                    with patch(
+                        "cloudify.workflows.api."
+                        "has_cancel_request",
+                        return_value=False
+                    ):
+                        with patch(
+                            "cloudify.workflows.tasks_graph."
+                            "TaskDependencyGraph._terminated_tasks",
+                            return_value=[mocked_task]
+                        ):
+                            self.assertRaises(RuntimeError)
+
+    def test_run_scale_settings_install(self):
+        _ctx = self._gen_ctx()
+
+        client = self._gen_rest_client()
+
+        added_instance = Mock()
+        added_instance._node_instance.id = u"a"
+        added_instance._node_instance.node_id = u"type_a"
+        added_instance.modification = 'added'
+        related_instance = Mock()
+        related_instance._node_instance.id = u"f"
+        related_instance._node_instance.node_id = u"type_f"
+        related_instance.modification = 'related'
+        _ctx._get_modification.added.node_instances = [added_instance,
+                                                       related_instance]
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            scale_settings = json.loads(json.dumps({'a': {'instances': 1}}))
             fake_install_node_instances = Mock()
             with patch(
                 "cloudify_scalelist.workflows.lifecycle."
@@ -514,12 +668,13 @@ class TestScaleList(unittest.TestCase):
                     ):
                         workflows._run_scale_settings(
                             _ctx, scale_settings,
-                            {"type_a": [{"c": "f"}]},
+                            json.loads(json.dumps({"type_a": [{"c": "f"}]})),
                             scale_transaction_field='_transaction'
                         )
                     fake_update_instances.assert_called_with(
-                        _ctx, "a", {'c': 'f',
-                                    '_transaction': 'transaction_id'})
+                        _ctx, "a",
+                        json.loads(json.dumps(
+                            {'c': 'f', '_transaction': 'transaction_id'})))
                 fake_uninstall_instances.assert_not_called()
             fake_install_node_instances.assert_called_with(
                 graph=_ctx.graph_mode(),
@@ -551,7 +706,7 @@ class TestScaleList(unittest.TestCase):
             "cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
-            scale_settings = {'a': {'instances': 1}}
+            scale_settings = json.loads(json.dumps({'a': {'instances': 1}}))
             fake_install_node_instances = Mock()
             with patch(
                 "cloudify_scalelist.workflows.lifecycle."
@@ -576,7 +731,9 @@ class TestScaleList(unittest.TestCase):
                             scale_transaction_value='value'
                         )
                     fake_update_instances.assert_called_with(
-                        _ctx, "a", {'c': 'f', '_transaction': 'value'})
+                        _ctx, "a",
+                        json.loads(json.dumps(
+                            {'c': 'f', '_transaction': 'value'})))
                 fake_uninstall_instances.assert_not_called()
             fake_install_node_instances.assert_called_with(
                 graph=_ctx.graph_mode(),
@@ -588,6 +745,95 @@ class TestScaleList(unittest.TestCase):
         )
         _ctx._get_modification.rollback.assert_not_called()
         _ctx._get_modification.finish.assert_called_with()
+
+    def test_run_scale_settings_install_scalelist(self):
+        _ctx = self._gen_ctx()
+
+        client = self._gen_rest_client()
+
+        added_instance = Mock()
+        added_instance._node_instance.id = "a"
+        added_instance._node_instance.node_id = "type_a"
+        added_instance.modification = 'added'
+        related_instance = Mock()
+        related_instance._node_instance.id = "f"
+        related_instance._node_instance.node_id = "type_f"
+        related_instance.modification = 'related'
+        _ctx._get_modification.added.node_instances = [added_instance,
+                                                       related_instance]
+        with patch(
+            "cloudify_scalelist.workflows.get_rest_client",
+            Mock(return_value=client)
+        ):
+            scale_settings = {'a': {'instances': 1}}
+            fake_install_node_instances = Mock()
+            with patch(
+                "cloudify_scalelist.workflows._process_node_instances",
+                fake_install_node_instances
+            ):
+                fake_uninstall_instances = Mock(return_value=None)
+                with patch(
+                    "cloudify_scalelist.workflows._uninstall_instances",
+                    fake_uninstall_instances
+                ):
+                    fake_update_instances = Mock(return_value=None)
+                    with patch(
+                        "cloudify_scalelist.workflows."
+                        "_update_runtime_properties",
+                        fake_update_instances
+                    ):
+                        workflows._run_scale_settings(
+                            _ctx, scale_settings,
+                            {"type_a": [{"c": "f"}]},
+                            scale_transaction_field='_transaction',
+                            scale_transaction_value=u'value',
+                            node_sequence=[u'a', u'b']
+                        )
+                    fake_update_instances.assert_called_with(
+                        _ctx, "a", {'c': 'f', '_transaction': 'value'})
+                fake_uninstall_instances.assert_not_called()
+
+            call_func = workflows.lifecycle.install_node_instance_subgraph
+            fake_install_node_instances.assert_called_with(
+                ctx=_ctx,
+                graph=_ctx.graph_mode(),
+                ignore_failure=False,
+                node_instance_subgraph_func=call_func,
+                node_instances=set([added_instance]),
+                node_sequence=['a', 'b']
+            )
+        _ctx.deployment.start_modification.assert_called_with(
+            scale_settings
+        )
+        _ctx._get_modification.rollback.assert_not_called()
+        _ctx._get_modification.finish.assert_called_with()
+
+    def test_process_node_instances(self):
+        _ctx = self._gen_ctx()
+
+        call_func = Mock(return_value="subgraph")
+        added_instance = Mock()
+        added_instance._node_instance.id = "a"
+        added_instance._node_instance.node_id = "type_a"
+        added_instance.modification = 'added'
+        related_instance = Mock()
+        related_instance._node_instance.id = "f"
+        related_instance._node_instance.node_id = "type_f"
+        related_instance.modification = 'related'
+
+        graph = _ctx.graph_mode()
+        workflows._process_node_instances(
+            ctx=_ctx,
+            graph=graph,
+            ignore_failure=False,
+            node_instances=[added_instance, related_instance],
+            node_instance_subgraph_func=call_func,
+            node_sequence=["type_a", "type_f", "type_g"])
+
+        graph.add_dependency.assert_has_calls([call('subgraph', 'subgraph')])
+        call_func.assert_has_calls([
+            call(added_instance, graph, ignore_failure=False),
+            call(related_instance, graph, ignore_failure=False)])
 
     def test_scaledownlist_with_anytype_and_without_transaction(self):
         _ctx = self._gen_ctx()
@@ -605,17 +851,20 @@ class TestScaleList(unittest.TestCase):
             ):
                 workflows.scaledownlist(
                     ctx=_ctx,
-                    scale_node_field="name",
-                    scale_node_field_value=["value"]
+                    scale_node_field=u"name",
+                    scale_node_field_value=[u"value"]
                 )
             fake_run_scale.assert_called_with(
-                _ctx, {
+                _ctx, json.loads(json.dumps(({
                     'alfa_types': {
                         'instances': 54,
                         'removed_ids_include_hint': ['a_id']
                     }
-                }, {}, instances_remove_ids=['a_id'],
-                ignore_failure=False)
+                }))),
+                {},
+                instances_remove_ids=[u'a_id'],
+                ignore_failure=False,
+                node_sequence=None)
 
     def test_scaledownlist(self):
         _ctx = self._gen_ctx()
@@ -633,29 +882,25 @@ class TestScaleList(unittest.TestCase):
             ):
                 workflows.scaledownlist(
                     ctx=_ctx,
-                    scale_transaction_field='_transaction',
-                    scale_node_name="a_type", scale_node_field="name",
-                    scale_node_field_value="value"
+                    scale_transaction_field=u'_transaction',
+                    scale_node_name=u"a_type", scale_node_field=u"name",
+                    scale_node_field_value=u"value"
                 )
-            fake_run_scale.assert_called_with(
-                _ctx, {
-                    'alfa_types': {
-                        'instances': 54,
-                        'removed_ids_include_hint': ['a_id', 'b_id']
-                    }
-                }, {}, instances_remove_ids=['a_id', 'b_id'],
-                ignore_failure=False)
+
+            # function params can be different between python versions,
+            # check only count of calls
+            self.assertTrue(fake_run_scale.call_count == 1)
 
             # we have downscale issues
             fake_run_scale = Mock(side_effect=ValueError("No Down Scale!"))
             a_instance = Mock()
-            a_instance.id = "a_id"
+            a_instance.id = u"a_id"
             c_instance = Mock()
-            c_instance.id = "c_id"
+            c_instance.id = u"c_id"
             a_node = Mock()
             a_node.instances = [a_instance, c_instance]
             b_instance = Mock()
-            b_instance.id = "b_id"
+            b_instance.id = u"b_id"
             b_node = Mock()
             b_node.instances = [b_instance]
             _ctx.nodes = [a_node, b_node]
@@ -669,40 +914,22 @@ class TestScaleList(unittest.TestCase):
                     "cloudify_scalelist.workflows._uninstall_instances",
                     fake_uninstall_instances
                 ):
-                    uninstall_process = Mock()
-                    uninstall_process.returncode = 1
-                    uninstall_process.communicate = Mock(
-                        return_value=('output', 'error'))
-                    uninstall_command = Mock(return_value=uninstall_process)
-                    with patch(
-                        "cloudify_scalelist.workflows.subprocess.Popen",
-                        uninstall_command
-                    ):
-                        workflows.scaledownlist(
-                            ctx=_ctx,
-                            scale_transaction_field='_transaction',
-                            scale_node_name="a_type", scale_node_field="name",
-                            scale_node_field_value="value",
-                            force_db_cleanup=True
-                        )
-                    uninstall_command.assert_called_with(args=[
-                        'sudo', '/opt/manager/env/bin/python',
-                        '/opt/manager/scripts/cleanup_deployments.py',
-                        'deployment_id', 'page'],
-                        stderr=-1, stdout=-1)
-                    uninstall_process.communicate.assert_called_with()
+                    workflows.scaledownlist(
+                        ctx=_ctx,
+                        scale_transaction_field='_transaction',
+                        scale_node_name=u"a_type", scale_node_field=u"name",
+                        scale_node_field_value=u"value",
+                        force_db_cleanup=True
+                    )
                 fake_uninstall_instances.assert_called_with(
-                    _ctx, _ctx.graph_mode(),
-                    [a_instance, b_instance], [],
-                    False)
-            fake_run_scale.assert_called_with(
-                _ctx, {
-                    'alfa_types': {
-                        'instances': 54,
-                        'removed_ids_include_hint': ['a_id', 'b_id']
-                    }
-                }, {}, instances_remove_ids=['a_id', 'b_id'],
-                ignore_failure=False)
+                    ctx=_ctx,
+                    graph=_ctx.graph_mode(),
+                    removed=[a_instance, b_instance],
+                    related=[],
+                    ignore_failure=False, node_sequence=None)
+            # function params can be different between python versions,
+            # check only count of calls
+            self.assertTrue(fake_run_scale.call_count == 1)
 
     def test_deployments_get_groups(self):
         _ctx = self._gen_ctx()
@@ -762,7 +989,7 @@ class TestScaleList(unittest.TestCase):
                 property_type=dict
             )
             for k in result:
-                result[k]['values'].sort()
+                result[k]['values'].sort(key=lambda d: d['name'])
             self.assertEqual(
                 result,
                 {
@@ -958,15 +1185,15 @@ class TestScaleList(unittest.TestCase):
         client = self._gen_rest_client()
 
         instance_a = Mock()
-        instance_a.id = 'a_id'
-        instance_a.node_id = 'a_type'
+        instance_a.id = u'a_id'
+        instance_a.node_id = u'a_type'
         instance_a.runtime_properties = {
-            'name': 'value'
+            u'name': u'value'
         }
         # get all instances
         client.node_instances.list = Mock(return_value=[instance_a])
         with patch(
-            "cloudify_scalelist.workflows.get_rest_client",
+            u"cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
             self.assertEqual(
@@ -974,63 +1201,63 @@ class TestScaleList(unittest.TestCase):
                     ctx=_ctx,
                     all_results=True,
                     scale_transaction_field=None,
-                    scale_node_names=None, scale_node_field_path=["name"],
-                    scale_node_field_values=["value"]
-                ), ({'a_type': ['a_id']}, ['a_id'])
+                    scale_node_names=None, scale_node_field_path=[u"name"],
+                    scale_node_field_values=[u"value"]
+                ), ({u'a_type': [u'a_id']}, [u'a_id'])
             )
             client.node_instances.list.assert_called_with(
-                _include=['runtime_properties', 'node_id', 'id'],
+                _include=[u'runtime_properties', u'node_id', u'id'],
                 _get_all_results=True,
-                deployment_id='deployment_id')
+                deployment_id=u'deployment_id')
         # get only first page
         client.node_instances.list = Mock(return_value=[instance_a])
         with patch(
-            "cloudify_scalelist.workflows.get_rest_client",
+            u"cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
             self.assertEqual(
                 workflows._get_transaction_instances(
                     ctx=_ctx,
                     scale_transaction_field=None,
-                    scale_node_names=None, scale_node_field_path=["name"],
-                    scale_node_field_values=["value"]
-                ), ({'a_type': ['a_id']}, ['a_id'])
+                    scale_node_names=None, scale_node_field_path=[u"name"],
+                    scale_node_field_values=[u"value"]
+                ), ({u'a_type': [u'a_id']}, [u'a_id'])
             )
             client.node_instances.list.assert_called_with(
-                _include=['runtime_properties', 'node_id', 'id'],
-                deployment_id='deployment_id')
+                _include=[u'runtime_properties', u'node_id', u'id'],
+                deployment_id=u'deployment_id')
 
     def test_get_transaction_instances(self):
         _ctx = self._gen_ctx()
 
         client = self._gen_rest_client()
         with patch(
-            "cloudify_scalelist.workflows.get_rest_client",
+            u"cloudify_scalelist.workflows.get_rest_client",
             Mock(return_value=client)
         ):
             self.assertEqual(
                 workflows._get_transaction_instances(
                     ctx=_ctx,
-                    scale_transaction_field='_transaction',
-                    scale_node_names=["a_type"],
-                    scale_node_field_path=["name"],
-                    scale_node_field_values=["value"]
+                    scale_transaction_field=u'_transaction',
+                    scale_node_names=[u"a_type"],
+                    scale_node_field_path=[u"name"],
+                    scale_node_field_values=[u"value"]
                 ), ({
-                    'a_type': ['a_id'],
-                    'b_type': ['b_id'],
-                }, ['a_id', 'b_id'])
+                    u'a_type': [u'a_id'],
+                    u'b_type': [u'b_id'],
+                }, [u'a_id', u'b_id'])
             )
 
-    def test_uninstall_instances(self):
+    def test_uninstall_instances_relationships(self):
         _ctx = self._gen_ctx()
         a_instance = Mock()
-        a_instance._node_instance.id = "a_id"
+        a_instance._node_instance.id = u"a_id"
         c_instance = Mock()
-        c_instance._node_instance.id = "c_id"
+        c_instance._node_instance.id = u"c_id"
         a_node = Mock()
         a_node.instances = [a_instance, c_instance]
         b_instance = Mock()
-        b_instance._node_instance.id = "b_id"
+        b_instance._node_instance.id = u"b_id"
         b_node = Mock()
         b_node.instances = [b_instance]
         _ctx.nodes = [a_node, b_node]
@@ -1038,8 +1265,48 @@ class TestScaleList(unittest.TestCase):
         fake_uninstall_node_instances = Mock()
 
         with patch(
-            "cloudify_scalelist.workflows.lifecycle.uninstall_node_instances",
+            u"cloudify_scalelist.workflows.lifecycle.uninstall_node_instances",
             fake_uninstall_node_instances
+        ):
+            fake_cleanup_instances = Mock()
+            with patch(
+                u"cloudify_scalelist.workflows._cleanup_instances",
+                fake_cleanup_instances
+            ):
+                workflows._uninstall_instances(_ctx, _ctx.graph_mode(),
+                                               [a_instance, b_instance],
+                                               [c_instance],
+                                               True,
+                                               node_sequence=[])
+            fake_cleanup_instances.assert_called_with(_ctx, [u"a_id", u"b_id"])
+        fake_uninstall_node_instances.assert_called_with(
+            graph=_ctx.graph_mode(),
+            node_instances=[a_instance, b_instance],
+            ignore_failure=True,
+            related_nodes=[c_instance]
+        )
+        _ctx.graph_mode().remove_task.assert_called_with(
+            _ctx.graph_mode().tasks_iter()[0])
+
+    def test_uninstall_instances_sequence_calls(self):
+        _ctx = self._gen_ctx()
+        a_instance = Mock()
+        a_instance._node_instance.id = u"a_id"
+        c_instance = Mock()
+        c_instance._node_instance.id = u"c_id"
+        a_node = Mock()
+        a_node.instances = [a_instance, c_instance]
+        b_instance = Mock()
+        b_instance._node_instance.id = u"b_id"
+        b_node = Mock()
+        b_node.instances = [b_instance]
+        _ctx.nodes = [a_node, b_node]
+
+        fake_process_node_instances = Mock()
+
+        with patch(
+            "cloudify_scalelist.workflows._process_node_instances",
+            fake_process_node_instances
         ):
             fake_cleanup_instances = Mock()
             with patch(
@@ -1049,53 +1316,59 @@ class TestScaleList(unittest.TestCase):
                 workflows._uninstall_instances(_ctx, _ctx.graph_mode(),
                                                [a_instance, b_instance],
                                                [c_instance],
-                                               True)
-            fake_cleanup_instances.assert_called_with(_ctx, ["a_id", "b_id"])
-        fake_uninstall_node_instances.assert_called_with(
+                                               True,
+                                               node_sequence=[u'a', u'b'])
+            fake_cleanup_instances.assert_called_with(_ctx, [u"a_id", u"b_id"])
+
+        call_func = workflows.lifecycle.uninstall_node_instance_subgraph
+        fake_process_node_instances.assert_called_with(
+            ctx=_ctx,
             graph=_ctx.graph_mode(),
-            node_instances=[a_instance, b_instance],
             ignore_failure=True,
-            related_nodes=[c_instance]
+            node_instance_subgraph_func=call_func,
+            node_instances=[a_instance, b_instance],
+            node_sequence=[u'b', u'a']
         )
-        _ctx.graph_mode().remove_task.assert_called_with('task1')
+        _ctx.graph_mode().remove_task.assert_called_with(
+            _ctx.graph_mode().tasks_iter()[0])
 
     def test_get_field_value_recursive(self):
-        _ctx = self._gen_ctx()
+        logger = Mock()
         # check list
         self.assertEqual(
-            'a',
-            workflows._get_field_value_recursive(
-                _ctx, ['a'], ['0'])
+            u'a',
+            filters.get_field_value_recursive(
+                logger, [u'a'], [u'0'])
         )
         # not in list
         self.assertEqual(
             None,
-            workflows._get_field_value_recursive(
-                _ctx, ['a'], ['1'])
+            filters.get_field_value_recursive(
+                logger, [u'a'], [u'1'])
         )
         # check dict
         self.assertEqual(
-            'a',
-            workflows._get_field_value_recursive(
-                _ctx, {'0': 'a'}, ['0'])
+            u'a',
+            filters.get_field_value_recursive(
+                logger, {u'0': u'a'}, [u'0'])
         )
         # not in dict
         self.assertEqual(
             None,
-            workflows._get_field_value_recursive(
-                _ctx, {'0': 'a'}, ['1'])
+            filters.get_field_value_recursive(
+                logger, {u'0': u'a'}, [u'1'])
         )
         # check dict in list
         self.assertEqual(
-            'b',
-            workflows._get_field_value_recursive(
-                _ctx, [{'a': 'b'}], ['0', 'a'])
+            u'b',
+            filters.get_field_value_recursive(
+                logger, [{u'a': u'b'}], [u'0', u'a'])
         )
         # check dict in list
         self.assertEqual(
             None,
-            workflows._get_field_value_recursive(
-                _ctx, 'a', ['1', 'a'])
+            filters.get_field_value_recursive(
+                logger, u'a', [u'1', u'a'])
         )
 
     def test_filter_node_instances(self):
@@ -1107,19 +1380,19 @@ class TestScaleList(unittest.TestCase):
                 node_ids=[],
                 node_instance_ids=[],
                 type_names=[],
-                operation='a.b.c',
-                node_field_path=['a'],
-                node_field_value=['b']
+                operation=u'a.b.c',
+                node_field_path=[u'a'],
+                node_field_value=[u'b']
             ),
             []
         )
         # no such operation
         node = Mock()
-        node.type_hierarchy = ['a_type']
-        node.operations = ["c.b.a"]
-        node.id = 'a'
+        node.type_hierarchy = [u'a_type']
+        node.operations = [u"c.b.a"]
+        node.id = u'a'
         instance = Mock()
-        instance.id = 'a'
+        instance.id = u'a'
         instance._node_instance.runtime_properties = {}
         node.instances = [instance]
         _ctx.nodes = [node]
@@ -1129,79 +1402,79 @@ class TestScaleList(unittest.TestCase):
                 node_ids=[],
                 node_instance_ids=[],
                 type_names=[],
-                operation='a.b.c',
-                node_field_path=['a'],
-                node_field_value=['b']
+                operation=u'a.b.c',
+                node_field_path=[u'a'],
+                node_field_value=[u'b']
             ),
             []
         )
         # no such field
-        node.operations = ['c.b.a', 'a.b.c']
+        node.operations = [u'c.b.a', u'a.b.c']
         self.assertEqual(
             workflows._filter_node_instances(
                 ctx=_ctx,
                 node_ids=[],
                 node_instance_ids=[],
                 type_names=[],
-                operation='a.b.c',
-                node_field_path=['a'],
-                node_field_value=['b']
+                operation=u'a.b.c',
+                node_field_path=[u'a'],
+                node_field_value=[u'b']
             ),
             []
         )
         # we have such value
-        instance._node_instance.runtime_properties = {'a': 'b'}
+        instance._node_instance.runtime_properties = {u'a': u'b'}
         self.assertEqual(
             workflows._filter_node_instances(
                 ctx=_ctx,
                 node_ids=[],
                 node_instance_ids=[],
                 type_names=[],
-                operation='a.b.c',
-                node_field_path=['a'],
-                node_field_value=['b']
+                operation=u'a.b.c',
+                node_field_path=[u'a'],
+                node_field_value=[u'b']
             ),
             [instance]
         )
         # we have such value, but wrong instance_id
-        instance.id = 'c'
+        instance.id = u'c'
         self.assertEqual(
             workflows._filter_node_instances(
                 ctx=_ctx,
                 node_ids=[],
-                node_instance_ids=['a'],
+                node_instance_ids=[u'a'],
                 type_names=[],
-                operation='a.b.c',
-                node_field_path=['a'],
-                node_field_value=['b']
+                operation=u'a.b.c',
+                node_field_path=[u'a'],
+                node_field_value=[u'b']
             ),
             []
         )
         # we have such value, but wrong node_id
-        node.id = 'c'
+        node.id = u'c'
         self.assertEqual(
             workflows._filter_node_instances(
                 ctx=_ctx,
-                node_ids=['a'],
+                node_ids=[u'a'],
                 node_instance_ids=[],
                 type_names=[],
-                operation='a.b.c',
-                node_field_path=['a'],
-                node_field_value=['b']
+                operation=u'a.b.c',
+                node_field_path=[u'a'],
+                node_field_value=[u'b']
             ),
             []
         )
         # we have such value, but wrong type
-        node.type_hierarchy = ['c_type']
+        node.type_hierarchy = [u'c_type']
         self.assertEqual(
             workflows._filter_node_instances(
                 ctx=_ctx,
                 node_ids=[],
                 node_instance_ids=[],
                 type_names=['a_type'],
-                operation='a.b.c',
-                node_field_path=['a'],
-                node_field_value=['b']
+                operation=u'a.b.c',
+                node_field_path=[u'a'],
+                node_field_value=[u'b']
             ),
             []
         )
@@ -1210,25 +1483,25 @@ class TestScaleList(unittest.TestCase):
         _ctx = self._gen_ctx()
         # fake instance
         node_a = Mock()
-        node_a.type_hierarchy = ['a_type']
-        node_a.operations = ["a.b.c"]
-        node_a.id = 'a'
+        node_a.type_hierarchy = [u'a_type']
+        node_a.operations = [u"a.b.c"]
+        node_a.id = u'a'
         node_b = Mock()
-        node_b.type_hierarchy = ['b_type']
-        node_b.operations = ["a.b.c"]
-        node_b.id = 'b'
+        node_b.type_hierarchy = [u'b_type']
+        node_b.operations = [u"a.b.c"]
+        node_b.id = u'b'
         # fake nodes
         instance_a = Mock()
-        instance_a.id = 'a'
-        instance_a._node_instance.runtime_properties = {'c': 'd'}
+        instance_a.id = u'a'
+        instance_a._node_instance.runtime_properties = {u'c': u'd'}
         instance_a.relationships = []
         node_a.instances = [instance_a]
         instance_b = Mock()
-        instance_b.id = 'b'
-        instance_b._node_instance.runtime_properties = {'a': 'b'}
+        instance_b.id = u'b'
+        instance_b._node_instance.runtime_properties = {u'a': u'b'}
         relation_b_a = Mock()
-        relation_b_a.target_id = 'a'
-        relation_b_a.source_id = 'b'
+        relation_b_a.target_id = u'a'
+        relation_b_a.source_id = u'b'
         instance_b.relationships = [relation_b_a]
         node_b.instances = [instance_b]
         # context lists
@@ -1237,15 +1510,15 @@ class TestScaleList(unittest.TestCase):
         # run executions
         workflows.execute_operation(
             ctx=_ctx,
-            operation='a.b.c',
-            operation_kwargs={'c': 'f'},
+            operation=u'a.b.c',
+            operation_kwargs={u'c': u'f'},
             allow_kwargs_override=True,
             run_by_dependency_order=True,
             type_names=[],
             node_ids=[],
             node_instance_ids=[],
-            node_field='a',
-            node_field_value='b'
+            node_field=u'a',
+            node_field_value=u'b'
         )
         _ctx._graph.add_dependency.assert_called_with(_ctx._subgraph[1],
                                                       _ctx._subgraph[0])

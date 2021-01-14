@@ -7,8 +7,9 @@ nose-cov
 pylint
 flake8
 requests-mock
-PyYAML
-xmltodict
+PyYAML==5.1.1
 # for blueprints validate
-cloudify>=3.4.1
 nose-exclude
+
+# for integration tests
+pytest==4.6.3
