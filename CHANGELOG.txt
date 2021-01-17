@@ -1,6 +1,9 @@
-releases:
+  1.24.0: Add operations wrappers workflows and rollback workflow.
+
   v1.23.11: Tag urllib3 version
+
   v1.23.10: Make sure that we are using the latest cloudify-utlitities-sdk
+
   v1.23.9:
   - Bump version in order to use latest cloudify-utilities-plugins-sdk
 
@@ -19,8 +22,8 @@ releases:
   - Fix encode/decode issue in ssh key.
 
   v1.23.4:
-  -Fix bug in custom_workflow code and add ftp_module to setup.py.
-  -Fix bug in scalelist module (add refresh_node_instances after start_modification).
+  - Fix bug in custom_workflow code and add ftp_module to setup.py.
+  - Fix bug in scalelist module (add refresh_node_instances after start_modification).
 
   v1.23.1:
   - Additional Python3 Fixes.
@@ -71,8 +74,7 @@ releases:
   v1.15.0:
   - Add resumable flag for all operations.
   - CloudInit: cleanup runtime properties on delete.
-  - Terminal: Add experimental support for smart devices with shell extension
-    support.
+  - Terminal: Add experimental support for smart devices with shell extension support.
   - SSH Key: cleanup runtime properties on delete.
 
   v1.14.0:
@@ -129,9 +131,10 @@ releases:
   - Terminal: Filter warnings and critical errors.
 
   v1.9.8:
-  - Scalelist: Use `get_all_results` in `cleanup_deployments.py` and
-    `_get_transaction_instances`. (Logic available by flag `all_results` for 4.4+
-    manager only).
+  - Scalelist: >
+        Use `get_all_results` in `cleanup_deployments.py` and
+        `_get_transaction_instances`. (Logic available by flag `all_results` for 4.4+
+        manager only).
 
   v1.9.7:
   - Scalelist: Run cleanup instances after uinstall in DB by `force_db_cleanup` flag.
@@ -166,12 +169,12 @@ releases:
   - Scalelist Down: Additional example for update workflow
 
   v1.8.2:
-  - Scalelist Down: Additional examples for remove instances by property value
-    without transaction id.
+  - Scalelist Down: >
+        Additional examples for remove instances by property value
+        without transaction id.
 
   v1.8.1:
-  - Scalelist Down: Additional examples for remove instances created by install
-    workflow.
+  - Scalelist Down: Additional examples for remove instances created by install workflow.
 
   v1.8.0:
   - Add scale several scaling group in one transaction
@@ -187,7 +190,8 @@ releases:
 
   v.1.7.1:
   - Fix bug introduced in 1.7.0 when blueprint archive is null.
-  - Changed the logic for external_resource in Blueprint and Deployment.
+  - >
+    Changed the logic for external_resource in Blueprint and Deployment.
     New Logic Is:
     - external_resource is True and resource exists: finish
     - external_resource is True and resource does not exist: fail
@@ -196,7 +200,7 @@ releases:
   - Fix call sequence in backup workflow.
 
   v.1.7.0:
-  - Add support for local blueprint archive
+  - Add support for local blueprint archive.
 
   v.1.6.1:
   - Improve Rest Plugin with recoverable error.
