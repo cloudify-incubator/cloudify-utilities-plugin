@@ -1,117 +1,47 @@
-# Cloudify Utilities: Secrets
+# Cloudify Utilities: Resources
 
 ## Description
-Added support for create, read, update and delete operation for complex secrets from the blueprint level.
+Added support for managing resources reservations from the blueprint level.
 
-It is often needed to switch between few DCs during resources provisioning.
-For instance we may have to provision the same blueprint as 3 deployment in 3 different data centers with Openstack.
-So far we needed to e.g. add prefix or suffix to each of secrets being a parts of *openstack_config*.
-To change credentials (data center location) and make new deployment we needed to change secret key prefix / suffix manually in the blueprint (*get_secret* intrinsic function invocations).
+It is often needed to manage resources pools during deployment provisioning.
+For instance we may have to provision the same blueprint as 3 deployments in a single datacenter with Openstack.
+So far we needed to e.g. make sure if we are not putting any conflicting IPs as inputs.
+If there was any mistake, deployment failed.
 
-*Secrets plugin* can do this automatically - you need only to specify name of DC location.
+*Resources plugin* allows to define resources list - you need only to use a relationship to make a reservation on a particular resource.
 
-With *secrets plugin* you can:
-* Perform CRUD operation on secrets from the blueprint
-* Read / write complex structures (dictionaries) as one secret (JSON serialization)
-* Switch dynamically between few variants of the same secret (credentials, data center locations related params etc.) 
+With *resources plugin* you can make reservations on resources using a dedicated relationship (reserve_list_item).
 
 ## Node types
 
-#### cloudify.nodes.secrets.Writer
+#### cloudify.nodes.resources.List
 
-Node responsible for performing CUD operations on the set of secrets.
-
-Properties:
-* ***entries*** - dictionary with keys being secret names and values being secret value.
-Secret value may be: *dict, list, string, boolean, integer*
-Complex types as: *dict* and *list* will be serialized to JSON.
-* ***variant*** - *[OPTIONAL]* suffix used to determine variant of secrets (e.g. DC location for credentials secret)
-* ***separator*** - *[OPTIONAL]* characters used to separate proper secret name and its variant
-* ***do_not_delete*** - *[OPTIONAL]* it set to *true* - already created secrets won't be deleted on uninstall
-
-Runtime properties:
-* ***data*** - dictionary containing Secrets API responses for each already created secret
-* ***do_not_delete*** 
-
-#### cloudify.nodes.secrets.Reader
-
-Node responsible for performing R operation on the set of secrets.
+Node responsible for performing CUD operations on the set of resources.
 
 Properties:
-* ***keys*** - list of secrets names which values will be retrieved
-* ***variant*** - *[OPTIONAL]* suffix used to determine variant of secrets (e.g. DC location for credentials secret)
-* ***separator*** - [OPTIONAL]* characters used to separate proper secret name and its variant
+* ***resource_config*** - list of resources which you want to manage - they can be IPs, host IDs, anything!
 
 Runtime properties:
-* ***data*** - dictionary containing Secrets API responses for each secret name specified in *keys* property
+* ***resource_config*** - list of resources which are being managed
+* ***free_resources*** - list of resources which are available for reservation
+* ***reservations*** - a key-value dictionary containing information about the resources & 
+`cloudify.nodes.resources.ListItem` node instances, which holds the particular reservations, in format:
+```
+{
+    "node_instance_xyz": resource0,
+    "node_instance_abc": resource1,
+    ...
+}
+```
+
+#### cloudify.nodes.resources.ListItem
+
+Node responsible for holding the reserved resource.
+
+Runtime properties:
+* ***reservation*** - contains the reserved resource.
 
 
 ## Examples
 
-[Write Example](examples/write-secret-blueprint.yaml)
-
-[Read Example](examples/read-secret-blueprint.yaml)
-
-Both examples ude below to show how plugin works:
-
-1) List current secrets:
-
-    ```
-    cfy secrets list
-    ```
-    
-2) Install write example blueprint:
-
-    ```
-    cfy install write-secret-blueprint.yaml -b write_secrets_test
-    ```
-
-3) Check already created secrets:
-
-    ```
-    cfy secrets list
-    ```
-
-    For each secret execute:
-    
-    ```
-    cfy secrets get <secret name>
-    ```
-
-4) Install read example blueprint 
-
-    ```
-    cfy install read-secret-blueprint.yaml -b read_secrets_test -vv
-    ```
-
-5) Check outputs of read example deployment (should contain some secrets dump)
-
-    ```
-    cfy deployments outputs read_secrets_test
-    ```
-    
-6) Uninstall read example deployment
-
-    ```
-    cfy uninstall read_secrets_test
-    ```
-    
-7) Uninstall read example deployment
-
-    ```
-    cfy uninstall write_secrets_test
-    ```
-    
-8) Check secrets - notice that secrets with *do_not_delete* flag set should still be present
-
-    ```
-    cfy secrets list
-    ```
-    
-9) Delete these secrets
-
-    ```
-    cfy secrets delete openstack_config__lab1_tenantA
-    cfy secrets delete openstack_config__lab1_tenantB    
-    cfy secrets delete openstack_config__lab2_tenantA
-    ``` 
+[Example](examples/blueprint.yaml)

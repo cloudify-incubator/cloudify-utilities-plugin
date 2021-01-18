@@ -14,249 +14,226 @@
 # limitations under the License.
 
 import unittest
-import mock
-import copy
 
 from cloudify.state import current_ctx
-from cloudify.mocks import MockCloudifyContext
-from cloudify_secrets import tasks
+from cloudify.mocks import (
+    MockCloudifyContext,
+    MockNodeContext,
+    MockNodeInstanceContext,
+    MockRelationshipContext,
+    MockRelationshipSubjectContext
+)
+from cloudify_resources import tasks
+from cloudify_resources.constants import (
+    RESOURCES_LIST_PROPERTY,
+    FREE_RESOURCES_LIST_PROPERTY,
+    RESERVATIONS_PROPERTY,
+    SINGLE_RESERVATION_PROPERTY
+)
 
 
 class TestTasks(unittest.TestCase):
 
-    @staticmethod
-    def _secret_resource(key, value):
-        return {
-            'key': key,
-            'value': value,
-            'created_at': '2019-02-11 11:47:21.105634',
-            'updated_at': '2019-02-11 11:47:21.105634',
-            'visibility': 'global',
-            'is_hidden_value': False
-        }
-
-    def _mock_secrets(self):
-        self.first_key = 'some_key_1'
-        self.first_value = 'Test str'
-        self.first_value_updated = 'Test str UPDATED'
-        self.second_key = 'some_key_2'
-        self.second_value = 12
-        self.third_key = 'some_key_3'
-        self.third_value = False
-        self.fourth_key = 'some_key_4'
-        self.fourth_value = {
-            'test': {
-                'test1': 'test',
-                'test2': ['a', 'b']
-            }
-        }
-
-        self.secrets = {
-            self.first_key: self.first_value,
-            self.second_key: self.second_value,
-            self.third_key: self.third_value,
-            self.fourth_key: self.fourth_value
-        }
-
-        self.secrets_with_details = {
-            self.first_key:
-                self._secret_resource(self.first_key, self.first_value),
-            self.second_key:
-                self._secret_resource(self.second_key, self.second_value),
-            self.third_key:
-                self._secret_resource(self.third_key, self.third_value),
-            self.fourth_key:
-                self._secret_resource(self.fourth_key, self.fourth_value)
-        }
-
-        self.secrets_with_details_updated = {
-            self.first_key:
-                self._secret_resource(
-                    self.first_key,
-                    self.first_value_updated
-                ),
-            self.second_key:
-                self._secret_resource(self.second_key, self.second_value),
-            self.third_key:
-                self._secret_resource(self.third_key, self.third_value),
-            self.fourth_key:
-                self._secret_resource(self.fourth_key, self.fourth_value)
-        }
-
-    def _mock_writer_ctx(self, do_not_delete=False):
+    def _mock_resource_list_ctx(self):
         properties = {
-            'entries': {
-                self.first_key: self.first_value,
-                self.second_key: self.second_value,
-                self.third_key: self.third_value,
-                self.fourth_key: self.fourth_value
-            },
-            'variant': 'Lab_1',
-            'separator': '---',
-            'do_not_delete': do_not_delete
+            'resource_config': [
+                '10.0.1.0/24',
+                '10.0.2.0/24',
+                '10.0.3.0/24'
+            ]
         }
 
         ctx = MockCloudifyContext(
-            node_id='test_writer',
+            node_id='test_resources',
+            type='cloudify.nodes.resources.List',
             properties=properties
         )
 
         current_ctx.set(ctx)
         return ctx
 
-    def _mock_reader_ctx(self):
-        properties = {
-            'keys': ['some_key_1', 'some_key_2', 'some_key_3', 'some_key_4'],
-            'variant': 'Lab_1',
-            'separator': '---'
-        }
-
+    def _mock_resource_list_item_ctx(self):
         ctx = MockCloudifyContext(
-            node_id='test_reader',
-            properties=properties
+            node_id='test_item',
+            type='cloudify.nodes.resources.ListItem'
         )
 
         current_ctx.set(ctx)
         return ctx
 
-    def _mock_secrets_sdk(self):
-        self.secrets_sdk_create_mock = mock.Mock(
-            return_value=self.secrets_with_details
-        )
-        self.secrets_sdk_update_mock = mock.Mock(
-            return_value=self.secrets_with_details_updated
-        )
-        self.secrets_sdk_delete_mock = mock.Mock()
-        self.secrets_sdk_read_mock = mock.Mock(
-            return_value=self.secrets_with_details
-        )
-        self.secrets_sdk_mock = mock.Mock()
-
-        self.secrets_sdk_mock.create = \
-            self.secrets_sdk_create_mock
-        self.secrets_sdk_mock.update = \
-            self.secrets_sdk_update_mock
-        self.secrets_sdk_mock.delete = \
-            self.secrets_sdk_delete_mock
-        self.secrets_sdk_mock.read = \
-            self.secrets_sdk_read_mock
-
-        self.secrets_sdk_class_mock = mock.Mock(
-            return_value=self.secrets_sdk_mock
+    def _mock_item_to_resources_list_rel_ctx(self):
+        # target
+        tar_rel_subject_ctx = MockRelationshipSubjectContext(
+            node=MockNodeContext(
+                node_id='test_resources',
+                type='cloudify.nodes.resources.List',
+                properties={
+                    'resource_config': [
+                        '10.0.1.0/24',
+                        '10.0.2.0/24',
+                        '10.0.3.0/24'
+                    ]
+                }
+            ),
+            instance=MockNodeInstanceContext(
+                id='test_resources_123456'
+            )
         )
 
-    def _mock_get_rest_client(self):
-        self.get_rest_client_mock = mock.Mock()
+        rel_ctx = MockRelationshipContext(
+            type='cloudify.relationships.resources.reserve_list_item',
+            target=tar_rel_subject_ctx
+        )
 
-    def setUp(self):
-        self._mock_get_rest_client()
-        self._mock_secrets()
-        self._mock_secrets_sdk()
+        # source
+        src_ctx = MockCloudifyContext(
+            node_id='test_item_123456',
+            type='cloudify.nodes.resources.ListItem',
+            source=self,
+            target=tar_rel_subject_ctx,
+            relationships=rel_ctx
+        )
 
-        tasks.get_rest_client = self.get_rest_client_mock
-        tasks.SecretsSDK = self.secrets_sdk_class_mock
+        current_ctx.set(src_ctx)
+        return src_ctx
 
-    def _do_test_create_delete(self, ctx, expected_do_not_delete=False):
-        # given
-        update_inputs = {
-            'entries': {
-                self.first_key: self.first_value_updated
-            }
-        }
+    def test_create_delete_resources_list(self):
+        ctx = self._mock_resource_list_ctx()
 
         # when (create)
         tasks.create(ctx)
 
         # then (create)
-        self.assertTrue('do_not_delete' in ctx.instance.runtime_properties)
-        self.assertTrue('data' in ctx.instance.runtime_properties)
+        self.assertTrue(
+            RESOURCES_LIST_PROPERTY in ctx.instance.runtime_properties)
+        self.assertTrue(
+            FREE_RESOURCES_LIST_PROPERTY in ctx.instance.runtime_properties)
+        self.assertTrue(
+            RESERVATIONS_PROPERTY in ctx.instance.runtime_properties)
 
         self.assertEquals(
-            ctx.instance.runtime_properties['do_not_delete'],
-            expected_do_not_delete
+            ctx.instance.runtime_properties[RESOURCES_LIST_PROPERTY],
+            ctx.node.properties['resource_config']
         )
-        self.assertEquals(
-            ctx.instance.runtime_properties['data'],
-            self.secrets_with_details
-        )
-
-        self.secrets_sdk_create_mock.assert_called_once_with(
-            **ctx.node.properties
-        )
-
-        # when (update)
-        tasks.update(ctx, **update_inputs)
-
-        # then (update)
-        self.assertTrue('do_not_delete' in ctx.instance.runtime_properties)
-        self.assertTrue('data' in ctx.instance.runtime_properties)
 
         self.assertEquals(
-            ctx.instance.runtime_properties['do_not_delete'],
-            expected_do_not_delete
+            ctx.instance.runtime_properties[FREE_RESOURCES_LIST_PROPERTY],
+            ctx.instance.runtime_properties[RESOURCES_LIST_PROPERTY]
         )
+
         self.assertEquals(
-            ctx.instance.runtime_properties['data'],
-            self.secrets_with_details_updated
+            ctx.instance.runtime_properties[RESERVATIONS_PROPERTY],
+            {}
         )
-
-        called_with = copy.deepcopy(ctx.node.properties)
-        called_with['entries'] = {
-            self.first_key: self.first_value_updated
-        }
-        self.secrets_sdk_update_mock.assert_called_once_with(
-            **called_with
-        )
-
-    def test_create_update_delete(self):
-        ctx = self._mock_writer_ctx()
-        self._do_test_create_delete(ctx)
 
         # when (delete)
         tasks.delete(ctx)
 
         # then (delete)
-        self.assertTrue(
-            'do_not_delete' not in ctx.instance.runtime_properties
-        )
-        self.assertTrue('data' not in ctx.instance.runtime_properties)
-
-        self.secrets_sdk_delete_mock.assert_called_once_with(
-            self.secrets_with_details_updated,
-            **ctx.node.properties
+        self.assertEquals(
+            ctx.instance.runtime_properties[RESOURCES_LIST_PROPERTY],
+            []
         )
 
-    def test_create_update_delete__with_do_not_delete(self):
-        ctx = self._mock_writer_ctx(True)
-        self._do_test_create_delete(ctx, True)
-
-        # when (delete)
-        tasks.delete(ctx)
-
-        # then (delete)
-        self.assertTrue(
-            'do_not_delete' not in ctx.instance.runtime_properties
+        self.assertEquals(
+            ctx.instance.runtime_properties[FREE_RESOURCES_LIST_PROPERTY],
+            []
         )
-        self.assertTrue('data' not in ctx.instance.runtime_properties)
 
-        self.assertFalse(self.secrets_sdk_delete_mock.called)
+        self.assertEquals(
+            ctx.instance.runtime_properties[RESERVATIONS_PROPERTY],
+            {}
+        )
 
-    def test_read(self):
-        # given
-        ctx = self._mock_reader_ctx()
-
-        # when
-        tasks.read(ctx)
+    def test_create_delete_resources_list_item(self):
+        ctx = self._mock_resource_list_item_ctx()
+        # when (create)
+        tasks.create(ctx)
 
         # then (create)
-        self.assertTrue('do_not_delete' not in ctx.instance.runtime_properties)
-        self.assertTrue('data' in ctx.instance.runtime_properties)
+        self.assertTrue(
+            SINGLE_RESERVATION_PROPERTY in ctx.instance.runtime_properties)
 
         self.assertEquals(
-            ctx.instance.runtime_properties['data'],
-            self.secrets_with_details
+            ctx.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY],
+            ''
         )
 
-        self.secrets_sdk_read_mock.assert_called_once_with(
-            **ctx.node.properties
+        # when (delete)
+        tasks.delete(ctx)
+
+        # then (delete)
+        self.assertEquals(
+            ctx.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY],
+            ''
+        )
+
+    def test_reserve_return_resource(self):
+        ctx = self._mock_item_to_resources_list_rel_ctx()
+
+        # when (reserve)
+        tasks.reserve_list_item(ctx)
+
+        # then (reserve)
+        self.assertEquals(
+            ctx.source.instance.runtime_properties.get(
+                SINGLE_RESERVATION_PROPERTY),
+            '10.0.1.0/24'
+        )
+        self.assertEquals(
+            ctx.target.instance.runtime_properties.get(
+                RESERVATIONS_PROPERTY),
+            {
+                'test_item_123456': '10.0.1.0/24'
+            }
+        )
+        self.assertEquals(
+            ctx.target.instance.runtime_properties.get(
+                FREE_RESOURCES_LIST_PROPERTY),
+            [
+                '10.0.2.0/24',
+                '10.0.3.0/24'
+            ]
+        )
+        self.assertEquals(
+            ctx.target.instance.runtime_properties.get(
+                RESOURCES_LIST_PROPERTY),
+            [
+                '10.0.1.0/24',
+                '10.0.2.0/24',
+                '10.0.3.0/24'
+            ]
+        )
+
+        # when (return)
+        tasks.return_list_item(ctx)
+
+        # then (return)
+        self.assertEquals(
+            ctx.source.instance.runtime_properties.get(
+                SINGLE_RESERVATION_PROPERTY),
+            ''
+        )
+        self.assertEquals(
+            ctx.target.instance.runtime_properties.get(
+                RESERVATIONS_PROPERTY),
+            {}
+        )
+        self.assertEquals(
+            ctx.target.instance.runtime_properties.get(
+                FREE_RESOURCES_LIST_PROPERTY),
+            [
+                '10.0.1.0/24',
+                '10.0.2.0/24',
+                '10.0.3.0/24'
+            ]
+        )
+        self.assertEquals(
+            ctx.target.instance.runtime_properties.get(
+                RESOURCES_LIST_PROPERTY),
+            [
+                '10.0.1.0/24',
+                '10.0.2.0/24',
+                '10.0.3.0/24'
+            ]
         )
