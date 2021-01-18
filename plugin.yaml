@@ -772,6 +772,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create: resources.cloudify_resources.tasks.create_list
+        delete: resources.cloudify_resources.tasks.delete_list
 
   # cloudify.nodes.resources.List
   cloudify.nodes.resources.ListItem:
@@ -779,6 +780,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create: resources.cloudify_resources.tasks.create_list_item
+        delete: resources.cloudify_resources.tasks.delete_list_item
 
 
 relationships:
