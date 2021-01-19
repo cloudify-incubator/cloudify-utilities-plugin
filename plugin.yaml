@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.23.13.zip
-    package_version: '1.23.13'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.25.0.zip
+    package_version: '1.25.0'
 
   cfy_files: *utilities_plugin
 
@@ -31,6 +31,8 @@ plugins:
   secrets: *utilities_plugin
 
   resources: *utilities_plugin
+  
+  rollback: *utilities_plugin
 
 data_types:
 
@@ -1127,3 +1129,184 @@ workflows:
         description: >
           List of calls to run
         default: []
+
+  alt_start:
+    mapping: rollback.cloudify_rollback_workflow.workflows.start
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  alt_stop:
+    mapping: rollback.cloudify_rollback_workflow.workflows.stop
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  alt_precreate:
+    mapping: rollback.cloudify_rollback_workflow.workflows.precreate
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  alt_create:
+    mapping: rollback.cloudify_rollback_workflow.workflows.create
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  alt_configure:
+    mapping: rollback.cloudify_rollback_workflow.workflows.configure
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  alt_poststart:
+    mapping: rollback.cloudify_rollback_workflow.workflows.poststart
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  alt_prestop:
+    mapping: rollback.cloudify_rollback_workflow.workflows.prestop
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  alt_delete:
+    mapping: rollback.cloudify_rollback_workflow.workflows.delete
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  alt_postdelete:
+    mapping: rollback.cloudify_rollback_workflow.workflows.postdelete
+    is_cascading: false
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        default: [ ]
+      node_instance_ids:
+        default: [ ]
+      ignore_failure:
+        default: false
+
+  rollback:
+    mapping: rollback.cloudify_rollback_workflow.workflows.rollback
+    is_cascading: false
+    parameters:
+      type_names:
+        default: [ ]
+        description: >
+          A list of type names. The operation will be executed
+          only on node instances which are of these types or of types which
+          (recursively) derive from them. An empty list means no filtering
+          will take place and all type names are valid.
+      node_ids:
+        default: [ ]
+        description: >
+          A list of node ids. The operation will be executed only on node
+          instances which are instances of these nodes. An empty list means
+          no filtering will take place and all nodes are valid.
+      node_instance_ids:
+        default: [ ]
+        description: >
+          A list of node instance ids. The operation will be executed only on
+          the node instances specified. An empty list means no filtering will
+          take place and all node instances are valid (Default: [ ]).
+      full_rollback:
+        default: false
+        description: >
+          Whether rollback to resolved state or full uninstall.

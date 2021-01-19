@@ -20,7 +20,7 @@ Utilities for extending Cloudify features.
 - [Cloudify SSH Key](cloudify_ssh_key/README.md)
 - [Cloudify Suspend/Backup Workflows](cloudify_suspend/README.md)
 - [Cloudify Terminal](cloudify_terminal/README.md)
-
+- [Cloudify Rollback Workflow](cloudify_rollback_workflow/README.md)
 
 ## Versions:
 
