@@ -1,3 +1,5 @@
+  1.24.1: Remove is_cascading from plugin.yaml.
+
   1.24.0: Add operations wrappers workflows and rollback workflow.
 
   v1.23.11: Tag urllib3 version
