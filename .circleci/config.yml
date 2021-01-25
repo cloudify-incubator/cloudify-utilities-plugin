@@ -296,6 +296,7 @@ commands:
           at: workspace
       - run: python .circleci/package_release.py
 
+
   merge_docs:
     steps:
       - attach_workspace:
