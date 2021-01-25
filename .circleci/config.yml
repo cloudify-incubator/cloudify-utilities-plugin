@@ -204,7 +204,7 @@ commands:
           at: workspace
       - run:
           name: update pip
-          command: pip install -U pip ===20.3.3
+          command: pip install -U pip===20.3.3
       - run:
           name: install cloudify
           command: pip install -U cloudify==5.0.0 pytest==4.6.3 pyyaml==3.10
@@ -238,7 +238,7 @@ commands:
           at: workspace
       - run:
           name: update pip
-          command: pip install -U pip ===20.3.3
+          command: pip install -U pip===20.3.3
       - run:
           name: install cloudify
           command: |
