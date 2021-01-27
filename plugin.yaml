@@ -1132,7 +1132,6 @@ workflows:
 
   alt_start:
     mapping: rollback.cloudify_rollback_workflow.workflows.start
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1149,7 +1148,6 @@ workflows:
 
   alt_stop:
     mapping: rollback.cloudify_rollback_workflow.workflows.stop
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1166,7 +1164,6 @@ workflows:
 
   alt_precreate:
     mapping: rollback.cloudify_rollback_workflow.workflows.precreate
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1183,7 +1180,6 @@ workflows:
 
   alt_create:
     mapping: rollback.cloudify_rollback_workflow.workflows.create
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1200,7 +1196,6 @@ workflows:
 
   alt_configure:
     mapping: rollback.cloudify_rollback_workflow.workflows.configure
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1217,7 +1212,6 @@ workflows:
 
   alt_poststart:
     mapping: rollback.cloudify_rollback_workflow.workflows.poststart
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1234,7 +1228,6 @@ workflows:
 
   alt_prestop:
     mapping: rollback.cloudify_rollback_workflow.workflows.prestop
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1251,7 +1244,6 @@ workflows:
 
   alt_delete:
     mapping: rollback.cloudify_rollback_workflow.workflows.delete
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1268,7 +1260,6 @@ workflows:
 
   alt_postdelete:
     mapping: rollback.cloudify_rollback_workflow.workflows.postdelete
-    is_cascading: false
     parameters:
       operation_parms:
         default: { }
@@ -1285,7 +1276,6 @@ workflows:
 
   rollback:
     mapping: rollback.cloudify_rollback_workflow.workflows.rollback
-    is_cascading: false
     parameters:
       type_names:
         default: [ ]
