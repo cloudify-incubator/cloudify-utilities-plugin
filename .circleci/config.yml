@@ -27,7 +27,7 @@ executors:
     machine:
       image: ubuntu-1604:201903-01
 
-  cloudify-machine-510:
+  cloudify-machine-py3:
     machine:
       image: ubuntu-1604:201903-01
 
@@ -194,7 +194,7 @@ commands:
           paths:
             - build/*
 
-  run_integration_tests_505:
+  create_manager_container_505:
     steps:
       - run:
           name: "Pull Submodules"
@@ -226,9 +226,8 @@ commands:
       - run:
           name: install local project
           command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-      - run: pytest -s .circleci/test_examples.py
 
-  run_integration_tests_510:
+  create_manager_container_py3:
     steps:
       - run:
           name: "Pull Submodules"
@@ -258,7 +257,26 @@ commands:
       - run:
           name: install local project
           command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-      - run: pytest -s .circleci/test_examples.py
+
+  prepare_test_manager:
+    steps:
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE --bundle-path workspace/build/cloudify-plugins-bundle.tgz
+
+  run_cloudinit_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/utilities-examples/cloudify_cloudinit/simple.yaml --test-id=cloudify_cloudinit --on-failure=uninstall-force
+
+  run_ssh_key_test:
+    steps:
+      - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/utilities-examples/cloudify_ssh_key/create-secret-agent-key.yaml --test-id=cloudify_ssh_key --on-failure=uninstall-force
+
+  run_secrets_test:
+      steps:
+        - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/utilities-examples/cloudify_secrets/write-secret-blueprint.yaml --test-id=cloudify_secrets --on-failure=uninstall-force
+
+  run_rest_test:
+      steps:
+        - run: ecosystem-test local-blueprint-test  -b examples/blueprint-examples/utilities-examples/cloudify_rest/example-github-status.yaml --test-id=cloudify_rest --on-failure=uninstall-force
 
   release_plugin:
     steps:
@@ -391,15 +409,25 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - run_integration_tests_505
+      - create_manager_container_505
+      - prepare_test_manager
+      - run_cloudinit_test
+      - run_ssh_key_test
+      - run_secrets_test
+      - run_rest_test
 
-  integration_tests_510:
-    executor: cloudify-machine-510
+  integration_tests_py3:
+    executor: cloudify-machine-py3
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - run_integration_tests_510
+      - create_manager_container_py3
+      - prepare_test_manager
+      - run_cloudinit_test
+      - run_ssh_key_test
+      - run_secrets_test
+      - run_rest_test
 
   release:
     executor: py36
@@ -425,15 +453,18 @@ workflows:
       - wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+#              only: /([0-9\.]*\-build|master|dev)/
+              only: /RD-1505-use-ecosystem-tests-cli/
       - rhel_wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+#              only: /([0-9\.]*\-build|master|dev)/
+              only: /RD-1505-use-ecosystem-tests-cli/
       - build_bundle:
           filters:
             branches:
-              only: /master/
+#              only: /master/
+              only: /RD-1505-use-ecosystem-tests-cli/
           requires:
             - wagon
             - rhel_wagon
@@ -442,13 +473,15 @@ workflows:
             - build_bundle
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
-      - integration_tests_510:
+#              only: /([0-9\.]*\-build|master|dev)/
+              only: /RD-1505-use-ecosystem-tests-cli/
+      - integration_tests_py3:
           requires:
             - build_bundle
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+#              only: /([0-9\.]*\-build|master|dev)/
+              only: /RD-1505-use-ecosystem-tests-cli/
       - release:
           filters:
             branches:
@@ -461,7 +494,7 @@ workflows:
             - validate_version
             - validate_documentation
             - integration_tests_505
-            - integration_tests_510
+            - integration_tests_py3
 #      - merge_docs:
 #          filters:
 #            branches:
@@ -490,17 +523,22 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - integration_tests_505:
+      - build_bundle:
+          filters:
+            branches:
+              only: /master/
           requires:
             - wagon
             - rhel_wagon
+      - integration_tests_505:
+          requires:
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - integration_tests_510:
+      - integration_tests_py3:
           requires:
-            - wagon
-            - rhel_wagon
+            - build_bundle
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
