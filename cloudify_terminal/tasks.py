@@ -58,6 +58,8 @@ def _execute(ctx, properties, runtime_properties, get_resource, host_ip,
         ctx.logger.info("Used host from container: {ip_list}"
                         .format(ip_list=repr(ip_list)))
 
+    if isinstance(ip_list, bytes):
+        ip_list = ip_list.decode('UTF-8')
     if isinstance(ip_list, text_type):
         ip_list = [ip_list]
     user = terminal_auth.get('user')
