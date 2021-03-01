@@ -1,301 +1,297 @@
-  1.24.1: Remove is_cascading from plugin.yaml.
+1.24.2: Decode bytes in ip list terminal plugin.
+1.24.1: Remove is_cascading from plugin.yaml.
 
-  1.24.0: Add operations wrappers workflows and rollback workflow.
+1.24.0: Add operations wrappers workflows and rollback workflow.
 
-  v1.23.11: Tag urllib3 version
+v1.23.11: Tag urllib3 version
 
-  v1.23.10: Make sure that we are using the latest cloudify-utlitities-sdk
+v1.23.10: Make sure that we are using the latest cloudify-utlitities-sdk
 
-  v1.23.9:
-  - Bump version in order to use latest cloudify-utilities-plugins-sdk
+v1.23.9:
+- Bump version in order to use latest cloudify-utilities-plugins-sdk
 
-  v1.23.8:
-  - Terminal Encoding for template
-  - Handle constraints for urllib3
+v1.23.8:
+- Terminal Encoding for template
+- Handle constraints for urllib3
 
-  v1.23.7:
-  - Deployment proxy python 3
+v1.23.7:
+- Deployment proxy python 3
 
-  v1.23.6:
-  - Bump version in order to release and use the new centos wagon builder.
+v1.23.6:
+- Bump version in order to release and use the new centos wagon builder.
 
-  v1.23.5:
-  - Updated wagon builders on release to py2py3 wagons.
-  - Fix encode/decode issue in ssh key.
+v1.23.5:
+- Updated wagon builders on release to py2py3 wagons.
+- Fix encode/decode issue in ssh key.
 
-  v1.23.4:
-  - Fix bug in custom_workflow code and add ftp_module to setup.py.
-  - Fix bug in scalelist module (add refresh_node_instances after start_modification).
+v1.23.4:
+- Fix bug in custom_workflow code and add ftp_module to setup.py.
+- Fix bug in scalelist module (add refresh_node_instances after start_modification).
 
-  v1.23.1:
-  - Additional Python3 Fixes.
+v1.23.1:
+- Additional Python3 Fixes.
 
-  v1.23.0:
-  - Apply futurize fixes for python3
+v1.23.0:
+- Apply futurize fixes for python3
 
-  v1.22.0:
-  - terminal: support run action as hook
-  - terminal: fix prompt check code (in sdk)
+v1.22.0:
+- terminal support run action as hook
+- terminal fix prompt check code (in sdk)
 
-  v1.21.0:
-  - rest: support run action as hook
+v1.21.0:
+- rest support run action as hook
 
-  v1.20.0:
-  -ssh_key: add use_secrets_if_exist property to
-   cloudify.keys.nodes.RSAKey node.
+v1.20.0:
+- ssh_key add use_secrets_if_exist property to cloudify.keys.nodes.RSAKey node.
 
-  v1.19.0:
-  - hooks: add hooks events filtering plugin
+v1.19.0:
+- hooks add hooks events filtering plugin
 
-  v1.18.0:
-  - ftp: add ftp file upload support
-  - cloudinit: add json dump and fix `write_files` template engine.
+v1.18.0:
+- ftp add ftp file upload support
+- cloudinit add json dump and fix `write_files` template engine.
 
-  v1.17.0:
-  - Rest: support CA_BUNDLE as value for verify
-  - Rest: official support for resumable operations
-  - Terminal: official support for resumable operations
+v1.17.0:
+- Rest support CA_BUNDLE as value for verify
+- Rest official support for resumable operations
+- Terminal official support for resumable operations
 
-  v1.16.1:
-  - Fix python package importer
+v1.16.1:
+- Fix python package importer
 
-  v1.16.0:
-  - Terminal: support questions after login before promt
-  - EOL: Cloudify 4.3.x
+v1.16.0:
+- Terminal support questions after login before promt
+- EOL Cloudify 4.3.x
 
-  v1.15.3:
-  - Support external resource in files.
+v1.15.3:
+- Support external resource in files.
 
-  v1.15.2:
-  - Improved logging of deployment proxy's waiting for upstream events.
-  - Added option to expose all upstream deployment's outputs at once.
+v1.15.2:
+- Improved logging of deployment proxy's waiting for upstream events.
+- Added option to expose all upstream deployment's outputs at once.
 
-  v1.15.1:
-  - Fixed issue around creating SSH key in a different file system.
+v1.15.1:
+- Fixed issue around creating SSH key in a different file system.
 
-  v1.15.0:
-  - Add resumable flag for all operations.
-  - CloudInit: cleanup runtime properties on delete.
-  - Terminal: Add experimental support for smart devices with shell extension support.
-  - SSH Key: cleanup runtime properties on delete.
+v1.15.0:
+- Add resumable flag for all operations.
+- CloudInit cleanup runtime properties on delete.
+- Terminal Add experimental support for smart devices with shell extension support.
+- SSH Key cleanup runtime properties on delete.
 
-  v1.14.0:
-  - Rest: use auth parameters from action inputs
-  - Rest: support `files_raw`/`raw_files` and `payload_raw`/`raw_payload`
+v1.14.0:
+- Rest use auth parameters from action inputs
+- Rest support `files_raw`/`raw_files` and `payload_raw`/`raw_payload`
 
-  v1.13.0:
-  - Rest: merge parameters in property and in call
-  - Secrets: Add support manage secrets from blueprint
-  - Fix Issue in File type when using use_sudo.
+v1.13.0:
+- Rest merge parameters in property and in call
+- Secrets Add support manage secrets from blueprint
+- Fix Issue in File type when using use_sudo.
 
-  v1.12.5:
-  - Rest: Update SDK==0.0.7
-  - Rest: Add toxml filter
-  - Rest: Failback to json if can't detect content type
+v1.12.5:
+- Rest Update SDK==0.0.7
+- Rest Add toxml filter
+- Rest Failback to json if can't detect content type
 
-  v1.12.4:
-  - Rest: Update SDK==0.0.6
-  - Rest: Hide calls from response
+v1.12.4:
+- Rest Update SDK==0.0.6
+- Rest Hide calls from response
 
-  v1.12.3:
-  - Rest: Support auth headers
-  - Rest: Add 'save_path' to cloudify.rest.Requests
+v1.12.3:
+- Rest Support auth headers
+- Rest Add 'save_path' to cloudify.rest.Requests
 
-  v1.12.2:
-  - Rest: Support raw_payload in rest sdk
-  - Rest: Support hardcoded translation_format version in rest sdk
-  - Rest: Support prerender template in rest sdk
+v1.12.2:
+- Rest Support raw_payload in rest sdk
+- Rest Support hardcoded translation_format version in rest sdk
+- Rest Support prerender template in rest sdk
 
-  v1.12.1:
-  - Rest: Update SDK and support save headers/cookies to runtime properties.
-  - Rest: Autodetext content type by default
+v1.12.1:
+- Rest Update SDK and support save headers/cookies to runtime properties.
+- Rest Autodetext content type by default
 
-  v1.12.0:
-  - Rest: Support send bunch request groups in one action.
-  - Move terminal and connection logic to separate package.
+v1.12.0:
+- Rest Support send bunch request groups in one action.
+- Move terminal and connection logic to separate package.
 
-  v1.11.2:
-  - Scalelist: Fix wait so that it doesn't fail on unhandled runtime errors.
+v1.11.2:
+- Scalelist Fix wait so that it doesn't fail on unhandled runtime errors.
 
-  v1.11.0:
-  - Scalelist: add wait for tasks to finish in failed workflow.
-  - Remove force_db_cleanup functionality.
+v1.11.0:
+- Scalelist add wait for tasks to finish in failed workflow.
+- Remove force_db_cleanup functionality.
 
-  v1.10.2:
-  - Deployment proxy: Support dict as list of plugins.
+v1.10.2:
+- Deployment proxy Support dict as list of plugins.
 
-  v1.10.1:
-  - Deployment proxy: Remove only downloaded wagons
+v1.10.1:
+- Deployment proxy Remove only downloaded wagons
 
-  v1.10.0:
-  - Scalelist: Add `node_sequence` for override relationships.
-  - Terminal: Hide debug messages.
-  - Terminal: Filter warnings and critical errors.
+v1.10.0:
+- Scalelist Add `node_sequence` for override relationships.
+- Terminal Hide debug messages.
+- Terminal Filter warnings and critical errors.
 
-  v1.9.8:
-  - Scalelist: >
-        Use `get_all_results` in `cleanup_deployments.py` and
-        `_get_transaction_instances`. (Logic available by flag `all_results` for 4.4+
-        manager only).
+v1.9.8:
+- Scalelist: >
+    Use `get_all_results` in `cleanup_deployments.py` and
+    `_get_transaction_instances`. (Logic available by flag `all_results` for 4.4+
+    manager only).
 
-  v1.9.7:
-  - Scalelist: Run cleanup instances after uinstall in DB by `force_db_cleanup` flag.
-  - RestAPI: rename `result_propeties` to `result_properties`.
+v1.9.7:
+- Scalelist Run cleanup instances after uinstall in DB by `force_db_cleanup` flag.
+- RestAPI rename `result_propeties` to `result_properties`.
 
-  v1.9.6:
-  - Scalelist: Add `ignore_rollback_failure` parameter for ignore action failures on rollback.
-  - Scalelist: More strict validation for parameters in scalelist up.
+v1.9.6:
+- Scalelist Add `ignore_rollback_failure` parameter for ignore action failures on rollback.
+- Scalelist More strict validation for parameters in scalelist up.
 
-  v1.9.5:
-  - Deployment proxy: Using pagination in executions list.
+v1.9.5:
+- Deployment proxy Using pagination in executions list.
 
-  v1.9.4:
-  - Deployment proxy: Ignore proxy deployment uninstall errors unless user specifies otherwise.
+v1.9.4:
+- Deployment proxy Ignore proxy deployment uninstall errors unless user specifies otherwise.
 
-  v1.9.3:
-  - Raise NonRecoverableError exception on failed proxy executions.
-  - Increase default execution timeout to 1800 seconds.
+v1.9.3:
+- Raise NonRecoverableError exception on failed proxy executions.
+- Increase default execution timeout to 1800 seconds.
 
-  v1.9.2:
-  - Scalelist Up: Fix issue with scaledown on rollback
-  - Terminal Plugin: Show current messages as debug logs.
+v1.9.2:
+- Scalelist Up Fix issue with scaledown on rollback
+- Terminal Plugin Show current messages as debug logs.
 
-  v1.9.1:
-  - Deployment Proxy: Fix issue with deployment outputs when adding nodes derived from deployment proxy node
+v1.9.1:
+- Deployment Proxy Fix issue with deployment outputs when adding nodes derived from deployment proxy node
 
-  v1.9.0:
-  - Scalelist Down: Support deep check property value
-  - Deployment Proxy: Install plugins and set secrets with create deployment.
+v1.9.0:
+- Scalelist Down Support deep check property value
+- Deployment Proxy Install plugins and set secrets with create deployment.
 
-  v1.8.3:
-  - Scalelist Down: Additional example for update workflow
+v1.8.3:
+- Scalelist Down Additional example for update workflow
 
-  v1.8.2:
-  - Scalelist Down: >
-        Additional examples for remove instances by property value
-        without transaction id.
+v1.8.2:
+- Scalelist Down: >
+    Additional examples for remove instances by property value
+    without transaction id.
 
-  v1.8.1:
-  - Scalelist Down: Additional examples for remove instances created by install workflow.
+v1.8.1:
+- Scalelist Down Additional examples for remove instances created by install workflow.
 
-  v1.8.0:
-  - Add scale several scaling group in one transaction
+v1.8.0:
+- Add scale several scaling group in one transaction
 
-  v1.7.3:
-  - Examples for use terminal plugin in relationships
+v1.7.3:
+- Examples for use terminal plugin in relationships
 
-  v1.7.2:
-  - Rest Plugin Improvements
-  - Update tests to use cirleci v2 and to use ecosystem test tools
-  - added integration tests for key, file, cloudinit, deployment proxy,
-    and rest tools.
+v1.7.2:
+- Rest Plugin Improvements
+- Update tests to use cirleci v2 and to use ecosystem test tools
+- added integration tests for key, file, cloudinit, deployment proxy, and rest tools.
 
-  v.1.7.1:
-  - Fix bug introduced in 1.7.0 when blueprint archive is null.
-  - >
-    Changed the logic for external_resource in Blueprint and Deployment.
-    New Logic Is:
-    - external_resource is True and resource exists: finish
-    - external_resource is True and resource does not exist: fail
-    - external_resource is False and resource exists: warn
-    - external_resource is False and resource does not exist: create
+v.1.7.1:
+- Fix bug introduced in 1.7.0 when blueprint archive is null.
+- Changed the logic for external_resource in Blueprint and Deployment. New Logic Is:
+  - external_resource is True and resource exists finish
+  - external_resource is True and resource does not exist fail
+  - external_resource is False and resource exists warn
+  - external_resource is False and resource does not exist create
   - Fix call sequence in backup workflow.
 
-  v.1.7.0:
-  - Add support for local blueprint archive.
+v.1.7.0:
+- Add support for local blueprint archive.
 
-  v.1.6.1:
-  - Improve Rest Plugin with recoverable error.
+v.1.6.1:
+- Improve Rest Plugin with recoverable error.
 
-  v.1.6.0:
-  - Backup/Restore workflows
-  - Close connection after error in terminal plugin.
+v.1.6.0:
+- Backup/Restore workflows
+- Close connection after error in terminal plugin.
 
-  v.1.5.4:
-  - Add ability to send newline after answer question in terminal plugin.
+v.1.5.4:
+- Add ability to send newline after answer question in terminal plugin.
 
-  v.1.5.3:
-  - Handle retries in REST type.
+v.1.5.3:
+- Handle retries in REST type.
 
-  v.1.5.2:
-  - Bug fix for empty deployment outputs in deployment proxy.
+v.1.5.2:
+- Bug fix for empty deployment outputs in deployment proxy.
 
-  v.1.5.1:
-  - Support user configuration of failure success on certain responses in REST plugin.
+v.1.5.1:
+- Support user configuration of failure success on certain responses in REST plugin.
 
-  v1.5.0.1:
-  - Deployment proxy bug fix. Ensure that correct execution ID is polled for deployment,
-    when workflow ID is identical.
+v1.5.0.1:
+- Deployment proxy bug fix. Ensure that correct execution ID is polled for deployment, when workflow ID is identical.
 
-  v.1.5.0:
-  - Add REST Plugin for generic interaction with REST APIs.
+v.1.5.0:
+- Add REST Plugin for generic interaction with REST APIs.
 
-  v.1.4.5:
-  - Terminal Plugin Handle Socket Timeout.
+v.1.4.5:
+- Terminal Plugin Handle Socket Timeout.
 
-  v1.4.4:
-  - Add Debug Logging to Deployment Proxy.
+v1.4.4:
+- Add Debug Logging to Deployment Proxy.
 
-  v1.4.3:
-  - Allow infinite timeout in deployment proxy.
+v1.4.3:
+- Allow infinite timeout in deployment proxy.
 
-  v1.4.2.1:
-  - Handle parameters correctly in configuration update operation.
+v1.4.2.1:
+- Handle parameters correctly in configuration update operation.
 
-  v1.4.2:
-  - Configuration Plugin IP regression fixes.
-  - Merging Types YAML into single Plugin YAML.
+v1.4.2:
+- Configuration Plugin IP regression fixes.
+- Merging Types YAML into single Plugin YAML.
 
-  v1.4.1.1:
-  - Fixed bug in multiple IP handling.
+v1.4.1.1:
+- Fixed bug in multiple IP handling.
 
-  v1.4.1:
-  - Added support for multiple IPs in Terminal plugin.
+v1.4.1:
+- Added support for multiple IPs in Terminal plugin.
 
-  v1.4.0:
-  - Added support for files back in a simplified form.
+v1.4.0:
+- Added support for files back in a simplified form.
 
-  v1.3.1:
-  - Adding Suspend/Resume Workflow
-  - Adding Custom Workflow Tool
-  - Removing Files Feature
-  - Reorganizing plugin.yaml into types.yaml.
+v1.3.1:
+- Adding Suspend/Resume Workflow
+- Adding Custom Workflow Tool
+- Removing Files Feature
+- Reorganizing plugin.yaml into types.yaml.
 
-  v1.3.0:
-  - Added file type.
+v1.3.0:
+- Added file type.
 
-  v1.2.5:
-  - Added Cloud-init type.
+v1.2.5:
+- Added Cloud-init type.
 
-  v1.2.4:
-  - handling paging in long executions in the deployment proxy
-  - added configuration plugin examples
+v1.2.4:
+- handling paging in long executions in the deployment proxy
+- added configuration plugin examples
 
-  v1.2.3:
-  - configuration plugin
-  - terminal plugin
-  - improved deployment/blueprint as external resource support
+v1.2.3:
+- configuration plugin
+- terminal plugin
+- improved deployment/blueprint as external resource support
 
-  v1.2.2:
-  - add ability to store to runtime props
+v1.2.2:
+- add ability to store to runtime props
 
-  v1.2.1:
-  - Public Key Runtime Property
+v1.2.1:
+- Public Key Runtime Property
 
-  v1.2.0:
-  - Add NodeInstanceProxy node type.
-  - add cloudify rest client mock
-  - added more tests
+v1.2.0:
+- Add NodeInstanceProxy node type.
+- add cloudify rest client mock
+- added more tests
 
-  v1.1.1:
-  - Fixed an issue where the install workflow is re-executed.
+v1.1.1:
+- Fixed an issue where the install workflow is re-executed.
 
-  v1.1.0:
-  - add cloudify_ssh_key plugin (moved from cloudify-key-plugin).
-  - refactoring
+v1.1.0:
+- add cloudify_ssh_key plugin (moved from cloudify-key-plugin).
+- refactoring
 
-  v1.0.0:
-  - rename plugin
-  - change property structure
-  - add data types and property validations
-  - unit tests
+v1.0.0:
+- rename plugin
+- change property structure
+- add data types and property validations
+- unit tests
