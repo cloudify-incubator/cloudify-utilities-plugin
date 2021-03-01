@@ -34,6 +34,7 @@ v1.23.1:
 v1.23.0:
 - Apply futurize fixes for python3
 
+<<<<<<< Updated upstream
 v1.22.0:
 - terminal: support run action as hook
 - terminal: fix prompt check code (in sdk)
@@ -56,13 +57,43 @@ v1.17.0:
 - Rest: support CA_BUNDLE as value for verify
 - Rest: official support for resumable operations
 - Terminal: official support for resumable operations
+=======
+  v1.22.0:
+  - terminal support run action as hook
+  - terminal fix prompt check code (in sdk)
+
+  v1.21.0:
+  - rest support run action as hook
+
+  v1.20.0:
+  -ssh_key add use_secrets_if_exist property to
+   cloudify.keys.nodes.RSAKey node.
+
+  v1.19.0:
+  - hooks add hooks events filtering plugin
+
+  v1.18.0:
+  - ftp add ftp file upload support
+  - cloudinit add json dump and fix `write_files` template engine.
+
+  v1.17.0:
+  - Rest support CA_BUNDLE as value for verify
+  - Rest official support for resumable operations
+  - Terminal official support for resumable operations
+>>>>>>> Stashed changes
 
 v1.16.1:
 - Fix python package importer
 
+<<<<<<< Updated upstream
 v1.16.0:
 - Terminal: support questions after login before promt
 - EOL: Cloudify 4.3.x
+=======
+  v1.16.0:
+  - Terminal support questions after login before promt
+  - EOL Cloudify 4.3.x
+>>>>>>> Stashed changes
 
 v1.15.3:
 - Support external resource in files.
@@ -74,6 +105,7 @@ v1.15.2:
 v1.15.1:
 - Fixed issue around creating SSH key in a different file system.
 
+<<<<<<< Updated upstream
 v1.15.0:
 - Add resumable flag for all operations.
 - CloudInit: cleanup runtime properties on delete.
@@ -132,6 +164,66 @@ v1.10.0:
 - Scalelist: Add `node_sequence` for override relationships.
 - Terminal: Hide debug messages.
 - Terminal: Filter warnings and critical errors.
+=======
+  v1.15.0:
+  - Add resumable flag for all operations.
+  - CloudInit cleanup runtime properties on delete.
+  - Terminal Add experimental support for smart devices with shell extension support.
+  - SSH Key cleanup runtime properties on delete.
+
+  v1.14.0:
+  - Rest use auth parameters from action inputs
+  - Rest support `files_raw`/`raw_files` and `payload_raw`/`raw_payload`
+
+  v1.13.0:
+  - Rest merge parameters in property and in call
+  - Secrets Add support manage secrets from blueprint
+  - Fix Issue in File type when using use_sudo.
+
+  v1.12.5:
+  - Rest Update SDK==0.0.7
+  - Rest Add toxml filter
+  - Rest Failback to json if can't detect content type
+
+  v1.12.4:
+  - Rest Update SDK==0.0.6
+  - Rest Hide calls from response
+
+  v1.12.3:
+  - Rest Support auth headers
+  - Rest Add 'save_path' to cloudify.rest.Requests
+
+  v1.12.2:
+  - Rest Support raw_payload in rest sdk
+  - Rest Support hardcoded translation_format version in rest sdk
+  - Rest Support prerender template in rest sdk
+
+  v1.12.1:
+  - Rest Update SDK and support save headers/cookies to runtime properties.
+  - Rest Autodetext content type by default
+
+  v1.12.0:
+  - Rest Support send bunch request groups in one action.
+  - Move terminal and connection logic to separate package.
+
+  v1.11.2:
+  - Scalelist Fix wait so that it doesn't fail on unhandled runtime errors.
+
+  v1.11.0:
+  - Scalelist add wait for tasks to finish in failed workflow.
+  - Remove force_db_cleanup functionality.
+
+  v1.10.2:
+  - Deployment proxy Support dict as list of plugins.
+
+  v1.10.1:
+  - Deployment proxy Remove only downloaded wagons
+
+  v1.10.0:
+  - Scalelist Add `node_sequence` for override relationships.
+  - Terminal Hide debug messages.
+  - Terminal Filter warnings and critical errors.
+>>>>>>> Stashed changes
 
 v1.9.8:
 - Scalelist: >
@@ -139,6 +231,7 @@ v1.9.8:
     `_get_transaction_instances`. (Logic available by flag `all_results` for 4.4+
     manager only).
 
+<<<<<<< Updated upstream
 v1.9.7:
 - Scalelist: Run cleanup instances after uinstall in DB by `force_db_cleanup` flag.
 - RestAPI: rename `result_propeties` to `result_properties`.
@@ -152,11 +245,27 @@ v1.9.5:
 
 v1.9.4:
 - Deployment proxy: Ignore proxy deployment uninstall errors unless user specifies otherwise.
+=======
+  v1.9.7:
+  - Scalelist Run cleanup instances after uinstall in DB by `force_db_cleanup` flag.
+  - RestAPI rename `result_propeties` to `result_properties`.
+
+  v1.9.6:
+  - Scalelist Add `ignore_rollback_failure` parameter for ignore action failures on rollback.
+  - Scalelist More strict validation for parameters in scalelist up.
+
+  v1.9.5:
+  - Deployment proxy Using pagination in executions list.
+
+  v1.9.4:
+  - Deployment proxy Ignore proxy deployment uninstall errors unless user specifies otherwise.
+>>>>>>> Stashed changes
 
 v1.9.3:
 - Raise NonRecoverableError exception on failed proxy executions.
 - Increase default execution timeout to 1800 seconds.
 
+<<<<<<< Updated upstream
 v1.9.2:
 - Scalelist Up: Fix issue with scaledown on rollback
 - Terminal Plugin: Show current messages as debug logs.
@@ -170,14 +279,34 @@ v1.9.0:
 
 v1.8.3:
 - Scalelist Down: Additional example for update workflow
+=======
+  v1.9.2:
+  - Scalelist Up Fix issue with scaledown on rollback
+  - Terminal Plugin Show current messages as debug logs.
+
+  v1.9.1:
+  - Deployment Proxy Fix issue with deployment outputs when adding nodes derived from deployment proxy node
+
+  v1.9.0:
+  - Scalelist Down Support deep check property value
+  - Deployment Proxy Install plugins and set secrets with create deployment.
+
+  v1.8.3:
+  - Scalelist Down Additional example for update workflow
+>>>>>>> Stashed changes
 
 v1.8.2:
 - Scalelist Down: >
     Additional examples for remove instances by property value
     without transaction id.
 
+<<<<<<< Updated upstream
 v1.8.1:
 - Scalelist Down: Additional examples for remove instances created by install workflow.
+=======
+  v1.8.1:
+  - Scalelist Down Additional examples for remove instances created by install workflow.
+>>>>>>> Stashed changes
 
 v1.8.0:
 - Add scale several scaling group in one transaction
@@ -191,6 +320,7 @@ v1.7.2:
 - added integration tests for key, file, cloudinit, deployment proxy,
 and rest tools.
 
+<<<<<<< Updated upstream
 v.1.7.1:
 - Fix bug introduced in 1.7.0 when blueprint archive is null.
 - >
@@ -201,6 +331,18 @@ New Logic Is:
 - external_resource is False and resource exists: warn
 - external_resource is False and resource does not exist: create
 - Fix call sequence in backup workflow.
+=======
+  v.1.7.1:
+  - Fix bug introduced in 1.7.0 when blueprint archive is null.
+  - >
+    Changed the logic for external_resource in Blueprint and Deployment.
+    New Logic Is:
+    - external_resource is True and resource exists finish
+    - external_resource is True and resource does not exist fail
+    - external_resource is False and resource exists warn
+    - external_resource is False and resource does not exist create
+  - Fix call sequence in backup workflow.
+>>>>>>> Stashed changes
 
 v.1.7.0:
 - Add support for local blueprint archive.
