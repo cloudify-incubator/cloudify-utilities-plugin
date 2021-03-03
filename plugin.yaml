@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.24.2.zip
-    package_version: '1.24.2'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.24.3.zip
+    package_version: '1.24.3'
 
   cfy_files: *utilities_plugin
 
@@ -30,7 +30,7 @@ plugins:
 
   secrets: *utilities_plugin
 
-  rollback: *utilities_plugin
+  lifecycle_operations: *utilities_plugin
 
 data_types:
 
@@ -1100,7 +1100,7 @@ workflows:
         default: []
 
   alt_start:
-    mapping: rollback.cloudify_rollback_workflow.workflows.start
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.start
     parameters:
       operation_parms:
         default: { }
@@ -1116,7 +1116,7 @@ workflows:
         default: false
 
   alt_stop:
-    mapping: rollback.cloudify_rollback_workflow.workflows.stop
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.stop
     parameters:
       operation_parms:
         default: { }
@@ -1132,7 +1132,7 @@ workflows:
         default: false
 
   alt_precreate:
-    mapping: rollback.cloudify_rollback_workflow.workflows.precreate
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.precreate
     parameters:
       operation_parms:
         default: { }
@@ -1148,7 +1148,7 @@ workflows:
         default: false
 
   alt_create:
-    mapping: rollback.cloudify_rollback_workflow.workflows.create
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.create
     parameters:
       operation_parms:
         default: { }
@@ -1164,7 +1164,7 @@ workflows:
         default: false
 
   alt_configure:
-    mapping: rollback.cloudify_rollback_workflow.workflows.configure
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.configure
     parameters:
       operation_parms:
         default: { }
@@ -1180,7 +1180,7 @@ workflows:
         default: false
 
   alt_poststart:
-    mapping: rollback.cloudify_rollback_workflow.workflows.poststart
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.poststart
     parameters:
       operation_parms:
         default: { }
@@ -1196,7 +1196,7 @@ workflows:
         default: false
 
   alt_prestop:
-    mapping: rollback.cloudify_rollback_workflow.workflows.prestop
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.prestop
     parameters:
       operation_parms:
         default: { }
@@ -1212,7 +1212,7 @@ workflows:
         default: false
 
   alt_delete:
-    mapping: rollback.cloudify_rollback_workflow.workflows.delete
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.delete
     parameters:
       operation_parms:
         default: { }
@@ -1228,7 +1228,7 @@ workflows:
         default: false
 
   alt_postdelete:
-    mapping: rollback.cloudify_rollback_workflow.workflows.postdelete
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.postdelete
     parameters:
       operation_parms:
         default: { }
@@ -1243,8 +1243,8 @@ workflows:
       ignore_failure:
         default: false
 
-  rollback:
-    mapping: rollback.cloudify_rollback_workflow.workflows.rollback
+  rollback_deprecated:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.rollback
     parameters:
       type_names:
         default: [ ]
