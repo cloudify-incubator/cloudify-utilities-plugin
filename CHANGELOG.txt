@@ -1,4 +1,4 @@
-1.25.0: Change rollback workflow name to rollback_deprecated to avoid conflict with cloudify-common rollback workflow.
+1.24.3: Change rollback workflow name to rollback_deprecated to avoid conflict with cloudify-common rollback workflow.
 1.24.2: Decode bytes in ip list terminal plugin.
 1.24.1: Remove is_cascading from plugin.yaml.
 
