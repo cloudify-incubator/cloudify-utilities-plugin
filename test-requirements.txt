@@ -7,7 +7,7 @@ nose-cov
 pylint
 flake8
 requests-mock
-PyYAML==5.1.1
+PyYAML==5.4
 # for blueprints validate
 nose-exclude
 
