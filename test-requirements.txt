@@ -8,9 +8,3 @@ nose-cov
 pylint
 flake8
 requests-mock
-# for blueprints validate
-
-# for integration tests
-# pytest==4.6.3
-# pyyaml>=4.2b4
-# python2-cryptography
