@@ -1,5 +1,5 @@
 cloudify-utilities-plugins-sdk
 networkx
-ruamel.yaml==0.16.13
+ruamel.yaml<=0.15
 paramiko>=2.7.1
 cryptography==3.3.2
