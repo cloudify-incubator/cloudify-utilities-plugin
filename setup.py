@@ -53,8 +53,8 @@ setup(
               'cloudify_secrets',
               'cloudify_rollback_workflow'],
     license='LICENSE',
-    install_requires=[
-        'cloudify-common>=4.5.5',  # deployment_proxy
-        'cloudify-utilities-plugins-sdk>=0.0.34',  # terminal, rest
-        'ruamel.yaml==0.16.13']  # cloudinit
+    # install_requires=[
+    #     'cloudify-utilities-plugins-sdk>=0.0.34',  # terminal, rest
+    #     'ruamel.yaml==0.16.13']  # cloudinit
+    install_requires=['cloudify-utilities-plugins-sdk>=0.0.34', 'ruamel.yaml==0.16.13']  # cloudinit
 )

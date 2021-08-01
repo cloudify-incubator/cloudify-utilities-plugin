@@ -3,13 +3,14 @@ nose>=1.3
 coverage
 testtools>=0.9.36,!=1.2.0
 tox
+nose-exclude
 nose-cov
 pylint
 flake8
 requests-mock
-PyYAML==5.1.1
 # for blueprints validate
-nose-exclude
 
 # for integration tests
-pytest==4.6.3
+# pytest==4.6.3
+# pyyaml>=4.2b4
+# python2-cryptography
