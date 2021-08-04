@@ -51,7 +51,8 @@ setup(
               'cloudify_rest',
               'cloudify_scalelist',
               'cloudify_secrets',
-              'cloudify_rollback_workflow'],
+              'cloudify_rollback_workflow',
+              'cloudify_resources'],
     license='LICENSE',
     # install_requires=[
     #     'cloudify-utilities-plugins-sdk>=0.0.34',  # terminal, rest
