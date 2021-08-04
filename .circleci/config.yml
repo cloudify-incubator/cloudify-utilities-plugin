@@ -34,17 +34,13 @@ executors:
 commands:
   run_unittest:
     steps:
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update --remote --recursive
+      - checkout
       - run:
           name: install tox
           command: pip install --user tox
       - run:
           name: Run Flake8
-          command: /home/circleci/.local/bin/tox -e flake8
+          command: /home/circleci/.local/bin/tox -e pep8
       - run:
          name: Run nosetest
          command: /home/circleci/.local/bin/tox -e nosetest
@@ -137,6 +133,7 @@ commands:
           at: workspace
       - run: python .circleci/validate_version.py
 
+
   generate_py27py36_wagon:
     steps:
       - run:
@@ -146,8 +143,8 @@ commands:
           name: Build py27py36 Wagon
           command: |
               git clone https://github.com/cloudify-cosmo/cloudify-wagon-build-containers.git
-              docker build -t cloudify-centos-7-wagon-builder cloudify-wagon-build-containers/centos_7_py2py3
-              docker run -v ~/project/:/packaging cloudify-centos-7-wagon-builder
+              docker build -t cloudify-wagon-builder-centos-7-py2py3 cloudify-wagon-build-containers/centos_7_py2py3
+              docker run -v ~/project/:/packaging cloudify-wagon-builder-centos-7-py2py3
       - run:
           name: copy wagon to workspace
           command: cp *.wgn workspace/build/
@@ -165,8 +162,8 @@ commands:
           name: Build RHEL py27py36 Wagon
           command: |
               git clone https://github.com/cloudify-cosmo/cloudify-wagon-build-containers.git
-              docker build -t cloudify-redhat-7-wagon-builder cloudify-wagon-build-containers/redhat_7_py2py3 --build-arg USERNAME="$USERNAME" --build-arg PASSWORD="$PASSWORD"
-              docker run -v ~/project/:/packaging cloudify-redhat-7-wagon-builder
+              docker build -t cloudify-wagon-builder-redhat-7-py2py3 cloudify-wagon-build-containers/redhat_7_py2py3 --build-arg USERNAME="$USERNAME" --build-arg PASSWORD="$PASSWORD"
+              docker run -v ~/project/:/packaging cloudify-wagon-builder-redhat-7-py2py3
       - run:
           name: copy wagon to workspace
           command: cp *.wgn workspace/build/

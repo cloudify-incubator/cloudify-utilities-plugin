@@ -1,2 +1,5 @@
-# python3+
 networkx
+ruamel.yaml<=0.15
+paramiko>=2.7.1
+cryptography==3.3.2
+ruamel.yaml.clib==0.2.0
