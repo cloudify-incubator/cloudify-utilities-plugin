@@ -8,3 +8,4 @@ nose-cov
 pylint
 flake8
 requests-mock
+https://github.com/cloudify-incubator/cloudify-utilities-plugins-sdk/archive/refs/heads/RD-2928-Batch-Deployments-Install.zip

@@ -28,6 +28,7 @@ from .batch_utils import (
     generate_deployment_ids_from_group_id
 )
 
+
 def log(**kwargs):
     ctx.logger.info("Log interface: {}".format(repr(kwargs)))
 
