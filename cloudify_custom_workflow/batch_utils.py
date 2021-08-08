@@ -14,10 +14,10 @@ def generate_deployment_ids_from_group_id(group_id, deployments):
         len(deployments))]
 
 
-def generate_inputs_from_connected_deployments(inputs, deployments):
+def generate_inputs_from_deployments(inputs, deployments):
     inputs = inputs or []
     for iterator, deployment_id in enumerate(deployments):
-    	inputs[iterator]['deployment'] = deployment_id
+        inputs[iterator]['deployment'] = deployment_id
     return inputs
 
 
