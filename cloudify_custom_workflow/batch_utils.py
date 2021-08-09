@@ -1,5 +1,5 @@
 from cloudify_common_sdk.utils import get_deployments_from_blueprint
-
+from cloudify.workflows import ctx
 
 def generate_group_id_from_blueprint(blueprint_id):
     deployments = get_deployments_from_blueprint(blueprint_id)
@@ -17,7 +17,10 @@ def generate_deployment_ids_from_group_id(group_id, deployments):
 def generate_inputs_from_deployments(inputs, deployments):
     inputs = inputs or []
     for iterator, deployment_id in enumerate(deployments):
-        inputs[iterator]['deployment'] = deployment_id
+        try:
+            inputs[iterator]['deployment'] = deployment_id
+        except IndexError:
+            inputs.append({'deployment': deployment_id})
     return inputs
 
 

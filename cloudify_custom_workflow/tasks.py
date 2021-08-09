@@ -18,6 +18,7 @@ import json
 from cloudify import ctx
 from cloudify.decorators import workflow
 from cloudify.workflows import ctx as workflow_ctx
+from cloudify.exceptions import NonRecoverableError
 
 from cloudify_common_sdk.utils import create_deployments, install_deployments
 
@@ -100,7 +101,6 @@ def batch_deploy_and_install(blueprint_id,
     :return: None
     :rtype: NoneType
     """
-
     group_id = batch_deploy(blueprint_id,
                             parent_deployments,
                             group_id,
@@ -136,11 +136,21 @@ def batch_deploy(blueprint_id,
     :return: group_id
     :rtype: str
     """
+    if not isinstance(parent_deployments, list):
+        # If someone sends a list in the CLI, it will not be properly formatted.
+        try:
+            parent_deployments = json.loads(parent_deployments)
+        except json.JSONDecodeError:
+            raise NonRecoverableError(
+                'The parent_deployments parameter is not properly formatted. '
+                'Proper format is a list, a {t} was provided: {v}.'.format(
+                    t=type(parent_deployments), v=parent_deployments))
+
     group_id = group_id or generate_group_id_from_blueprint(
         blueprint_id)
     new_deployment_ids = new_deployment_ids or \
-        generate_deployment_ids_from_group_id(group_id)
-    inputs = inputs or generate_inputs_from_deployments(parent_deployments)
+        generate_deployment_ids_from_group_id(group_id, parent_deployments)
+    inputs = generate_inputs_from_deployments(inputs, parent_deployments)
     labels = labels or generate_labels_from_inputs(inputs)
 
     create_deployments(
