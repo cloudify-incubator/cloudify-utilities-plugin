@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014-2018 Cloudify Platform Ltd. All rights reserved
+# Copyright (c) 2014-2021 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -137,7 +137,8 @@ def batch_deploy(blueprint_id,
     :rtype: str
     """
     if not isinstance(parent_deployments, list):
-        # If someone sends a list in the CLI, it will not be properly formatted.
+        # If someone sends a list in the CLI,
+        # it will not be properly formatted.
         try:
             parent_deployments = json.loads(parent_deployments)
         except json.JSONDecodeError:
