@@ -143,6 +143,9 @@ commands:
           name: Build py27py36 Wagon
           command: |
               git clone https://github.com/cloudify-cosmo/cloudify-wagon-build-containers.git
+              pushd cloudify-wagon-build-containers
+              git checkout mods
+              popd
               docker build -t cloudify-wagon-builder-centos-7-py2py3 cloudify-wagon-build-containers/centos_7_py2py3
               docker run -v ~/project/:/packaging cloudify-wagon-builder-centos-7-py2py3
       - run:
