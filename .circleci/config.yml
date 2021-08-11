@@ -165,6 +165,9 @@ commands:
           name: Build RHEL py27py36 Wagon
           command: |
               git clone https://github.com/cloudify-cosmo/cloudify-wagon-build-containers.git
+              pushd cloudify-wagon-build-containers
+              git checkout mods
+              popd
               docker build -t cloudify-wagon-builder-redhat-7-py2py3 cloudify-wagon-build-containers/redhat_7_py2py3 --build-arg USERNAME="$USERNAME" --build-arg PASSWORD="$PASSWORD"
               docker run -v ~/project/:/packaging cloudify-wagon-builder-redhat-7-py2py3
       - run:
