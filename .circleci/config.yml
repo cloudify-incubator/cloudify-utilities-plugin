@@ -143,9 +143,6 @@ commands:
           name: Build py27py36 Wagon
           command: |
               git clone https://github.com/cloudify-cosmo/cloudify-wagon-build-containers.git
-              pushd cloudify-wagon-build-containers
-              git checkout rhel-2
-              popd
               docker build -t cloudify-wagon-builder-centos-7-py2py3 cloudify-wagon-build-containers/centos_7_py2py3
               docker run -v ~/project/:/packaging cloudify-wagon-builder-centos-7-py2py3
       - run:
@@ -165,9 +162,6 @@ commands:
           name: Build RHEL py27py36 Wagon
           command: |
               git clone https://github.com/cloudify-cosmo/cloudify-wagon-build-containers.git
-              pushd cloudify-wagon-build-containers
-              git checkout rhel-2
-              popd
               docker build -t cloudify-wagon-builder-redhat-7-py2py3 cloudify-wagon-build-containers/redhat_7_py2py3 --build-arg USERNAME="$USERNAME" --build-arg PASSWORD="$PASSWORD"
               docker run -v ~/project/:/packaging cloudify-wagon-builder-redhat-7-py2py3
       - run:
@@ -464,7 +458,7 @@ workflows:
       - build_bundle:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /master/
           requires:
             - wagon
             - rhel_wagon
