@@ -462,12 +462,12 @@ workflows:
           requires:
             - wagon
             - rhel_wagon
-      - integration_tests_505:
-          requires:
-            - build_bundle
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+      # - integration_tests_505:
+      #     requires:
+      #       - build_bundle
+      #     filters:
+      #       branches:
+      #         only: /([0-9\.]*\-build|master|dev)/
       - integration_tests_py3:
           requires:
             - build_bundle
@@ -485,7 +485,7 @@ workflows:
             - wagon
             - validate_version
             - validate_documentation
-            - integration_tests_505
+            # - integration_tests_505
             - integration_tests_py3
 #      - merge_docs:
 #          filters:
@@ -522,12 +522,12 @@ workflows:
           requires:
             - wagon
             - rhel_wagon
-      - integration_tests_505:
-          requires:
-            - build_bundle
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+      # - integration_tests_505:
+      #     requires:
+      #       - build_bundle
+      #     filters:
+      #       branches:
+      #         only: /([0-9\.]*\-build|master|dev)/
       - integration_tests_py3:
           requires:
             - build_bundle
