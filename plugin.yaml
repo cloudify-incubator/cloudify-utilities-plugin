@@ -3,8 +3,8 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.24.4.zip
-    package_version: '1.24.4'
+    source: https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.25.0.zip
+    package_version: '1.25.0'
 
   cfy_files: *utilities_plugin
 
@@ -31,6 +31,8 @@ plugins:
   secrets: *utilities_plugin
 
   lifecycle_operations: *utilities_plugin
+
+  resources: *utilities_plugin
 
 data_types:
 
@@ -763,6 +765,26 @@ node_types:
         update:
           implementation: secrets.cloudify_secrets.tasks.read
 
+  # cloudify.nodes.resources.Manager
+  cloudify.nodes.resources.List:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        default: []
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: resources.cloudify_resources.tasks.create_list
+        delete: resources.cloudify_resources.tasks.delete_list
+
+  # cloudify.nodes.resources.List
+  cloudify.nodes.resources.ListItem:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: resources.cloudify_resources.tasks.create_list_item
+        delete: resources.cloudify_resources.tasks.delete_list_item
+
+
 relationships:
 
   load_from_config:
@@ -774,6 +796,15 @@ relationships:
           inputs:
             source_config:
               default: { get_attribute: [TARGET , params ]  }
+  
+  # reserve/reserve_item
+  cloudify.relationships.resources.reserve_list_item:
+    derived_from: cloudify.relationships.connected_to
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: resources.cloudify_resources.tasks.reserve_list_item
+        unlink: resources.cloudify_resources.tasks.return_list_item
+
 
 workflows:
 
@@ -1269,3 +1300,62 @@ workflows:
         default: false
         description: >
           Whether rollback to resolved state or full uninstall.
+
+  batch_deploy_and_install:
+    mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy_and_install
+    parameters:
+      blueprint_id:
+        type: string
+        description: The name of an already uploaded blueprint.
+      parent_deployments:
+        type: list
+        description: A list of deployments, which will be parents to the new deployments. One new deployment will be create from blueprint_id per parent deployment that is provided.
+      group_id:
+        type: string
+        description: The new group ID.
+        default: ''
+      new_deployment_ids:
+        type: list
+        description: The new new_deployment_ids.
+        default: []
+      inputs:
+        type: list
+        description: An ordered list of inputs that will be provided per new deployment.
+        default: []
+      labels:
+        type: list
+        description: An ordered list of labels that will be provided per new deployment.
+        default: []
+
+  batch_deploy:
+    mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy
+    parameters:
+      blueprint_id:
+        type: string
+        description: The name of an already uploaded blueprint.
+      parent_deployments:
+        type: list
+        description: A list of deployments, which will be parents to the new deployments. One new deployment will be create from blueprint_id per parent deployment that is provided.
+      group_id:
+        type: string
+        description: The new group ID.
+        default: ''
+      new_deployment_ids:
+        type: list
+        description: The new new_deployment_ids.
+        default: []
+      inputs:
+        type: list
+        description: An ordered list of inputs that will be provided per new deployment.
+        default: []
+      labels:
+        type: list
+        description: An ordered list of labels that will be provided per new deployment.
+        default: []
+
+  batch_install:
+    mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_install
+    parameters:
+      group_id:
+        type: string
+        description: The new group ID.
