@@ -1,3 +1,4 @@
+1.25.1: RD-2954 Fix Cloud Init Encoding.
 1.25.0:
     - RD-2928: Add batch install deploy workflows.
     - Added cloudify_resources plugin
