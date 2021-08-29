@@ -99,8 +99,8 @@ class CloudifyCloudInitTestBase(unittest.TestCase):
             # Need to covert before compare as we can have different syntax
             yaml.load(
                 MINIMUM_CLOUD_CONFIG.format("packages: [package1, package2]")),
-            yaml.load(base64.decodestring(
-                _ctx._runtime_properties.get('cloud_config'))))
+            yaml.load(base64.b64decode(
+                _ctx._runtime_properties.get('cloud_config')).decode()))
 
         # Test that even if we run Base64 on the string
         # the resource_config is not touched.

@@ -215,7 +215,9 @@ def _execute(params, template_file, retry_count, retry_sleep, ctx, **kwargs):
     if not template_file:
         ctx.logger.info('Processing finished. No template file provided.')
         return
-    template = (kwargs['resource_callback'](template_file)).decode("utf-8")
+    template = kwargs['resource_callback'](template_file)
+    if isinstance(template, bytes):
+        template = template.decode("utf-8", errors='ignore')
     try:
         kwargs['params'] = params
         kwargs['template'] = template

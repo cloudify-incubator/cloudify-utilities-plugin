@@ -86,8 +86,9 @@ class CloudInit(object):
             cloud_init_string = \
                 header + '\n' + cloud_init_string
         if ctx.node.properties.get('encode_base64'):
-            cloud_init_string = \
-                base64.encodestring(cloud_init_string.encode())
+            return base64.b64encode(
+                cloud_init_string.encode()).decode(
+                    'ascii')
         return cloud_init_string
 
     def update(self, **_):
