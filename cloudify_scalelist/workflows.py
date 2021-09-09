@@ -251,7 +251,7 @@ def _uninstall_instances(ctx, graph, removed, related, ignore_failure,
                          node_sequence):
 
     # cleanup tasks
-    for task in graph.tasks_iter():
+    for task in get_tasks_from_graph(graph):
         graph.remove_task(task)
 
     if removed:
@@ -390,13 +390,12 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
         _wait_for_sent_tasks(ctx, graph)
         modification.rollback()
         raise ex
-    else:
-        modification.finish()
+    modification.finish()
 
 
 def _wait_for_sent_tasks(ctx, graph):
     """Wait for tasks that are in the SENT state to return"""
-    for task in graph.tasks_iter():
+    for task in get_tasks_from_graph(graph):
         # Check type.
         ctx.logger.debug(
             'Parallel task to failed task: {0}. State: {1}'.format(
@@ -422,7 +421,7 @@ def _wait_for_sent_tasks(ctx, graph):
             except RuntimeError:
                 ctx.logger.error('Unhandled Failed task: {0}'.format(task))
         if not any(task.get_state() == tasks.TASK_SENT
-                   for task in graph.tasks_iter()):
+                   for task in get_tasks_from_graph(graph)):
             break
         else:
             time.sleep(0.1)
@@ -719,3 +718,10 @@ def execute_operation(ctx, operation, operation_kwargs, allow_kwargs_override,
                                      subgraphs[rel.target_id])
 
     graph.execute()
+
+
+def get_tasks_from_graph(graph):
+    try:
+        return [task for task in graph.tasks_iter()]
+    except AttributeError:
+        return graph.tasks
