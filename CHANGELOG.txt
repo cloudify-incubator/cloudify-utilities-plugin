@@ -1,3 +1,4 @@
+1.25.4: CYBL-1207 Fix mode property in File plugin.
 1.25.3: Rerelease for arm64 support.
 1.25.2: RD-3143 Fix Scale down list.
 1.25.1: RD-2954 Fix Cloud Init Encoding.
