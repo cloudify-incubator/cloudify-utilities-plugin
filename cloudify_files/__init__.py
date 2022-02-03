@@ -140,7 +140,7 @@ class CloudifyFile(object):
         try:
             os.rename(downloaded_file_path, self.file_path)
             os.chown(self.file_path, uid, gid)
-            os.chmod(self.file_path, self.mode)
+            os.chmod(self.file_path, int(str(self.mode), 8))
         except OSError as e:
             raise NonRecoverableError('{0}'.format(str(e)))
 
