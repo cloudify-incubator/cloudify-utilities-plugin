@@ -15,6 +15,7 @@
 import grp
 import os
 import pwd
+import shutil
 import subprocess
 from getpass import getuser
 
@@ -138,7 +139,7 @@ class CloudifyFile(object):
             raise NonRecoverableError('{0}'.format(str(e)))
 
         try:
-            os.rename(downloaded_file_path, self.file_path)
+            shutil.move(downloaded_file_path, self.file_path)
             os.chown(self.file_path, uid, gid)
             os.chmod(self.file_path, int(str(self.mode), 8))
         except OSError as e:
