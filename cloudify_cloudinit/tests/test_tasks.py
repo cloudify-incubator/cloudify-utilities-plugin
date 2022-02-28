@@ -91,7 +91,7 @@ class CloudifyCloudTasksTest(unittest.TestCase):
                 'Content-Type': 'text/cloud_config',
                 'packages': [['epel-release'],
                              ['openssl-devel']]},
-            yaml.load(
+            yaml.safe_load(
                 _ctx.instance.runtime_properties.get('cloud_config')))
         self.assertEquals(
             {
