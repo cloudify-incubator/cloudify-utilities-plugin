@@ -16,6 +16,7 @@
 import json
 
 from cloudify import ctx
+
 from cloudify.decorators import workflow
 from cloudify.workflows import ctx as workflow_ctx
 from cloudify.exceptions import NonRecoverableError
@@ -83,6 +84,7 @@ def batch_deploy_and_install(blueprint_id,
                              new_deployment_ids=None,
                              inputs=None,
                              labels=None,
+                             add_parent_labels=False,
                              **_):
     """
     Create deployments for a batch from a single blueprint.
@@ -106,7 +108,9 @@ def batch_deploy_and_install(blueprint_id,
                             group_id,
                             new_deployment_ids,
                             inputs,
-                            labels)
+                            labels,
+                            add_parent_labels,
+                            **_)
 
     batch_install(group_id)
 
@@ -118,7 +122,8 @@ def batch_deploy(blueprint_id,
                  new_deployment_ids=None,
                  inputs=None,
                  labels=None,
-                 **_):
+                 add_parent_labels=False,
+                 **kwargs):
     """
     Create deployments for a batch from a single blueprint.
     :param blueprint_id: The blueprint, which has already been uploaded.
@@ -136,6 +141,11 @@ def batch_deploy(blueprint_id,
     :return: group_id
     :rtype: str
     """
+
+    labels = labels or []
+
+    local_ctx = kwargs.get('ctx')
+
     if not isinstance(parent_deployments, list):
         # If someone sends a list in the CLI,
         # it will not be properly formatted.
@@ -152,14 +162,23 @@ def batch_deploy(blueprint_id,
     new_deployment_ids = new_deployment_ids or \
         generate_deployment_ids_from_group_id(group_id, parent_deployments)
     inputs = generate_inputs_from_deployments(inputs, parent_deployments)
-    labels = labels or generate_labels_from_inputs(inputs)
+    if add_parent_labels:
+        labels.extend(labels or generate_labels_from_inputs(inputs))
 
-    create_deployments(
+    create_dep_params = (
         group_id,
         blueprint_id,
         new_deployment_ids,
         inputs,
         labels)
+
+    if local_ctx:
+
+        local_ctx.logger.debug(
+            'Sending these params to create_deployments: {}'.format(
+                json.dumps(create_dep_params)))
+
+    create_deployments(*create_dep_params)
 
     return group_id
 

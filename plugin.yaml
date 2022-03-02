@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.25.5'
+    package_version: '1.25.6'
 
   cfy_files: *utilities_plugin
 
@@ -1321,6 +1321,10 @@ workflows:
         type: list
         description: An ordered list of inputs that will be provided per new deployment.
         default: []
+      add_parent_labels:
+        type: boolean
+        description: Whether to automatically add parent csys-parent-id label.
+        default: false
       labels:
         type: list
         description: An ordered list of labels that will be provided per new deployment.
