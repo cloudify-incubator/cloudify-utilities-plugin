@@ -8,9 +8,15 @@ For instance we may have to provision the same blueprint as 3 deployments in a s
 So far we needed to e.g. make sure if we are not putting any conflicting IPs as inputs.
 If there was any mistake, deployment failed.
 
-*Resources plugin* allows to define resources list - you need only to use a relationship to make a reservation on a particular resource.
+*Resources plugin* allows to define resources list.
 
-With *resources plugin* you can make reservations on resources using a dedicated relationship (reserve_list_item).
+With *resources plugin* you can make reservations on resources in two ways:
+* using a dedicated relationship (***reserve_list_item***),
+* using a dedicated interface (***cloudify.interfaces.operations***) operations:
+    * ***reserve*** - creates a reservation. You can pass *reservation_id* as a parameter. If empty, it will be
+    automatically generated.
+    * ***return*** - removes a reservation and returns the resource to the pool. *reservation_id* is mandatory.
+
 
 ## Node types
 

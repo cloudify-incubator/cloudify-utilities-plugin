@@ -14,7 +14,9 @@
 # limitations under the License.
 
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, RecoverableError
+from cloudify.utils import id_generator
+from cloudify.constants import NODE_INSTANCE, RELATIONSHIP_INSTANCE
 
 from .constants import (
     RESOURCES_LIST_PROPERTY,
@@ -73,6 +75,16 @@ def delete_list(ctx, **kwargs):
 
 @operation(resumable=True)
 def reserve_list_item(ctx, **kwargs):
+    if ctx.type == RELATIONSHIP_INSTANCE:
+        _reserve_list_item_rel(ctx)
+    elif ctx.type == NODE_INSTANCE and \
+            ctx.node.type == "cloudify.nodes.resources.List":
+        _reserve_list_item(ctx, reservation_id=kwargs.get('reservation_id', None))
+    else:
+        NonRecoverableError("Neither relationship nor operation context.")
+
+
+def _reserve_list_item_rel(ctx, **kwargs):
     if not ctx.target.instance.runtime_properties.get(
             FREE_RESOURCES_LIST_PROPERTY, []):
         raise NonRecoverableError(
@@ -113,8 +125,65 @@ def reserve_list_item(ctx, **kwargs):
     ))
 
 
+def _reserve_list_item(ctx, **kwargs):
+    if not ctx.instance.runtime_properties.get(
+            FREE_RESOURCES_LIST_PROPERTY, []):
+        raise NonRecoverableError(
+            'Reservation has failed, because there are no \
+            available resources right now.')
+
+    reservation_id = kwargs.get('reservation_id', None)
+    ctx.instance.refresh()
+
+    free_resources = \
+        ctx.instance.runtime_properties.get(
+            FREE_RESOURCES_LIST_PROPERTY)
+    reservations = \
+        ctx.instance.runtime_properties.get(
+            RESERVATIONS_PROPERTY, {})
+
+    if not reservation_id:
+        reservation_id = id_generator(size=8)
+        if reservation_id in reservations:
+            raise RecoverableError('reservation_id already taken.')
+    else:
+        if reservation_id in reservations:
+            raise NonRecoverableError('reservation_id already taken.')
+
+    reservation = free_resources.pop(0)
+
+    ctx.instance.runtime_properties[FREE_RESOURCES_LIST_PROPERTY] = \
+        free_resources
+
+    reservations[reservation_id] = reservation
+    ctx.instance.runtime_properties[RESERVATIONS_PROPERTY] = \
+        reservations
+
+    ctx.instance.update()
+
+    ctx.logger.debug('Reservation successful: {0}\
+            \nLeft resources: {1}\
+            \nReservations: {2}'.format(
+        reservation,
+        ctx.instance.runtime_properties.get(
+            FREE_RESOURCES_LIST_PROPERTY),
+        ctx.instance.runtime_properties.get(
+            RESERVATIONS_PROPERTY)
+    ))
+
+
 @operation(resumable=True)
 def return_list_item(ctx, **kwargs):
+    if ctx.type == RELATIONSHIP_INSTANCE:
+        _return_list_item_rel(ctx)
+    elif ctx.type == NODE_INSTANCE and \
+            ctx.node.type == "cloudify.nodes.resources.List":
+        _return_list_item(ctx, reservation_id=kwargs.get('reservation_id', None))
+    else:
+        NonRecoverableError("Neither relationship nor operation context.")
+
+
+def _return_list_item_rel(ctx, **kwargs):
     free_resources = ctx.target.instance.runtime_properties.get(
         FREE_RESOURCES_LIST_PROPERTY, [])
     reservation = ctx.source.instance.runtime_properties.get(
@@ -143,5 +212,37 @@ def return_list_item(ctx, **kwargs):
         \nLeft resources: {1}'.format(
             reservation,
             ctx.target.instance.runtime_properties.get(
+                FREE_RESOURCES_LIST_PROPERTY, [])
+        ))
+
+
+def _return_list_item(ctx, **kwargs):
+    reservation_id = kwargs.get('reservation_id')
+
+    free_resources = ctx.instance.runtime_properties.get(
+        FREE_RESOURCES_LIST_PROPERTY, [])
+    reservations = ctx.instance.runtime_properties.get(
+        RESERVATIONS_PROPERTY, None)
+    reservation = reservations.get(reservation_id)
+
+    if not reservation or not reservations:
+        return ctx.logger.debug('Nothing to do.')
+
+    ctx.instance.refresh()
+
+    reservations.pop(reservation_id)
+    ctx.instance.runtime_properties[RESERVATIONS_PROPERTY] = \
+        reservations
+
+    free_resources.append(reservation)
+    ctx.instance.runtime_properties[FREE_RESOURCES_LIST_PROPERTY] = \
+        free_resources
+
+    ctx.instance.update()
+
+    ctx.logger.debug('{0} has been returned back successfully to the resources list.\
+        \nLeft resources: {1}'.format(
+            reservation,
+            ctx.instance.runtime_properties.get(
                 FREE_RESOURCES_LIST_PROPERTY, [])
         ))
