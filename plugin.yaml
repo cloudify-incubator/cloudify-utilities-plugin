@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.25.7'
+    package_version: '1.25.6+dev.0'
 
   cfy_files: *utilities_plugin
 
@@ -814,7 +814,12 @@ relationships:
     derived_from: cloudify.relationships.connected_to
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        preconfigure: resources.cloudify_resources.tasks.reserve_list_item
+        preconfigure: 
+          implementation: resources.cloudify_resources.tasks.reserve_list_item
+          inputs:
+            resources_list_node_id:
+              type: string
+              default: ''
         unlink: resources.cloudify_resources.tasks.return_list_item
 
 

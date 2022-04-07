@@ -11,7 +11,9 @@ If there was any mistake, deployment failed.
 *Resources plugin* allows to define resources list.
 
 With *resources plugin* you can make reservations on resources in two ways:
-* using a dedicated relationship (***reserve_list_item***),
+* using a dedicated relationship (***reserve_list_item***) with two target options:
+    * `cloudify.nodes.resources.List` instance, which holds all reservations,
+    * `cloudify.nodes.SharedResource` instance, which contains `cloudify.nodes.resources.List` node - in case there is more than one node inside, you can use relationship parameter ***resources_list_node_id***,
 * using a dedicated interface (***cloudify.interfaces.operations***) operations:
     * ***reserve*** - creates a reservation. You can pass *reservation_id* as a parameter. If empty, it will be
     automatically generated.
