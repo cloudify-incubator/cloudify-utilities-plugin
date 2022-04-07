@@ -192,9 +192,13 @@ def _create_secret(key, value):
 def _get_secret(key):
     try:
         client = manager.get_rest_client()
-        return client.secrets.get(key)
+        response = client.secrets.get(key)
     except CloudifyClientError as e:
         raise NonRecoverableError(str(e))
+
+    if not response.value:
+        raise NonRecoverableError('')
+    return client.secrets.get(key)
 
 
 def _check_if_secret_exist(key):
