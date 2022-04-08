@@ -149,7 +149,7 @@ def _reserve_shared_list_item(ctx, **kwargs):
     # Cloudify client setup
     client_config = _get_target_shared_resource_client()
     if client_config:
-        http_client = CloudifyClient(client_config)
+        http_client = CloudifyClient(**client_config)
     else:
         http_client = manager.get_rest_client()
 
