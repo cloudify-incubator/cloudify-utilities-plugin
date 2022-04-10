@@ -1,3 +1,4 @@
+1.25.7: RD-4587 Supports empty secret
 1.25.6: Make some changes to support 6.3 in batch deploy.
 1.25.5: RD-3794-Copy File Method
 1.25.4: CYBL-1207 Fix mode property in File plugin.
