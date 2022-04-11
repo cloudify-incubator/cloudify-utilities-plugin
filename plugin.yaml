@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.25.6+dev.0'
+    package_version: '1.25.7'
 
   cfy_files: *utilities_plugin
 
