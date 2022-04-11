@@ -197,8 +197,8 @@ def _get_secret(key):
         raise NonRecoverableError(str(e))
 
     if not response.value:
-        raise NonRecoverableError('')
-    return client.secrets.get(key)
+        raise NonRecoverableError('{0} secret is empty'.format(key))
+    return response
 
 
 def _check_if_secret_exist(key):
