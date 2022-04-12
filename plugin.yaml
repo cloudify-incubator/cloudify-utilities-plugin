@@ -774,6 +774,19 @@ node_types:
       cloudify.interfaces.lifecycle:
         create: resources.cloudify_resources.tasks.create_list
         delete: resources.cloudify_resources.tasks.delete_list
+      cloudify.interfaces.operations:
+        reserve:
+          implementation: resources.cloudify_resources.tasks.reserve_list_item
+          inputs:
+            reservation_id:
+              type: string
+              default: ''
+        return:
+          implementation: resources.cloudify_resources.tasks.return_list_item
+          inputs:
+            reservation_id:
+              type: string
+              default: ''
 
   # cloudify.nodes.resources.List
   cloudify.nodes.resources.ListItem:
@@ -796,12 +809,17 @@ relationships:
             source_config:
               default: { get_attribute: [TARGET , params ]  }
   
-  # reserve/reserve_item
+  # reserve/return_item
   cloudify.relationships.resources.reserve_list_item:
     derived_from: cloudify.relationships.connected_to
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        preconfigure: resources.cloudify_resources.tasks.reserve_list_item
+        preconfigure: 
+          implementation: resources.cloudify_resources.tasks.reserve_list_item
+          inputs:
+            resources_list_node_id:
+              type: string
+              default: ''
         unlink: resources.cloudify_resources.tasks.return_list_item
 
 
