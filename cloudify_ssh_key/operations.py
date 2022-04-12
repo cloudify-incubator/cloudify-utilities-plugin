@@ -206,7 +206,7 @@ def _check_if_secret_exist(key):
         if not response.value:
             ctx.logger.error('{0} secret already exists but is empty'
                              .format(key))
-            raise NonRecoverableError()
+            return False
         if response.key == key:
             return True
     except NonRecoverableError:
