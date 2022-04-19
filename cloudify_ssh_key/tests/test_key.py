@@ -190,6 +190,7 @@ class TestKey(testtools.TestCase):
         mock_client = mock.MagicMock(return_value=mock_secrets_client)
         with mock.patch('cloudify.manager.get_rest_client', mock_client):
             self.assertEquals(True, _check_if_secret_exist('k'))
+            mock_client.side_effect = NonRecoverableError("e")
             self.assertEquals(False, _check_if_secret_exist('different_key'))
 
     def test_remove_path_Error(self):

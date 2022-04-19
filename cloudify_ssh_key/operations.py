@@ -106,15 +106,18 @@ def create(**_):
     if use_secret_store:
         private_name = '{0}_private'.format(key_name)
         public_name = '{0}_public'.format(key_name)
-        if use_secrets_if_exist and _check_if_secret_exist(
-                private_name) and _check_if_secret_exist(public_name):
+        if_public_name_exist = _check_if_secret_exist(public_name)
+        if_private_name_exist = _check_if_secret_exist(private_name)
+
+        if use_secrets_if_exist and if_public_name_exist \
+                and if_private_name_exist:
             ctx.instance.runtime_properties[SECRETS_KEY_OWNER] = False
             private_key_export = _get_secret(private_name).value
             public_key_export = _get_secret(public_name).value
+
         # if the user want to use existing secrets but one of them is missing
-        elif use_secrets_if_exist and (
-                _check_if_secret_exist(public_name) ^ _check_if_secret_exist(
-                private_name)):
+        elif use_secrets_if_exist and \
+                if_public_name_exist ^ if_private_name_exist:
             raise NonRecoverableError('Cant use existing secrets: {0}, {1} '
                                       'because only one of them exists in '
                                       'your manager'.format(public_name,
@@ -199,9 +202,13 @@ def _get_secret(key):
 
 def _check_if_secret_exist(key):
     try:
-        if _get_secret(key).key == key:
+        response = _get_secret(key)
+        if not response.value:
+            ctx.logger.error('{0} secret already exists but is empty'
+                             .format(key))
+            return False
+        if response.key == key:
             return True
-        return False
     except NonRecoverableError:
         return False
 
