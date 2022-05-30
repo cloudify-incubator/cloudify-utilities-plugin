@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.25.7'
+    package_version: '1.25.8'
 
   cfy_files: *utilities_plugin
 
@@ -33,16 +33,6 @@ plugins:
 
   resources: *utilities_plugin
 
-blueprint_labels:
-  obj-type:
-    values:
-      - utilities
-
-labels:
-  obj-type:
-    values:
-      - utilities
-
 data_types:
 
   cloudify.datatypes.Blueprint:
@@ -52,6 +42,7 @@ data_types:
           Use external resource.
         default: false
       id:
+        type: blueprint_id
         description: >
           This is the blueprint that the deployment node is a proxy to.
         required: false
@@ -74,6 +65,7 @@ data_types:
           Use external resource.
         default: false
       id:
+        type: deployment_id
         description: >
           This is the deployment that the node is a proxy to.
         required: false
@@ -103,7 +95,7 @@ data_types:
   cloudify.datatypes.Node:
     properties:
       id:
-        type: string
+        type: node_id
 
   cloudify.datatypes.NodeInstance:
     properties:
@@ -111,7 +103,7 @@ data_types:
         type: cloudify.datatypes.Node
         required: false
       id:
-        type: string
+        type: node_instance_id
         required: false
 
   cloudify.datatypes.DeploymentProxy:
@@ -159,7 +151,7 @@ data_types:
         type: string
         default: '~/.ssh/id_rsa.pub'
       key_name:
-        type: string
+        type: secret_key
         required: false
       algorithm:
         type: string
@@ -828,7 +820,7 @@ relationships:
           implementation: resources.cloudify_resources.tasks.reserve_list_item
           inputs:
             resources_list_node_id:
-              type: string
+              type: node_id
               default: ''
         unlink: resources.cloudify_resources.tasks.return_list_item
 
@@ -841,6 +833,7 @@ workflows:
       params:
         description: json string
       configuration_node_id:
+        type: node_id
         default: configuration_loader
       merge_dict:
         default: false
@@ -1034,12 +1027,14 @@ workflows:
           derive from them. An empty list means no filtering will take place
           and all type names are valid (Default: []).
       node_ids:
+        type: node_ids
         default: []
         description: >
           A list of node ids. The operation will be executed only on node
           instances which are instances of these nodes. An empty list means
           no filtering will take place and all nodes are valid (Default: []).
       node_instance_ids:
+        type: node_instance_ids
         default: []
         description: >
           A list of node instance ids. The operation will be executed only on
@@ -1167,8 +1162,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1183,8 +1180,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1199,8 +1198,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1215,8 +1216,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1231,8 +1234,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1247,8 +1252,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1263,8 +1270,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1279,8 +1288,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1295,8 +1306,10 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
+        type: node_ids
         default: [ ]
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
       ignore_failure:
         default: false
@@ -1312,12 +1325,14 @@ workflows:
           (recursively) derive from them. An empty list means no filtering
           will take place and all type names are valid.
       node_ids:
+        type: node_ids
         default: [ ]
         description: >
           A list of node ids. The operation will be executed only on node
           instances which are instances of these nodes. An empty list means
           no filtering will take place and all nodes are valid.
       node_instance_ids:
+        type: node_instance_ids
         default: [ ]
         description: >
           A list of node instance ids. The operation will be executed only on
@@ -1332,17 +1347,17 @@ workflows:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy_and_install
     parameters:
       blueprint_id:
-        type: string
+        type: blueprint_id
         description: The name of an already uploaded blueprint.
       parent_deployments:
-        type: list
+        type: deployment_ids
         description: A list of deployments, which will be parents to the new deployments. One new deployment will be create from blueprint_id per parent deployment that is provided.
       group_id:
         type: string
         description: The new group ID.
         default: ''
       new_deployment_ids:
-        type: list
+        type: deployment_ids
         description: The new new_deployment_ids.
         default: []
       inputs:
@@ -1362,17 +1377,17 @@ workflows:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy
     parameters:
       blueprint_id:
-        type: string
+        type: blueprint_ids
         description: The name of an already uploaded blueprint.
       parent_deployments:
-        type: list
+        type: deployment_ids
         description: A list of deployments, which will be parents to the new deployments. One new deployment will be create from blueprint_id per parent deployment that is provided.
       group_id:
         type: string
         description: The new group ID.
         default: ''
       new_deployment_ids:
-        type: list
+        type: deployment_ids
         description: The new new_deployment_ids.
         default: []
       inputs:
@@ -1390,3 +1405,14 @@ workflows:
       group_id:
         type: string
         description: The new group ID.
+
+blueprint_labels:
+  obj-type:
+    values:
+      - utilities
+
+labels:
+  obj-type:
+    values:
+      - utilities
+

@@ -1,4 +1,4 @@
-
+1.25.8: V2 Plugin YAML types.
 1.25.7: 
   - RD-4587 Handle empty ssh secrets
   - Add reserve/return operations to cloudify.nodes.resources.List 
