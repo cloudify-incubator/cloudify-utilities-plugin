@@ -82,7 +82,7 @@ workflows:
       - wagonorb/build_bundle:
           filters:
             branches:
-              only: /master/
+              only: /([0-9\.]*\-build|master|dev)/
           requires:
             - wagonorb/wagon
             - wagonorb/rhel_wagon
