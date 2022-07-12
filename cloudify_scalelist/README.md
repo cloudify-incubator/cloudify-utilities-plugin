@@ -98,6 +98,7 @@ within one transaction.
 ## Install with one "two" node
 
 We install blueprint with one ["two" nodes](examples/blueprint.yaml).
+
 ```shell
 $ cfy install cloudify-utilities-plugin/cloudify_scalelist/examples/blueprint.yaml -b examples
 Uploading blueprint cloudify-utilities-plugin/cloudify_scalelist/examples/blueprint.yaml...
