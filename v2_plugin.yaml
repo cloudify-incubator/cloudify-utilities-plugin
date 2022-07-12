@@ -829,6 +829,8 @@ workflows:
 
   configuration_update:
     mapping: configuration.cloudify_configuration.tasks.update
+    availability_rules:
+      node_instances_active: [ 'all']
     parameters:
       params:
         description: json string
@@ -845,17 +847,23 @@ workflows:
   # suspend/wake up/resume
   suspend:
     mapping: suspend.cloudify_suspend.workflows.suspend
+    availability_rules:
+      node_instances_active: [ 'all']
 
   resume:
     mapping: suspend.cloudify_suspend.workflows.resume
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
 
   # force to dump native usage by cloud providers
   statistics:
     mapping: suspend.cloudify_suspend.workflows.statistics
+      node_instances_active: [ 'all']
 
   # backup related workflows
   backup:
     mapping: suspend.cloudify_suspend.workflows.backup
+      node_instances_active: [ 'all', 'partial']
     parameters:
       snapshot_name:
         description: >
@@ -877,6 +885,8 @@ workflows:
 
   restore:
     mapping: suspend.cloudify_suspend.workflows.restore
+    availability_rules:
+      node_instances_active: ['partial', 'none']
     parameters:
       snapshot_name:
         description: >
@@ -892,6 +902,8 @@ workflows:
   # so better remove before reconfigure
   remove_backup:
     mapping: suspend.cloudify_suspend.workflows.remove_backup
+    availability_rules:
+      node_instances_active: [ 'all', 'partial', 'none']
     parameters:
       snapshot_name:
         description: >
@@ -905,6 +917,8 @@ workflows:
 
   scaleuplist:
     mapping: scalelist.cloudify_scalelist.workflows.scaleuplist
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       scalable_entity_properties:
         description: >
@@ -940,6 +954,8 @@ workflows:
 
   scaledownlist:
     mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       scale_compute:
         description: >
@@ -992,6 +1008,8 @@ workflows:
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation:
         type: string
@@ -1053,6 +1071,8 @@ workflows:
 
   hook_workflow_run_filtered:
     mapping: cloudify_hooks_workflow.cloudify_hooks_workflow.tasks.run_workflow
+    availability_rules:
+      node_instances_active: [ 'all', 'partial', 'none']
     parameters:
       inputs:
         description: >
@@ -1088,6 +1108,8 @@ workflows:
 
   hook_workflow_rest:
     mapping: rest.cloudify_rest.tasks.execute_as_workflow
+    availability_rules:
+      node_instances_active: [ 'all', 'partial', 'none']
     parameters:
       inputs:
         description: >
@@ -1130,6 +1152,8 @@ workflows:
 
   hook_workflow_terminal:
     mapping: terminal.cloudify_terminal.tasks.run_as_workflow
+    availability_rules:
+      node_instances_active: [ 'all', 'partial', 'none']
     parameters:
       inputs:
         description: >
@@ -1154,6 +1178,8 @@ workflows:
 
   alt_start:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.start
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1172,6 +1198,8 @@ workflows:
 
   alt_stop:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.stop
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1190,6 +1218,8 @@ workflows:
 
   alt_precreate:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.precreate
+    availability_rules:
+      node_instances_active: ['partial', 'none']
     parameters:
       operation_parms:
         default: { }
@@ -1208,6 +1238,8 @@ workflows:
 
   alt_create:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.create
+    availability_rules:
+      node_instances_active: ['partial', 'none']
     parameters:
       operation_parms:
         default: { }
@@ -1226,6 +1258,8 @@ workflows:
 
   alt_configure:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.configure
+    availability_rules:
+      node_instances_active: ['partial', 'none']
     parameters:
       operation_parms:
         default: { }
@@ -1244,6 +1278,8 @@ workflows:
 
   alt_poststart:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.poststart
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1262,6 +1298,8 @@ workflows:
 
   alt_prestop:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.prestop
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1280,6 +1318,8 @@ workflows:
 
   alt_delete:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.delete
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1298,6 +1338,8 @@ workflows:
 
   alt_postdelete:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.postdelete
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1316,6 +1358,8 @@ workflows:
 
   rollback_deprecated:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.rollback
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       type_names:
         default: [ ]
@@ -1345,6 +1389,8 @@ workflows:
 
   batch_deploy_and_install:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy_and_install
+    availability_rules:
+      node_instances_active: ['none']
     parameters:
       blueprint_id:
         type: string
@@ -1375,6 +1421,8 @@ workflows:
 
   batch_deploy:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy
+    availability_rules:
+      node_instances_active: ['none']
     parameters:
       blueprint_id:
         type: string
@@ -1401,6 +1449,8 @@ workflows:
 
   batch_install:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_install
+    availability_rules:
+      node_instances_active: ['none']
     parameters:
       group_id:
         type: string
