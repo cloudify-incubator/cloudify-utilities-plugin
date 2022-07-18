@@ -1,3 +1,6 @@
+1.25.9:
+  - Add ignored instance states in scalelist.
+  - Add availabilty states to workflows.
 1.25.8: V2 Plugin YAML types.
 1.25.7: 
   - RD-4587 Handle empty ssh secrets
