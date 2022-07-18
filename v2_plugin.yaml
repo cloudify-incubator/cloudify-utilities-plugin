@@ -858,11 +858,13 @@ workflows:
   # force to dump native usage by cloud providers
   statistics:
     mapping: suspend.cloudify_suspend.workflows.statistics
+    availability_rules:
       node_instances_active: [ 'all']
 
   # backup related workflows
   backup:
     mapping: suspend.cloudify_suspend.workflows.backup
+    availability_rules:
       node_instances_active: [ 'all', 'partial']
     parameters:
       snapshot_name:
