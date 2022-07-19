@@ -42,6 +42,7 @@ data_types:
           Use external resource.
         default: false
       id:
+        type: blueprint_id
         description: >
           This is the blueprint that the deployment node is a proxy to.
         required: false
@@ -64,6 +65,7 @@ data_types:
           Use external resource.
         default: false
       id:
+        type: deployment_id
         description: >
           This is the deployment that the node is a proxy to.
         required: false
@@ -93,7 +95,7 @@ data_types:
   cloudify.datatypes.Node:
     properties:
       id:
-        type: string
+        type: node_id
 
   cloudify.datatypes.NodeInstance:
     properties:
@@ -101,7 +103,7 @@ data_types:
         type: cloudify.datatypes.Node
         required: false
       id:
-        type: string
+        type: node_instance
         required: false
 
   cloudify.datatypes.DeploymentProxy:
@@ -827,10 +829,13 @@ workflows:
 
   configuration_update:
     mapping: configuration.cloudify_configuration.tasks.update
+    availability_rules:
+      node_instances_active: [ 'all']
     parameters:
       params:
         description: json string
       configuration_node_id:
+        type: node_id
         default: configuration_loader
       merge_dict:
         default: false
@@ -842,17 +847,25 @@ workflows:
   # suspend/wake up/resume
   suspend:
     mapping: suspend.cloudify_suspend.workflows.suspend
+    availability_rules:
+      node_instances_active: [ 'all']
 
   resume:
     mapping: suspend.cloudify_suspend.workflows.resume
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
 
   # force to dump native usage by cloud providers
   statistics:
     mapping: suspend.cloudify_suspend.workflows.statistics
+    availability_rules:
+      node_instances_active: [ 'all']
 
   # backup related workflows
   backup:
     mapping: suspend.cloudify_suspend.workflows.backup
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       snapshot_name:
         description: >
@@ -874,6 +887,8 @@ workflows:
 
   restore:
     mapping: suspend.cloudify_suspend.workflows.restore
+    availability_rules:
+      node_instances_active: ['partial', 'none']
     parameters:
       snapshot_name:
         description: >
@@ -902,6 +917,8 @@ workflows:
 
   scaleuplist:
     mapping: scalelist.cloudify_scalelist.workflows.scaleuplist
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       scalable_entity_properties:
         description: >
@@ -937,6 +954,8 @@ workflows:
 
   scaledownlist:
     mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       scale_compute:
         description: >
@@ -989,6 +1008,8 @@ workflows:
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation:
         type: string
@@ -1024,12 +1045,16 @@ workflows:
           derive from them. An empty list means no filtering will take place
           and all type names are valid (Default: []).
       node_ids:
+        type: list
+        item_type: node_id
         default: []
         description: >
           A list of node ids. The operation will be executed only on node
           instances which are instances of these nodes. An empty list means
           no filtering will take place and all nodes are valid (Default: []).
       node_instance_ids:
+        type: list
+        item_type: node_instance
         default: []
         description: >
           A list of node instance ids. The operation will be executed only on
@@ -1149,6 +1174,8 @@ workflows:
 
   alt_start:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.start
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1157,14 +1184,18 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
-      ignore_failure:
-        default: false
+        type: list
+        item_type: node_instance
+        default: []
 
   alt_stop:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.stop
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1173,14 +1204,20 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
+        type: list
+        item_type: node_instance
+        default: []
       ignore_failure:
         default: false
 
   alt_precreate:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.precreate
+    availability_rules:
+      node_instances_active: ['partial', 'none']
     parameters:
       operation_parms:
         default: { }
@@ -1189,14 +1226,20 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
+        type: list
+        item_type: node_instance
+        default: []
       ignore_failure:
         default: false
 
   alt_create:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.create
+    availability_rules:
+      node_instances_active: ['partial', 'none']
     parameters:
       operation_parms:
         default: { }
@@ -1205,14 +1248,20 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
+        type: list
+        item_type: node_instance
+        default: []
       ignore_failure:
         default: false
 
   alt_configure:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.configure
+    availability_rules:
+      node_instances_active: ['partial', 'none']
     parameters:
       operation_parms:
         default: { }
@@ -1221,14 +1270,20 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
+        type: list
+        item_type: node_instance
+        default: []
       ignore_failure:
         default: false
 
   alt_poststart:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.poststart
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1237,14 +1292,20 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
+        type: list
+        item_type: node_instance
+        default: []
       ignore_failure:
         default: false
 
   alt_prestop:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.prestop
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1253,14 +1314,20 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
+        type: list
+        item_type: node_instance
+        default: []
       ignore_failure:
         default: false
 
   alt_delete:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.delete
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1269,14 +1336,20 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
+        type: list
+        item_type: node_instance
+        default: []
       ignore_failure:
         default: false
 
   alt_postdelete:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.postdelete
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       operation_parms:
         default: { }
@@ -1285,16 +1358,24 @@ workflows:
       type_names:
         default: [ ]
       node_ids:
-        default: [ ]
+        type: list
+        item_type: node_id
+        default: []
       node_instance_ids:
-        default: [ ]
+        type: list
+        item_type: node_instance
+        default: []
       ignore_failure:
         default: false
 
   rollback_deprecated:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.rollback
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
     parameters:
       type_names:
+        type: list
+        item_type: node_type
         default: [ ]
         description: >
           A list of type names. The operation will be executed
@@ -1302,12 +1383,16 @@ workflows:
           (recursively) derive from them. An empty list means no filtering
           will take place and all type names are valid.
       node_ids:
+        type: list
+        item_type: node_id
         default: [ ]
         description: >
           A list of node ids. The operation will be executed only on node
           instances which are instances of these nodes. An empty list means
           no filtering will take place and all nodes are valid.
       node_instance_ids:
+        type: list
+        item_type: node_id
         default: [ ]
         description: >
           A list of node instance ids. The operation will be executed only on
@@ -1320,12 +1405,15 @@ workflows:
 
   batch_deploy_and_install:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy_and_install
+    availability_rules:
+      node_instances_active: ['none']
     parameters:
       blueprint_id:
-        type: string
+        type: blueprint_id
         description: The name of an already uploaded blueprint.
       parent_deployments:
         type: list
+        item_type: deployment_id
         description: A list of deployments, which will be parents to the new deployments. One new deployment will be create from blueprint_id per parent deployment that is provided.
       group_id:
         type: string
@@ -1350,12 +1438,15 @@ workflows:
 
   batch_deploy:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy
+    availability_rules:
+      node_instances_active: ['none']
     parameters:
       blueprint_id:
-        type: string
+        type: blueprint_id
         description: The name of an already uploaded blueprint.
       parent_deployments:
         type: list
+        item_type: deployment_id
         description: A list of deployments, which will be parents to the new deployments. One new deployment will be create from blueprint_id per parent deployment that is provided.
       group_id:
         type: string
@@ -1376,7 +1467,20 @@ workflows:
 
   batch_install:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_install
+    availability_rules:
+      node_instances_active: ['none']
     parameters:
       group_id:
         type: string
         description: The new group ID.
+
+blueprint_labels:
+  obj-type:
+    values:
+      - utilities
+
+labels:
+  obj-type:
+    values:
+      - utilities
+
