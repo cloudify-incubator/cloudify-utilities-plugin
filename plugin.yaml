@@ -735,6 +735,10 @@ node_types:
       separator:
         type: string
         required: false
+      logs_secrets:
+        type: boolean
+        default: true
+        required: false
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
