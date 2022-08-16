@@ -25,6 +25,16 @@ from cloudify_common_sdk.filters import (get_field_value_recursive,
                                          obfuscate_passwords, )
 
 
+IGNORED_STATES = ['uninitialized', 'stopped', 'deleting', 'deleted']
+IGNORED_OPS = [
+    'cloudify.interfaces.lifecycle.unlink',
+    'cloudify.interfaces.lifecycle.prestop',
+    'cloudify.interfaces.lifecycle.stop',
+    'cloudify.interfaces.lifecycle.delete',
+    'cloudify.interfaces.lifecycle.postdelete'
+]
+
+
 def _update_runtime_properties(ctx, instance_id, properties_updates):
     manager = get_rest_client()
 
@@ -622,6 +632,8 @@ def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
 
         # look more deeply, what about instance id's and properties
         for instance in node.instances:
+            if instance.state in IGNORED_STATES and operation in IGNORED_OPS:
+                continue
             # sorry no such id in list
             if node_instance_ids and instance.id not in node_instance_ids:
                 continue
