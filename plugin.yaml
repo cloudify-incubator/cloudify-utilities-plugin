@@ -737,7 +737,7 @@ node_types:
         required: false
       logs_secrets:
         type: boolean
-        default: true
+        default: false
         required: false
     interfaces:
       cloudify.interfaces.lifecycle:

@@ -35,7 +35,7 @@ class SecretsSDK(object):
             return value
 
     def __init__(self, logger, rest_client, separator=DEFAULT_SEPARATOR,
-                 logs_secrets=True, **_):
+                 logs_secrets=False, **_):
         self._logger = logger
         self._rest_client = rest_client
         self._separator = separator
