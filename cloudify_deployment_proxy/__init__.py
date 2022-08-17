@@ -206,7 +206,7 @@ class DeploymentProxyBase(object):
 
         # Check if the ``blueprint_archive`` is not a URL then we need to
         # download it and pass the binaries to the client_args
-        if not(parse_url.netloc and parse_url.scheme):
+        if not (parse_url.netloc and parse_url.scheme):
             self.blueprint_archive = \
                 ctx.download_resource(self.blueprint_archive)
 
