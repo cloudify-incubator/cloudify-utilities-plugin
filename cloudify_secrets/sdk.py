@@ -34,10 +34,12 @@ class SecretsSDK(object):
         except ValueError:
             return value
 
-    def __init__(self, logger, rest_client, separator=DEFAULT_SEPARATOR, **_):
+    def __init__(self, logger, rest_client, separator=DEFAULT_SEPARATOR,
+                 logs_secrets=False, **_):
         self._logger = logger
         self._rest_client = rest_client
         self._separator = separator
+        self._logs_secrets = logs_secrets
 
     def _handle_variant(self, key, variant=None):
         if variant:
@@ -49,10 +51,11 @@ class SecretsSDK(object):
         result = {}
 
         for key, value in entries.items():
-            self._logger.debug(
-                'Creating secret "{0}" with value: {1}'
-                .format(key, value)
-            )
+            if self._logs_secrets:
+                self._logger.debug(
+                    'Creating secret "{0}" with value: {1}'
+                    .format(key, value)
+                )
 
             result[key] = rest_client_method(
                 key=self._handle_variant(key, variant),
