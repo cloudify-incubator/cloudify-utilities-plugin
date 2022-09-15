@@ -74,8 +74,10 @@ class TestWorkflow(unittest.TestCase):
             with patch('cloudify_custom_workflow.tasks.workflow_ctx', _ctx):
                 tasks.customwf(ctx=_ctx, nodes_to_runon=['node_id'],
                                operations_to_execute=['operation1'])
-        _instance.execute_operation.assert_called_with('operation1',
-                                                       kwargs={})
+        _instance.execute_operation.assert_called_with(
+            'operation1',
+            allow_kwargs_override=False,
+            kwargs={})
 
 
 if __name__ == '__main__':
