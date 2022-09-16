@@ -36,7 +36,10 @@ def log(**kwargs):
 
 
 @workflow
-def customwf(nodes_to_runon, operations_to_execute, **kwargs):
+def customwf(nodes_to_runon,
+             operations_to_execute,
+             allow_kwargs_override=False,
+             **kwargs):
 
     ctx = workflow_ctx
     ctx.logger.info("Starting Custom Workflow")
@@ -70,8 +73,10 @@ def customwf(nodes_to_runon, operations_to_execute, **kwargs):
                             instance.send_event(
                                 'Starting to {} on instance {} of node {}'
                                 .format(operation, instance.id, node.id)),
-                            instance.execute_operation(operation,
-                                                       kwargs=kwargs),
+                            instance.execute_operation(
+                                operation,
+                                allow_kwargs_override=allow_kwargs_override,
+                                kwargs=kwargs),
                             instance.send_event('Done {}'.format(operation)))
 
     graph.execute()
