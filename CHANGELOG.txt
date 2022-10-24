@@ -1,3 +1,5 @@
+1.25.13:
+  - CYBL-1872: Added force_remove flag to scaledownlist workflow.
 1.25.12: Allow kwargs override in custom workflow.
 1.25.11: Do not log secrets by default.
 1.25.10: Add plugin_1_4.yaml

@@ -989,6 +989,12 @@ workflows:
         default: false
         description: >
           Optional, sequence of nodes for run for override relationships.
+      force_remove:
+        default: true
+        type: boolean
+        description: >
+          Optional, force remove node instances set for scale down based on
+          transaction field.
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
