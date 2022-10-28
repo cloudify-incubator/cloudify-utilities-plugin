@@ -1,3 +1,4 @@
+1.25.13: Force refresh relationships instances runtime properties and on failure rollback reservation.
 1.25.12: Allow kwargs override in custom workflow.
 1.25.11: Do not log secrets by default.
 1.25.10: Add plugin_1_4.yaml
