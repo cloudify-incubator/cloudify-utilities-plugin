@@ -494,6 +494,7 @@ def scaledownlist(ctx, scale_compute=False,
                   scale_node_field_value=u'',
                   all_results=False,
                   node_sequence=None,
+                  force_remove=True,
                   rollback_on_failure=True,
                   **_):
     if not scale_node_field:
@@ -541,18 +542,20 @@ def scaledownlist(ctx, scale_compute=False,
     except Exception as e:
         ctx.logger.info('Scale down based on transaction failed: {}'
                         .format(repr(e)))
-        # check list for forced remove
-        removed = []
-        for node in ctx.nodes:
-            for instance in node.instances:
-                if instance.id in instance_ids:
-                    removed.append(instance)
-        _uninstall_instances(ctx=ctx,
-                             graph=ctx.graph_mode(),
-                             removed=removed,
-                             related=[],
-                             ignore_failure=ignore_failure,
-                             node_sequence=node_sequence)
+    
+        if force_remove:
+            # check list for forced remove
+            removed = []
+            for node in ctx.nodes:
+                for instance in node.instances:
+                    if instance.id in instance_ids:
+                        removed.append(instance)
+            _uninstall_instances(ctx=ctx,
+                                graph=ctx.graph_mode(),
+                                removed=removed,
+                                related=[],
+                                ignore_failure=ignore_failure,
+                                node_sequence=node_sequence)
 
         # remove from DB
         if force_db_cleanup:
