@@ -332,7 +332,8 @@ class TestScaleList(unittest.TestCase):
                 _ctx, json.loads(json.dumps({'one_scale': {'instances': 11}})),
                 json.loads(json.dumps({'one': [{'name': 'one'}]})),
                 '_transaction',
-                'transaction_value', False, False, node_sequence=None)
+                'transaction_value', False, False, node_sequence=None,
+                rollback_on_failure=True)
             # can downscale without errors, ignore failure
             fake_run_scale = Mock(return_value=None)
             with patch(
@@ -580,7 +581,8 @@ class TestScaleList(unittest.TestCase):
                     with self.assertRaises(Exception):
                         workflows._run_scale_settings(
                             _ctx, scale_settings, {},
-                            ignore_rollback_failure=False)
+                            ignore_rollback_failure=False,
+                            rollback_on_failure=True)
                     _ctx.deployment.start_modification.assert_called_with(
                         scale_settings
                     )
@@ -864,7 +866,8 @@ class TestScaleList(unittest.TestCase):
                 {},
                 instances_remove_ids=[u'a_id'],
                 ignore_failure=False,
-                node_sequence=None)
+                node_sequence=None,
+                rollback_on_failure=True)
 
     def test_scaledownlist(self):
         _ctx = self._gen_ctx()

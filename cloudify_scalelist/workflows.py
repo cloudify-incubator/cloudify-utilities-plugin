@@ -358,14 +358,15 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
             except Exception as ex:
                 if rollback_on_failure:
                     ctx.logger.error('Scale out failed, scaling back in. {}'
-                                    .format(repr(ex)))
+                                     .format(repr(ex)))
                     _wait_for_sent_tasks(ctx, graph)
-                    _uninstall_instances(ctx=ctx,
-                                        graph=graph,
-                                        removed=added,
-                                        related=related,
-                                        ignore_failure=ignore_rollback_failure,
-                                        node_sequence=node_sequence)
+                    _uninstall_instances(
+                        ctx=ctx,
+                        graph=graph,
+                        removed=added,
+                        related=related,
+                        ignore_failure=ignore_rollback_failure,
+                        node_sequence=node_sequence)
                 else:
                     ctx.logger.warn('Scale out failed, but '
                                     'rollback_on_failure is disabled. {}'
@@ -542,7 +543,7 @@ def scaledownlist(ctx, scale_compute=False,
     except Exception as e:
         ctx.logger.info('Scale down based on transaction failed: {}'
                         .format(repr(e)))
-    
+
         if force_remove:
             # check list for forced remove
             removed = []
@@ -551,11 +552,11 @@ def scaledownlist(ctx, scale_compute=False,
                     if instance.id in instance_ids:
                         removed.append(instance)
             _uninstall_instances(ctx=ctx,
-                                graph=ctx.graph_mode(),
-                                removed=removed,
-                                related=[],
-                                ignore_failure=ignore_failure,
-                                node_sequence=node_sequence)
+                                 graph=ctx.graph_mode(),
+                                 removed=removed,
+                                 related=[],
+                                 ignore_failure=ignore_failure,
+                                 node_sequence=node_sequence)
 
         # remove from DB
         if force_db_cleanup:
