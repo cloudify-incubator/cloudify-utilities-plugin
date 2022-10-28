@@ -19,6 +19,7 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import id_generator
 from cloudify.constants import NODE_INSTANCE, RELATIONSHIP_INSTANCE
 from cloudify_rest_client.client import CloudifyClient
+from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_types.shared_resource.constants import SHARED_RESOURCE_TYPE
 from cloudify_types.shared_resource.operations import execute_workflow
 from cloudify_types.shared_resource.execute_shared_resource_workflow import _get_target_shared_resource_client
@@ -32,8 +33,8 @@ from .constants import (
 
 
 def _refresh_source_and_target_runtime_props(ctx, **kwargs):
-    ctx.source.instance.refresh()
-    ctx.target.instance.refresh()
+    ctx.source.instance.refresh(force=True)
+    ctx.target.instance.refresh(force=True)
 
 
 def _update_source_and_target_runtime_props(ctx, **kwargs):
@@ -159,7 +160,6 @@ def _reserve_shared_list_item(ctx, **kwargs):
                             ['deployment']['id'])
 
     resources_list_instance = None
-
     if resources_list_node_id:
         resources_list_instance = http_client.node_instances.list(
             deployment_id=target_deployment_id,
@@ -174,9 +174,17 @@ def _reserve_shared_list_item(ctx, **kwargs):
                     node_id=node.id)[0]
                 break
 
+    _refresh_source_and_target_runtime_props(ctx)
+
     ctx.source.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY] = \
         resources_list_instance.runtime_properties.get(
             RESERVATIONS_PROPERTY).get(ctx.source.instance.id)
+
+    try:
+        _update_source_and_target_runtime_props(ctx)
+    except CloudifyClientError:
+        _return_shared_list_item(ctx)
+        raise
 
     ctx.logger.debug('Reservation successful: {0}\
             \nLeft resources: {1}\
@@ -298,7 +306,14 @@ def _return_shared_list_item(ctx, **kwargs):
     ctx.logger.debug('{0} has been returned back successfully to the resources list.'.format(
             ctx.source.instance.runtime_properties.get(SINGLE_RESERVATION_PROPERTY)
         ))
+    _refresh_source_and_target_runtime_props(ctx)
     ctx.source.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY] = ''
+    
+    try:
+        _update_source_and_target_runtime_props(ctx)
+    except CloudifyClientError:
+        _reserve_shared_list_item(ctx)
+        raise
 
 
 def _return_list_item(ctx, **kwargs):
