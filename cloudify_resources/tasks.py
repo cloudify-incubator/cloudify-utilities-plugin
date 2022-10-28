@@ -28,7 +28,8 @@ from .constants import (
     RESOURCES_LIST_PROPERTY,
     FREE_RESOURCES_LIST_PROPERTY,
     RESERVATIONS_PROPERTY,
-    SINGLE_RESERVATION_PROPERTY
+    SINGLE_RESERVATION_PROPERTY,
+    MAX_RETRIES
 )
 
 
@@ -179,12 +180,12 @@ def _reserve_shared_list_item(ctx, **kwargs):
                 RESERVATIONS_PROPERTY).get(ctx.source.instance.id)
         return resources_list_instance
 
-    for n in range(15):
+    for n in range(MAX_RETRIES):
         try:
             resources_list_instance = __save_reservation()
             break
         except CloudifyClientError as err:
-            ctx.logger.info('{}/nRetrying...({}/15)'.format(err, n))
+            ctx.logger.info('{0}/nRetrying...({1}/{2}})'.format(err, n, MAX_RETRIES))
 
     ctx.logger.debug('Reservation successful: {0}\
             \nLeft resources: {1}\
