@@ -430,10 +430,7 @@ def _wait_for_sent_tasks(ctx, graph):
             cancelled = graph._is_execution_cancelled()
         if cancelled:
             raise api.ExecutionCancelled()
-        try:
-            finished_tasks = graph._finished_tasks()
-        except AttributeError:
-            finished_tasks = graph._terminated_tasks()
+        finished_tasks = graph._finished_tasks
         for task in finished_tasks:
             try:
                 graph._handle_terminated_task(task)
