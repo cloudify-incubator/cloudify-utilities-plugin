@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.25.12'
+    package_version: '1.25.13'
 
   cfy_files: *utilities_plugin
 
@@ -937,6 +937,11 @@ workflows:
         default: false
         description: >
           Optional, sequence of nodes for run for override relationships.
+      rollback_on_failure:
+        default: true
+        type: boolean
+        description: >
+          Optional, rollback the deployment modification on failure.
 
   scaledownlist:
     mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
@@ -995,6 +1000,11 @@ workflows:
         description: >
           Optional, force remove node instances set for scale down based on
           transaction field.
+      rollback_on_failure:
+        default: true
+        type: boolean
+        description: >
+          Optional, rollback the deployment modification on failure.
 
   update_operation_filtered:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
