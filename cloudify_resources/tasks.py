@@ -28,14 +28,13 @@ from .constants import (
     RESOURCES_LIST_PROPERTY,
     FREE_RESOURCES_LIST_PROPERTY,
     RESERVATIONS_PROPERTY,
-    SINGLE_RESERVATION_PROPERTY,
-    MAX_RETRIES
+    SINGLE_RESERVATION_PROPERTY
 )
 
 
 def _refresh_source_and_target_runtime_props(ctx, **kwargs):
-    ctx.source.instance.refresh()
-    ctx.target.instance.refresh()
+    ctx.source.instance.refresh(force=True)
+    ctx.target.instance.refresh(force=True)
 
 
 def _update_source_and_target_runtime_props(ctx, **kwargs):
@@ -160,32 +159,32 @@ def _reserve_shared_list_item(ctx, **kwargs):
                             .properties['resource_config']
                             ['deployment']['id'])
 
-    def __save_reservation():
-        resources_list_instance = None
-        if resources_list_node_id:
-            resources_list_instance = http_client.node_instances.list(
-                deployment_id=target_deployment_id,
-                node_id=resources_list_node_id)[0]
-        else:
-            # if resources_list_node_id is not specified, first matching node
-            # will be used
-            for node in http_client.nodes.list(deployment_id=target_deployment_id):
-                if node.type == 'cloudify.nodes.resources.List':
-                    resources_list_instance = http_client.node_instances.list(
-                        deployment_id=target_deployment_id,
-                        node_id=node.id)[0]
-                    break
-        ctx.source.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY] = \
-            resources_list_instance.runtime_properties.get(
-                RESERVATIONS_PROPERTY).get(ctx.source.instance.id)
-        return resources_list_instance
+    resources_list_instance = None
+    if resources_list_node_id:
+        resources_list_instance = http_client.node_instances.list(
+            deployment_id=target_deployment_id,
+            node_id=resources_list_node_id)[0]
+    else:
+        # if resources_list_node_id is not specified, first matching node
+        # will be used
+        for node in http_client.nodes.list(deployment_id=target_deployment_id):
+            if node.type == 'cloudify.nodes.resources.List':
+                resources_list_instance = http_client.node_instances.list(
+                    deployment_id=target_deployment_id,
+                    node_id=node.id)[0]
+                break
 
-    for n in range(MAX_RETRIES):
-        try:
-            resources_list_instance = __save_reservation()
-            break
-        except CloudifyClientError as err:
-            ctx.logger.info('{0}/nRetrying...({1}/{2}})'.format(err, n, MAX_RETRIES))
+    _refresh_source_and_target_runtime_props(ctx)
+
+    ctx.source.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY] = \
+        resources_list_instance.runtime_properties.get(
+            RESERVATIONS_PROPERTY).get(ctx.source.instance.id)
+
+    try:
+        _update_source_and_target_runtime_props(ctx)
+    except CloudifyClientError:
+        _return_shared_list_item(ctx)
+        raise
 
     ctx.logger.debug('Reservation successful: {0}\
             \nLeft resources: {1}\
@@ -307,7 +306,14 @@ def _return_shared_list_item(ctx, **kwargs):
     ctx.logger.debug('{0} has been returned back successfully to the resources list.'.format(
             ctx.source.instance.runtime_properties.get(SINGLE_RESERVATION_PROPERTY)
         ))
+    _refresh_source_and_target_runtime_props(ctx)
     ctx.source.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY] = ''
+    
+    try:
+        _update_source_and_target_runtime_props(ctx)
+    except CloudifyClientError:
+        _reserve_shared_list_item(ctx)
+        raise
 
 
 def _return_list_item(ctx, **kwargs):
