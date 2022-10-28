@@ -19,6 +19,7 @@ from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify.utils import id_generator
 from cloudify.constants import NODE_INSTANCE, RELATIONSHIP_INSTANCE
 from cloudify_rest_client.client import CloudifyClient
+from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_types.shared_resource.constants import SHARED_RESOURCE_TYPE
 from cloudify_types.shared_resource.operations import execute_workflow
 from cloudify_types.shared_resource.execute_shared_resource_workflow import _get_target_shared_resource_client
@@ -158,25 +159,32 @@ def _reserve_shared_list_item(ctx, **kwargs):
                             .properties['resource_config']
                             ['deployment']['id'])
 
-    resources_list_instance = None
+    def __save_reservation():
+        resources_list_instance = None
+        if resources_list_node_id:
+            resources_list_instance = http_client.node_instances.list(
+                deployment_id=target_deployment_id,
+                node_id=resources_list_node_id)[0]
+        else:
+            # if resources_list_node_id is not specified, first matching node
+            # will be used
+            for node in http_client.nodes.list(deployment_id=target_deployment_id):
+                if node.type == 'cloudify.nodes.resources.List':
+                    resources_list_instance = http_client.node_instances.list(
+                        deployment_id=target_deployment_id,
+                        node_id=node.id)[0]
+                    break
+        ctx.source.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY] = \
+            resources_list_instance.runtime_properties.get(
+                RESERVATIONS_PROPERTY).get(ctx.source.instance.id)
+        return resources_list_instance
 
-    if resources_list_node_id:
-        resources_list_instance = http_client.node_instances.list(
-            deployment_id=target_deployment_id,
-            node_id=resources_list_node_id)[0]
-    else:
-        # if resources_list_node_id is not specified, first matching node
-        # will be used
-        for node in http_client.nodes.list(deployment_id=target_deployment_id):
-            if node.type == 'cloudify.nodes.resources.List':
-                resources_list_instance = http_client.node_instances.list(
-                    deployment_id=target_deployment_id,
-                    node_id=node.id)[0]
-                break
-
-    ctx.source.instance.runtime_properties[SINGLE_RESERVATION_PROPERTY] = \
-        resources_list_instance.runtime_properties.get(
-            RESERVATIONS_PROPERTY).get(ctx.source.instance.id)
+    for n in range(15):
+        try:
+            resources_list_instance = __save_reservation()
+            break
+        except CloudifyClientError as err:
+            ctx.logger.info('{}/nRetrying...({}/15)'.format(err, n))
 
     ctx.logger.debug('Reservation successful: {0}\
             \nLeft resources: {1}\
