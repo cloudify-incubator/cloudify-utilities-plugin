@@ -431,10 +431,12 @@ def _wait_for_sent_tasks(ctx, graph):
             cancelled = graph._is_execution_cancelled()
         if cancelled:
             raise api.ExecutionCancelled()
+
         finished_tasks = graph._finished_tasks
-        for task in finished_tasks:
+        while finished_tasks:
+            task, result = finished_tasks.popitem()
             try:
-                graph._handle_terminated_task(task)
+                graph._handle_terminated_task(result, task)
             except RuntimeError:
                 ctx.logger.error('Unhandled Failed task: {0}'.format(task))
         if not any(task.get_state() == tasks.TASK_SENT
