@@ -293,7 +293,8 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         ignore_failure=False,
                         ignore_rollback_failure=True,
                         instances_remove_ids=None,
-                        node_sequence=None):
+                        node_sequence=None,
+                        rollback_on_failure=True):
     modification = ctx.deployment.start_modification(scale_settings)
     ctx.refresh_node_instances()
     graph = ctx.graph_mode()
@@ -355,15 +356,21 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         node_instances=added,
                         related_nodes=related)
             except Exception as ex:
-                ctx.logger.error('Scale out failed, scaling back in. {}'
-                                 .format(repr(ex)))
-                _wait_for_sent_tasks(ctx, graph)
-                _uninstall_instances(ctx=ctx,
-                                     graph=graph,
-                                     removed=added,
-                                     related=related,
-                                     ignore_failure=ignore_rollback_failure,
-                                     node_sequence=node_sequence)
+                if rollback_on_failure:
+                    ctx.logger.error('Scale out failed, scaling back in. {}'
+                                     .format(repr(ex)))
+                    _wait_for_sent_tasks(ctx, graph)
+                    _uninstall_instances(
+                        ctx=ctx,
+                        graph=graph,
+                        removed=added,
+                        related=related,
+                        ignore_failure=ignore_rollback_failure,
+                        node_sequence=node_sequence)
+                else:
+                    ctx.logger.warn('Scale out failed, but '
+                                    'rollback_on_failure is disabled. {}'
+                                    .format(repr(ex)))
                 raise ex
 
         if len(set(modification.removed.node_instances)):
@@ -394,11 +401,14 @@ def _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                                  related=related,
                                  node_sequence=node_sequence)
     except Exception as ex:
-        ctx.logger.warn('Rolling back deployment modification. '
-                        '[modification_id={0}]: {1}'
-                        .format(modification.id, repr(ex)))
-        _wait_for_sent_tasks(ctx, graph)
-        modification.rollback()
+        if rollback_on_failure:
+            ctx.logger.warn('Rolling back deployment modification. '
+                            '[modification_id={0}]: {1}'
+                            .format(modification.id, repr(ex)))
+            _wait_for_sent_tasks(ctx, graph)
+            modification.rollback()
+        else:
+            modification.finish()
         raise ex
     modification.finish()
 
@@ -421,13 +431,12 @@ def _wait_for_sent_tasks(ctx, graph):
             cancelled = graph._is_execution_cancelled()
         if cancelled:
             raise api.ExecutionCancelled()
-        try:
-            finished_tasks = graph._finished_tasks()
-        except AttributeError:
-            finished_tasks = graph._terminated_tasks()
-        for task in finished_tasks:
+
+        finished_tasks = graph._finished_tasks
+        while finished_tasks:
+            task, result = finished_tasks.popitem()
             try:
-                graph._handle_terminated_task(task)
+                graph._handle_terminated_task(result, task)
             except RuntimeError:
                 ctx.logger.error('Unhandled Failed task: {0}'.format(task))
         if not any(task.get_state() == tasks.TASK_SENT
@@ -488,6 +497,8 @@ def scaledownlist(ctx, scale_compute=False,
                   scale_node_field_value=u'',
                   all_results=False,
                   node_sequence=None,
+                  force_remove=True,
+                  rollback_on_failure=True,
                   **_):
     if not scale_node_field:
         raise ValueError('You should provide `scale_node_field` for correct'
@@ -529,22 +540,25 @@ def scaledownlist(ctx, scale_compute=False,
         _run_scale_settings(ctx, scale_settings, {},
                             instances_remove_ids=instance_ids,
                             ignore_failure=ignore_failure,
-                            node_sequence=node_sequence)
+                            node_sequence=node_sequence,
+                            rollback_on_failure=rollback_on_failure)
     except Exception as e:
         ctx.logger.info('Scale down based on transaction failed: {}'
                         .format(repr(e)))
-        # check list for forced remove
-        removed = []
-        for node in ctx.nodes:
-            for instance in node.instances:
-                if instance.id in instance_ids:
-                    removed.append(instance)
-        _uninstall_instances(ctx=ctx,
-                             graph=ctx.graph_mode(),
-                             removed=removed,
-                             related=[],
-                             ignore_failure=ignore_failure,
-                             node_sequence=node_sequence)
+
+        if force_remove:
+            # check list for forced remove
+            removed = []
+            for node in ctx.nodes:
+                for instance in node.instances:
+                    if instance.id in instance_ids:
+                        removed.append(instance)
+            _uninstall_instances(ctx=ctx,
+                                 graph=ctx.graph_mode(),
+                                 removed=removed,
+                                 related=[],
+                                 ignore_failure=ignore_failure,
+                                 node_sequence=node_sequence)
 
         # remove from DB
         if force_db_cleanup:
@@ -598,6 +612,7 @@ def scaleuplist(ctx, scalable_entity_properties,
                 scale_transaction_field="",
                 scale_transaction_value="",
                 node_sequence=None,
+                rollback_on_failure=True,
                 **kwargs):
 
     if not scalable_entity_properties:
@@ -612,7 +627,8 @@ def scaleuplist(ctx, scalable_entity_properties,
     _run_scale_settings(ctx, scale_settings, scalable_entity_properties,
                         scale_transaction_field, scale_transaction_value,
                         ignore_failure, ignore_rollback_failure,
-                        node_sequence=node_sequence)
+                        node_sequence=node_sequence,
+                        rollback_on_failure=rollback_on_failure)
 
 
 def _filter_node_instances(ctx, node_ids, node_instance_ids, type_names,
