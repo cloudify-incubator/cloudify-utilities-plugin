@@ -1,3 +1,4 @@
+1.25.14: RD-6414 Hide authorization in headers in rest plugin.
 1.25.13:
   - CYBL-1875: Handle Parallel Reservations conflict.
   - CYBL-1872: Added force_remove flag to scaledownlist workflow.
