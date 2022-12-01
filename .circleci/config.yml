@@ -25,7 +25,7 @@ commands:
 
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -p $(find ~/project/workspace/build/ -name *centos-Core*x86_64.wgn)  ~/project/plugin.yaml
 
   run_cloudinit_test:
     steps:
