@@ -184,7 +184,7 @@ def _reserve_shared_list_item(ctx, **kwargs):
         _update_source_and_target_runtime_props(ctx)
     except CloudifyClientError:
         _return_shared_list_item(ctx)
-        raise
+        raise RecoverableError('Retrying reservation...')
 
     ctx.logger.debug('Reservation successful: {0}\
             \nLeft resources: {1}\
@@ -313,7 +313,7 @@ def _return_shared_list_item(ctx, **kwargs):
         _update_source_and_target_runtime_props(ctx)
     except CloudifyClientError:
         _reserve_shared_list_item(ctx)
-        raise
+        raise RecoverableError('Retrying reservation...')
 
 
 def _return_list_item(ctx, **kwargs):
