@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.25.15'
+    package_version: '1.25.16'
 
   cfy_files: *utilities_plugin
 
@@ -738,9 +738,13 @@ node_types:
         type: string
         required: false
       logs_secrets:
-          type: boolean
-          default: false
-          required: false
+        type: boolean
+        default: false
+        required: false
+      update_if_exists:
+        type: boolean
+        default: false
+        required: false
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
