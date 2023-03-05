@@ -1,3 +1,4 @@
+1.25.16: CYBL-2002 - Add option to update secrets if they exist but not by default
 1.25.15: CYBL-2016 Fix runtime_properties update at concurrent reservations.
 1.25.14: RD-6414 Hide authorization in headers in rest plugin.
 1.25.13:

@@ -64,8 +64,15 @@ class SecretsSDK(object):
 
         return result
 
-    def create(self, entries, variant=None, **_):
-        return self._write(self._rest_client.secrets.create, entries, variant)
+    def create(self, entries, variant=None, **kwargs):
+        if kwargs.get('update_if_exists', False) is True:
+            return self._write(self._rest_client.secrets.patch,
+                               entries,
+                               variant)
+        else:
+            return self._write(self._rest_client.secrets.create,
+                               entries,
+                               variant)
 
     def update(self, entries, variant=None, **_):
         return self._write(self._rest_client.secrets.patch, entries, variant)
