@@ -14,10 +14,10 @@ unittest-post-steps: &unittest-post-steps
     - slack/notify_failed
 
 orbs:
-  node: cloudify/public-unittest-orb@1 #orb version
-  wagonorb: cloudify/wagon-bulder-orb@2 #orb version
-  releaseorb: cloudify/release-orb@1 #orb version
-  managerorb: cloudify/manager-orb@2
+  node: cloudify/public-unittest-orb@volatile
+  wagonorb: cloudify/wagon-bulder-orb@volatile
+  releaseorb: cloudify/release-orb@volatile
+  managerorb: cloudify/manager-orb@volatile
   slack: cloudify/notify-slack@2
 
 checkout:
@@ -95,20 +95,12 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - wagonorb/build_bundle:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
-          requires:
-            - wagonorb/wagon
-            - wagonorb/rhel_wagon
-            - wagonorb/arch64_wagon
       - integration_tests_py3:
           context: 
             - slack-secrets
           <<: *job-post-steps
           requires:
-            - wagonorb/build_bundle
+            - wagonorb/wagon
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
@@ -151,20 +143,12 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-      - wagonorb/build_bundle:
-          filters:
-            branches:
-              only: /master/
-          requires:
-            - wagonorb/wagon
-            - wagonorb/arch64_wagon
-            - wagonorb/rhel_wagon
       - integration_tests_py3:
           context: 
             - slack-secrets
           <<: *job-post-steps
           requires:
-            - wagonorb/build_bundle
+            - wagonorb/wagon
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
