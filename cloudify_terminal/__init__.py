@@ -65,7 +65,7 @@ def operation_cleanup(func, force=False):
                 FINISHED_OPERATIONS, {})
             if not force_rerun and operations_finished.get(current_action):
                 ctx.logger.debug(
-                    "Opration {operation} is finished before."
+                    "Operation {operation} has already been finished before."
                     .format(operation=current_action))
                 return
 
