@@ -21,6 +21,7 @@ from cloudify.manager import DirtyTrackingDict
 from cloudify.mocks import MockNodeContext, MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
 
+from .. import tasks
 from cloudify_common_sdk._compat import PY2
 
 
@@ -42,8 +43,6 @@ class MockC1oudifyContext(MockCloudifyContext):
         node_type = kwargs.get('node_type')
         self._node = MockNodeCtx(node_name, properties, node_type)
 
-
-from .. import tasks
 
 TEMPLATE = """
     rest_calls:

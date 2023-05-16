@@ -78,7 +78,15 @@ class TestTasks(unittest.TestCase):
         )
         _target_ctx.instance.host_ip = None
 
+        _source_ctx = MockC1oudifyContext(
+            'node_name',
+            properties={},
+            runtime_properties={}
+        )
+        _source_ctx.instance.host_ip = None
+
         _ctx = MockC1oudifyContext(
+            source=_source_ctx,
             target=_target_ctx
         )
         _ctx._execution_id = "execution_id"
