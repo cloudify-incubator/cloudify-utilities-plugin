@@ -21,7 +21,7 @@ from mock import (
     PropertyMock)
 
 from cloudify.state import current_ctx
-from cloudify.mocks import MockCloudifyContext
+from cloudify.mocks import MockNodeContext, MockCloudifyContext
 from cloudify.exceptions import (
     NonRecoverableError, RecoverableError, OperationRetry
 )
@@ -32,6 +32,25 @@ from .. import tasks
 from cloudify_common_sdk import exceptions
 
 
+class MockNodeCtx(MockNodeContext):
+
+    def __init__(self, *_, **__):
+        super().__init__(*_, **__)
+
+    @property
+    def type_hierarchy(self):
+        return [self._type, 'cloudify.nodes.Root']
+
+
+class MockC1oudifyContext(MockCloudifyContext):
+    def __init__(self, *_, **kwargs):
+        super().__init__(*_, **kwargs)
+        node_name = kwargs.get('node_name')
+        properties = kwargs.get('properties')
+        node_type = kwargs.get('node_type')
+        self._node = MockNodeCtx(node_name, properties, node_type)
+
+
 class TestTasks(unittest.TestCase):
 
     def tearDown(self):
@@ -39,7 +58,7 @@ class TestTasks(unittest.TestCase):
         super(TestTasks, self).tearDown()
 
     def _gen_ctx(self):
-        _ctx = MockCloudifyContext(
+        _ctx = MockC1oudifyContext(
             'node_name',
             properties={},
         )
@@ -52,14 +71,14 @@ class TestTasks(unittest.TestCase):
         return _ctx
 
     def _gen_relation_ctx(self):
-        _target_ctx = MockCloudifyContext(
+        _target_ctx = MockC1oudifyContext(
             'node_name',
             properties={},
             runtime_properties={}
         )
         _target_ctx.instance.host_ip = None
 
-        _ctx = MockCloudifyContext(
+        _ctx = MockC1oudifyContext(
             target=_target_ctx
         )
         _ctx._execution_id = "execution_id"

@@ -19,18 +19,37 @@ import os
 from mock import MagicMock, patch
 import logging
 
-from cloudify.exceptions import RecoverableError, NonRecoverableError
-from cloudify.mocks import MockCloudifyContext
+from cloudify_rest import tasks
+
 from cloudify.state import current_ctx
 from cloudify.manager import DirtyTrackingDict
+from cloudify.mocks import MockNodeContext, MockCloudifyContext
+from cloudify.exceptions import RecoverableError, NonRecoverableError
 
-from cloudify_rest import tasks
+
+class MockNodeCtx(MockNodeContext):
+
+    def __init__(self, *_, **__):
+        super().__init__(*_, **__)
+
+    @property
+    def type_hierarchy(self):
+        return [self._type, 'cloudify.nodes.Root']
+
+
+class MockC1oudifyContext(MockCloudifyContext):
+    def __init__(self, *_, **kwargs):
+        super().__init__(*_, **kwargs)
+        node_name = kwargs.get('node_name')
+        properties = kwargs.get('properties')
+        node_type = kwargs.get('node_type')
+        self._node = MockNodeCtx(node_name, properties, node_type)
 
 
 class TestPlugin(unittest.TestCase):
 
     def test_execute_mock_sdk(self):
-        _ctx = MockCloudifyContext('node_name',
+        _ctx = MockC1oudifyContext('node_name',
                                    properties={'hosts': ['--fake.cake--',
                                                          'test123.test'],
                                                'port': -1,
@@ -88,7 +107,7 @@ class TestPlugin(unittest.TestCase):
             prerender=None, resource_callback=_ctx.get_resource)
 
     def test_execute_bunch_http_no_exception(self):
-        _ctx = MockCloudifyContext('node_name',
+        _ctx = MockC1oudifyContext('node_name',
                                    properties={'hosts': ['--fake.cake--',
                                                          'test123.test'],
                                                'port': -1,
@@ -150,7 +169,7 @@ class TestPlugin(unittest.TestCase):
                  'owner0': {'colour': 'black', 'name': 'book'}})
 
     def test_execute_http_no_exception(self):
-        _ctx = MockCloudifyContext('node_name',
+        _ctx = MockC1oudifyContext('node_name',
                                    properties={'hosts': ['--fake.cake--',
                                                          'test123.test'],
                                                'port': -1,
@@ -206,7 +225,7 @@ class TestPlugin(unittest.TestCase):
                  'owner0': {'colour': 'black', 'name': 'book'}})
 
     def test_execute_https_port_reco(self):
-        _ctx = MockCloudifyContext('node_name',
+        _ctx = MockC1oudifyContext('node_name',
                                    properties={'host': 'test123.test',
                                                'port': 12345,
                                                'ssl': 'true',
@@ -229,7 +248,7 @@ class TestPlugin(unittest.TestCase):
                 'defined as recoverable' in str(context.exception))
 
     def test_execute_overwrite_host_response_expecation(self):
-        _ctx = MockCloudifyContext('node_name',
+        _ctx = MockC1oudifyContext('node_name',
                                    properties={'hosts': ['test123.test'],
                                                'port': 12345,
                                                'ssl': 'true',
@@ -260,7 +279,7 @@ class TestPlugin(unittest.TestCase):
                 str(context.exception))
 
     def test_execute_nonrecoverable_response(self):
-        _ctx = MockCloudifyContext('node_name',
+        _ctx = MockC1oudifyContext('node_name',
                                    properties={'hosts': ['test123.test'],
                                                'port': 12345,
                                                'ssl': 'true',
@@ -289,7 +308,7 @@ class TestPlugin(unittest.TestCase):
                 str(context.exception))
 
     def test_execute_http_xml(self):
-        _ctx = MockCloudifyContext('node_name',
+        _ctx = MockC1oudifyContext('node_name',
                                    properties={'hosts': ['test123.test'],
                                                'port': -1,
                                                'ssl': False,
@@ -318,7 +337,7 @@ class TestPlugin(unittest.TestCase):
                  'CPUID': 'ABS:FFF222777'})
 
     def test_execute_jinja_block_parse(self):
-        _ctx = MockCloudifyContext('node_name',
+        _ctx = MockC1oudifyContext('node_name',
                                    properties={'hosts': ['test123.test'],
                                                'port': -1,
                                                'ssl': False,
