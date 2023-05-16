@@ -172,7 +172,7 @@ inputs:
 node_templates:
 
   user10-all-properties:
-    type: cloudify.rest.Requests
+    type: cloudify.nodes.rest.Requests
     properties:
       hosts: [{ get_input: rest_endpoint }]
       port: 443
@@ -185,7 +185,7 @@ node_templates:
             template_file: templates/get-user-all-properties-template.yaml
 
   user10-some-properties:
-    type: cloudify.rest.Requests
+    type: cloudify.nodes.rest.Requests
     properties:
       hosts: [{ get_input: rest_endpoint }]
       port: 443

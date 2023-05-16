@@ -1,3 +1,11 @@
+1.26.0:
+  - RND-555-deprecate-utils-types:
+    - load_from_config relationship
+    - cloudify.rest.BunchRequests node type
+    - cloudify.rest.Requests node type
+    - cloudify.terminal.raw node type
+    - cloudify.keys.nodes.RSAKey node type
+    - configuration_loader node type
 1.25.17: Improve logging message.
 1.25.16: CYBL-2002 - Add option to update secrets if they exist but not by default
 1.25.15: CYBL-2016 Fix runtime_properties update at concurrent reservations.
@@ -73,7 +81,7 @@ v1.21.0:
 - rest support run action as hook
 
 v1.20.0:
-- ssh_key add use_secrets_if_exist property to cloudify.keys.nodes.RSAKey node.
+- ssh_key add use_secrets_if_exist property to cloudify.nodes.keys.RSAKey node.
 
 v1.19.0:
 - hooks add hooks events filtering plugin

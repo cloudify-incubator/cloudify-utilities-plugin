@@ -14,7 +14,7 @@ inputs:
 node_templates:
 
   token:
-    type: cloudify.rest.Requests
+    type: cloudify.nodes.rest.Requests
     properties:
       hosts: [{ get_input: mgmt_ip }]
       port: 443
@@ -30,7 +30,7 @@ node_templates:
               PASSWORD: "admin"
 
   baseline_config:
-    type: cloudify.rest.Requests
+    type: cloudify.nodes.rest.Requests
     properties:
       hosts: [{ get_input: mgmt_ip }]
       port: 443
@@ -50,7 +50,7 @@ node_templates:
       target: token
 
   baseline_networking:
-    type: cloudify.rest.Requests
+    type: cloudify.nodes.rest.Requests
     properties:
       hosts: [{ get_input: mgmt_ip }]
       port: 443

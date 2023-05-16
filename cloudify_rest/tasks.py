@@ -39,6 +39,13 @@ def _get_params_attributes(ctx, runtime_properties, params_list):
 def bunch_execute(templates=None, **kwargs):
     # get current context
     ctx = kwargs.get('ctx', CloudifyContext)
+
+    if 'cloudify.rest.Requests' in ctx.node.type_hierarchy:
+        ctx.logger.error(
+            'The node type cloudify.rest.Requests is deprecated, '
+            'please update your blueprint to use '
+            'cloudify.nodes.rest.Requests.')
+
     auth = kwargs.get('auth')
 
     for template in templates or []:
@@ -78,6 +85,13 @@ def bunch_execute(templates=None, **kwargs):
 def execute(*argc, **kwargs):
     # get current context
     ctx = kwargs.get('ctx', CloudifyContext)
+
+    if 'cloudify.rest.Requests' in ctx.node.type_hierarchy:
+        ctx.logger.error(
+            'The node type cloudify.rest.Requests is deprecated, '
+            'please update your blueprint to use '
+            'cloudify.nodes.rest.Requests.')
+
     auth = kwargs.get('auth')
     params = kwargs.get('params', {})
     template_file = kwargs.get('template_file')

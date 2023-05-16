@@ -225,6 +225,13 @@ def run(*args, **kwargs):
     ctx = kwargs.get('ctx', CloudifyContext)
 
     if ctx.type == context.NODE_INSTANCE:
+
+        if 'cloudify.terminal.raw' in ctx.node.type_hierarchy:
+            ctx.logger.error(
+                'The node type cloudify.terminal.raw is deprecated, '
+                'please update your blueprint to use '
+                'cloudify.nodes.terminal.Raw.')
+
         # Node instance
         properties = ctx.node.properties
         runtime_properties = ctx.instance.runtime_properties
@@ -242,6 +249,18 @@ def run(*args, **kwargs):
         )
 
     elif ctx.type == context.RELATIONSHIP_INSTANCE:
+
+        if 'cloudify.terminal.raw' in ctx.source.node.type_hierarchy:
+            ctx.logger.error(
+                'The node type cloudify.terminal.raw is deprecated, '
+                'please update your blueprint to use '
+                'cloudify.nodes.terminal.Raw.')
+        if 'cloudify.terminal.raw' in ctx.target.node.type_hierarchy:
+            ctx.logger.error(
+                'The node type cloudify.terminal.raw is deprecated, '
+                'please update your blueprint to use '
+                'cloudify.nodes.terminal.Raw.')
+
         # Realationships context
         properties = ctx.target.node.properties
         runtime_properties = ctx.target.instance.runtime_properties
