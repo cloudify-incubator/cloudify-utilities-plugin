@@ -15,7 +15,7 @@ Features:
 - configurable recoverable errors
 - context sensitive "response expectation"
 
-Action inputs in `cloudify.rest.Requests`:
+Action inputs in `cloudify.nodes.rest.Requests`:
 * `params`: Template parameters. Default is empty dictionary.
 * `params_attributes`: dictionary with list based path to values in
   `runtime_prioperties`.
@@ -27,10 +27,10 @@ Action inputs in `cloudify.rest.Requests`:
 * `remove_calls`: Remove calls list from results. Default: save calls in
   runtime properties.
 
-Action inputs in `cloudify.rest.BunchRequests` is list of inputs from
-`cloudify.rest.Requests`.
+Action inputs in `cloudify.nodes.rest.BunchRequests` is list of inputs from
+`cloudify.nodes.rest.Requests`.
 
-Node properties for `cloudify.rest.Requests` and `cloudify.rest.BunchRequests`:
+Node properties for `cloudify.nodes.rest.Requests` and `cloudify.nodes.rest.BunchRequests`:
 * `hosts`: list of hosts name or IP addresses of Rest Servers
 * `host`: host name or IP addresses of Rest Servers if list of hosts is not
   needed single host can be provided by this property. NOTE: the 'hosts'
@@ -76,7 +76,7 @@ hooks:
 Supported parameters:
 * `inputs`: passed from cloudify hooks (or first param hooks)
 * `logger_file`: duplicate logger output to separate file
-* `properties`: connection properties(same as properties in `cloudify.rest.Requests`)
+* `properties`: connection properties(same as properties in `cloudify.nodes.rest.Requests`)
 * `template_file`: absolute path to template file
 * `params`: Template parameters, additionally providided `__inputs__` from hooks.
   Default is empty dictionary.
@@ -93,7 +93,7 @@ Supported parameters:
 
 ```yaml
   user:
-    type: cloudify.rest.Requests
+    type: cloudify.nodes.rest.Requests
     properties:
       hosts:
       - { get_input: rest_endpoint }
@@ -111,7 +111,7 @@ Supported parameters:
 
 ```yaml
   user:
-    cloudify.rest.BunchRequests
+    type: cloudify.nodes.rest.BunchRequests
     properties:
       # hosts:
       # - { get_input: rest_endpoint }
@@ -279,5 +279,5 @@ Real life example how F5 BigIP can be provisioned with REST API
 blueprint: [example-5-blueprint.yaml](examples/example-5-blueprint.yaml)
 
 Example for get users list, create new user based on first result and than
-remove new created user. Have used `cloudify.rest.BunchRequests` with
+remove new created user. Have used `cloudify.nodes.rest.BunchRequests` with
 `params_attributes`.

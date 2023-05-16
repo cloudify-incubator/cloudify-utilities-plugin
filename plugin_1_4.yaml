@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.25.17'
+    package_version: '1.26.0'
 
   cfy_files: *utilities_plugin
 
@@ -395,7 +395,7 @@ node_types:
         delete:
           implementation: cloudinit.cloudify_cloudinit.tasks.delete
 
-  configuration_loader:
+  cloudify.nodes.ConfigurationLoader:
     derived_from: cloudify.nodes.ApplicationServer
     properties:
       parameters_json:
@@ -410,7 +410,10 @@ node_types:
             merge_dicts:
               default: false
 
-  cloudify.keys.nodes.RSAKey:
+  configuration_loader:
+    derived_from: cloudify.nodes.ConfigurationLoader
+
+  cloudify.nodes.keys.RSAKey:
     derived_from: cloudify.nodes.Root
     properties:
       use_secret_store:
@@ -454,7 +457,10 @@ node_types:
         delete:
           implementation: keys.cloudify_ssh_key.operations.delete
 
-  cloudify.terminal.raw:
+  cloudify.keys.nodes.RSAKey:
+    derived_from: cloudify.nodes.keys.RSAKey
+
+  cloudify.nodes.terminal.Raw:
     derived_from: cloudify.nodes.Root
     properties:
       terminal_auth:
@@ -481,6 +487,9 @@ node_types:
         delete:
           implementation: terminal.cloudify_terminal.tasks.run
           inputs: {}
+
+  cloudify.terminal.raw:
+    derived_from: cloudify.nodes.terminal.Raw
 
   cloudify.nodes.File:
     derived_from: cloudify.nodes.Root
@@ -526,7 +535,7 @@ node_types:
             resource_config:
               default: { get_property: [ SELF, resource_config ] }
 
-  cloudify.rest.Requests:
+  cloudify.nodes.rest.Requests:
     derived_from: cloudify.nodes.Root
     properties:
       hosts:
@@ -633,7 +642,10 @@ node_types:
           implementation: rest.cloudify_rest.tasks.execute
           inputs: *rest_template_inputs
 
-  cloudify.rest.BunchRequests:
+  cloudify.rest.Requests:
+    derived_from: cloudify.nodes.rest.Requests
+
+  cloudify.nodes.rest.BunchRequests:
     derived_from: cloudify.nodes.Root
     properties:
       hosts:
@@ -723,6 +735,9 @@ node_types:
             templates:
               default: {}
 
+  cloudify.rest.BunchRequests:
+    derived_from: cloudify.nodes.rest.BunchRequests
+
   cloudify.nodes.secrets.Writer:
     derived_from: cloudify.nodes.Root
     properties:
@@ -809,7 +824,7 @@ node_types:
 
 relationships:
 
-  load_from_config:
+  cloudify.relationships.load_from_config:
     derived_from: cloudify.relationships.depends_on
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -819,6 +834,9 @@ relationships:
             source_config:
               default: { get_attribute: [TARGET , params ]  }
   
+  load_from_config:
+    derived_from: cloudify.relationships.load_from_config
+
   # reserve/return_item
   cloudify.relationships.resources.reserve_list_item:
     derived_from: cloudify.relationships.connected_to
@@ -1144,7 +1162,7 @@ workflows:
         default: ""
       properties:
         description: >
-          connection properties(same as properties in `cloudify.rest.Requests`)
+          connection properties(same as properties in `cloudify.nodes.rest.Requests`)
         default: {}
       params:
         description: >

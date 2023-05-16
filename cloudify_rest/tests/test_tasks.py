@@ -18,12 +18,31 @@ import unittest
 
 from cloudify.state import current_ctx
 from cloudify.manager import DirtyTrackingDict
-from cloudify.mocks import MockCloudifyContext
+from cloudify.mocks import MockNodeContext, MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
 
+from .. import tasks
 from cloudify_common_sdk._compat import PY2
 
-from .. import tasks
+
+class MockNodeCtx(MockNodeContext):
+
+    def __init__(self, *_, **__):
+        super().__init__(*_, **__)
+
+    @property
+    def type_hierarchy(self):
+        return [self._type, 'cloudify.nodes.Root']
+
+
+class MockC1oudifyContext(MockCloudifyContext):
+    def __init__(self, *_, **kwargs):
+        super().__init__(*_, **kwargs)
+        node_name = kwargs.get('node_name')
+        properties = kwargs.get('properties')
+        node_type = kwargs.get('node_type')
+        self._node = MockNodeCtx(node_name, properties, node_type)
+
 
 TEMPLATE = """
     rest_calls:
@@ -38,7 +57,7 @@ class TestTasks(unittest.TestCase):
         super(TestTasks, self).tearDown()
 
     def _gen_ctx(self):
-        _ctx = MockCloudifyContext(
+        _ctx = MockC1oudifyContext(
             'node_name',
             properties={},
         )
@@ -129,17 +148,17 @@ class TestTasks(unittest.TestCase):
                                retry_count=1, retry_sleep=15)
 
     def test_execute_as_relationship(self):
-        _source_ctx = MockCloudifyContext(
+        _source_ctx = MockC1oudifyContext(
             'source_name',
             properties={},
             runtime_properties={}
         )
-        _target_ctx = MockCloudifyContext(
+        _target_ctx = MockC1oudifyContext(
             'target_name',
             properties={},
             runtime_properties={}
         )
-        _ctx = MockCloudifyContext(
+        _ctx = MockC1oudifyContext(
             "execution_id",
             target=_target_ctx,
             source=_source_ctx

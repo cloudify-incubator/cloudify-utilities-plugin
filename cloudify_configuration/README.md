@@ -32,7 +32,7 @@ It will also be used as a target in relationships with nodes consuming the confi
 
 ```yaml
   configuration:
-    type: configuration_loader
+    type: cloudify.nodes.ConfigurationLoader
     properties:
       parameters_json: { get_input: parameters_json }
 ```
@@ -109,7 +109,7 @@ properties with the values relevant as specified in the `params_list`
             deep_error_check: true
             params: { get_attribute: [SELF, params] }
     relationships:
-      - type: load_from_config
+      - type: cloudify.relationships.load_from_config
         target: configuration
 ```
 
@@ -201,7 +201,7 @@ Configuration loader holds the entire configuration in it’s runtime properties
 
 **Relationships:**
 
-* `load_from_config`: Derived from `cloudify.relationships.depends_on` and must be used with target node only, e.g.: `cloudify.terminal.raw`.
+* `cloudify.relationships.load_from_config`: Derived from `cloudify.relationships.depends_on` and must be used with target node only, e.g.: `cloudify.nodes.terminal.Raw`.
 Update `params` in depended node by filter in `params_list` and is called before `configuration` action in node.
 
 **Examples:**

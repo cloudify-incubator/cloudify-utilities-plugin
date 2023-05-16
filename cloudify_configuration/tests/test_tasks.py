@@ -15,9 +15,28 @@ import unittest
 from mock import MagicMock, patch
 
 from cloudify.state import current_ctx
-from cloudify.mocks import MockCloudifyContext
+from cloudify.mocks import MockNodeContext, MockCloudifyContext
 
 from .. import tasks
+
+
+class MockNodeCtx(MockNodeContext):
+
+    def __init__(self, *_, **__):
+        super().__init__(*_, **__)
+
+    @property
+    def type_hierarchy(self):
+        return [self._type, 'cloudify.nodes.Root']
+
+
+class MockCtx(MockCloudifyContext):
+    def __init__(self, *_, **kwargs):
+        super().__init__(*_, **kwargs)
+        node_name = kwargs.get('node_name')
+        properties = kwargs.get('properties')
+        node_type = kwargs.get('node_type')
+        self._node = MockNodeCtx(node_name, properties, node_type)
 
 
 class TestTasks(unittest.TestCase):
@@ -27,7 +46,7 @@ class TestTasks(unittest.TestCase):
         super(TestTasks, self).tearDown()
 
     def test_load_configuration(self):
-        _ctx = MockCloudifyContext(
+        _ctx = MockCtx(
             'node_name',
             properties={},
             runtime_properties={}
@@ -41,7 +60,7 @@ class TestTasks(unittest.TestCase):
         })
 
     def test_load_json_configuration(self):
-        _ctx = MockCloudifyContext(
+        _ctx = MockCtx(
             'node_name',
             properties={},
             runtime_properties={}
@@ -55,7 +74,7 @@ class TestTasks(unittest.TestCase):
         })
 
     def test_load_configuration_can_merge_dicts(self):
-        _ctx = MockCloudifyContext(
+        _ctx = MockCtx(
             'node_name',
             properties={},
             runtime_properties={
@@ -92,7 +111,7 @@ class TestTasks(unittest.TestCase):
         })
 
     def test_load_configuration_to_runtime_properties(self):
-        _source_ctx = MockCloudifyContext(
+        _source_ctx = MockCtx(
             'source_name',
             properties={'params_list': ['a', 'c'],
                         'params': {'a': 'e', 'c': 'g'}},
@@ -100,12 +119,12 @@ class TestTasks(unittest.TestCase):
                 'params': {'a': 'n', 'c': 'g'}
             }
         )
-        _target_ctx = MockCloudifyContext(
+        _target_ctx = MockCtx(
             'source_name',
             properties={},
             runtime_properties={}
         )
-        _ctx = MockCloudifyContext(
+        _ctx = MockCtx(
             deployment_id='relationship_name',
             properties={},
             source=_source_ctx,

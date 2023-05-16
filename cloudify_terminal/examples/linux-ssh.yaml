@@ -59,7 +59,7 @@ node_templates:
         target: linux_impl
 
   linux_impl:
-    type: cloudify.terminal.raw
+    type: cloudify.nodes.terminal.Raw
     properties:
       terminal_auth:
         user: { get_input: terminal_user }
