@@ -27,7 +27,7 @@ dsl_definitions:
 node_templates:
 
   manager_key:
-    type: cloudify.keys.nodes.RSAKey
+    type: cloudify.nodes.keys.RSAKey
     properties:
       resource_config: *RESOURCE_CONFIG
       use_secret_store: { get_input: use_secret_store }

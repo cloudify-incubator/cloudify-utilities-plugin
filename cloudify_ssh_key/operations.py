@@ -44,6 +44,13 @@ SECRETS_KEY_OWNER = 'secrets_key_owner'
 
 @operation(resumable=True)
 def create(**_):
+
+    if 'cloudify.keys.nodes.RSAKey' in ctx.node.type_hierarchy:
+        ctx.logger.error(
+            'The node type cloudify.keys.nodes.RSAKey is deprecated, '
+            'please update your blueprint to use '
+            'cloudify.nodes.keys.RSAKey.')
+
     for key in [SECRETS_KEY_NAME, PUBLIC_KEY_PATH, PRIVATE_KEY_PATH,
                 PUBLIC_KEY_EXPORT, PRIVATE_KEY_EXPORT, SECRETS_KEY_OWNER]:
         if key in ctx.instance.runtime_properties:

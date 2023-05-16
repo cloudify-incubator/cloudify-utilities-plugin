@@ -38,7 +38,7 @@ inputs:
 node_templates:
 
   forti_impl:
-    type: cloudify.terminal.raw
+    type: cloudify.nodes.terminal.Raw
     interfaces:
       cloudify.interfaces.lifecycle:
         create:

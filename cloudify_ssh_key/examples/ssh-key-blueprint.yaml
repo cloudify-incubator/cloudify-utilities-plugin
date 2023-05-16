@@ -7,7 +7,7 @@ imports:
 node_templates:
 
   rsa_key:
-    type: cloudify.keys.nodes.RSAKey
+    type: cloudify.nodes.keys.RSAKey
     properties:
       resource_config:
         openssh_format: true

@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/5.0.0/types.yaml
-  - http://www.getcloudify.org/spec/utilities-plugin/1.18.0/plugin.yaml
+  - plugin:cloudify-utilities-plugin
 
 inputs:
 
@@ -44,7 +44,7 @@ inputs:
 node_types:
 
   terminal:
-    derived_from: cloudify.terminal.raw
+    derived_from: cloudify.nodes.terminal.Raw
     properties:
       params_list:
         default: {}
@@ -56,7 +56,7 @@ node_types:
 node_templates:
 
   configuration:
-    type: configuration_loader
+    type: cloudify.nodes.ConfigurationLoader
     properties:
       parameters_json: { get_input: parameters_json }
 

@@ -14,7 +14,7 @@ inputs:
 node_templates:
 
   bunch-calls:
-    type: cloudify.rest.BunchRequests
+    type: cloudify.nodes.rest.BunchRequests
     properties:
       hosts: [{ get_input: rest_endpoint }]
       port: 443
