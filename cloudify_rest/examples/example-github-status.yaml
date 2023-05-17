@@ -15,7 +15,7 @@ inputs:
 node_templates:
 
   github-state:
-    type: cloudify.rest.Requests
+    type: cloudify.nodes.rest.Requests
     properties:
       hosts: [{ get_input: rest_endpoint }]
       port: 443

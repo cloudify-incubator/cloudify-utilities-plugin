@@ -23,7 +23,7 @@ ip you can use contained_in relationship.
 
 ```yaml
   node_impl:
-    type: cloudify.terminal.raw
+    type: cloudify.nodes.terminal.Raw
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -76,7 +76,7 @@ node_templates:
         target: vm_host
 
   vm_host:
-    type: cloudify.terminal.raw
+    type: cloudify.nodes.terminal.Raw
     properties:
       terminal_auth:
         user: <user for instance>
@@ -92,7 +92,7 @@ node_templates:
 
 ```yaml
   ios_impl:
-    type: cloudify.terminal.raw
+    type: cloudify.nodes.terminal.Raw
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -115,7 +115,7 @@ node_templates:
 
 ```yaml
   node_impl:
-    type: cloudify.terminal.raw
+    type: cloudify.nodes.terminal.Raw
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -139,7 +139,7 @@ node_templates:
 
 ```yaml
   forti_impl:
-    type: cloudify.terminal.raw
+    type: cloudify.nodes.terminal.Raw
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -170,7 +170,7 @@ node_templates:
 
 ```yaml
   node_impl:
-    type: cloudify.terminal.raw
+    type: cloudify.nodes.terminal.Raw
     properties:
       terminal_auth:
         user: <user for instance>

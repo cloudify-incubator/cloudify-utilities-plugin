@@ -55,6 +55,12 @@ def _handle_parameters(parameters):
 
 def load_configuration(parameters=None, merge_dicts=False, **kwargs):
 
+    if 'configuration_loader' in ctx.node.type_hierarchy:
+        ctx.logger.error(
+            'The node type configuration_loader is deprecated, '
+            'please update your blueprint to use '
+            'cloudify.nodes.ConfigurationLoader.')
+
     parameters = parameters or \
         ctx.node.properties.get('parameters_json', {})
 
@@ -72,6 +78,13 @@ def load_configuration(parameters=None, merge_dicts=False, **kwargs):
 
 
 def load_configuration_to_runtime_properties(source_config=None, **kwargs):
+
+    if 'configuration_loader' in ctx.source.node.type_hierarchy or \
+            'configuration_loader' in ctx.target.node.type_hierarchy:
+        ctx.logger.error(
+            'The node type configuration_loader is deprecated, '
+            'please update your blueprint to use '
+            'cloudify.nodes.ConfigurationLoader.')
 
     source_config = source_config or \
         ctx.target.instance.runtime_properties.get('params', {})

@@ -22,7 +22,7 @@ import testtools
 # Third Party Imports
 from cloudify.state import current_ctx
 from cloudify.manager import DirtyTrackingDict
-from cloudify.mocks import MockCloudifyContext
+from cloudify.mocks import MockNodeContext, MockCloudifyContext
 from cloudify_rest_client.secrets import Secret
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -32,6 +32,25 @@ from ..operations import (create, delete, _get_secret,
                           _check_if_secret_exist)
 
 from cloudify_common_sdk._compat import PY2
+
+
+class MockNodeCtx(MockNodeContext):
+
+    def __init__(self, *_, **__):
+        super().__init__(*_, **__)
+
+    @property
+    def type_hierarchy(self):
+        return [self._type, 'cloudify.nodes.Root']
+
+
+class MockCtx(MockCloudifyContext):
+    def __init__(self, *_, **kwargs):
+        super().__init__(*_, **kwargs)
+        node_name = kwargs.get('node_name')
+        properties = kwargs.get('properties')
+        node_type = kwargs.get('node_type')
+        self._node = MockNodeCtx(node_name, properties, node_type)
 
 
 class TestKey(testtools.TestCase):
@@ -77,7 +96,7 @@ class TestKey(testtools.TestCase):
                 },
             }
 
-        ctx = MockCloudifyContext(
+        ctx = MockCtx(
             node_id=test_node_id,
             properties=test_properties
         )
