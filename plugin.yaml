@@ -17,6 +17,7 @@ plugins:
   secrets: *id001
   lifecycle_operations: *id001
   resources: *id001
+  iso: *id001
 data_types:
   cloudify.datatypes.Blueprint:
     properties:
@@ -625,6 +626,30 @@ node_types:
         create: resources.cloudify_resources.tasks.create_list_item
         delete: resources.cloudify_resources.tasks.delete_list_item
     properties: {}
+
+  cloudify.nodes.resources.ModifiedIso:
+    derived_from: cloudify.nodes.Root
+    properties:
+      iso_path:
+        type: string
+        required: true
+      output_iso_path:
+        type: string
+        required: false
+      new_directories:
+        default: []
+      new_files:
+        default: []
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: iso.cloudify_iso.tasks.modify_iso
+          inputs: {}
+        delete:
+          implementation: iso.cloudify_iso.tasks.delete_iso
+          inputs: {}
+
+
 relationships:
   cloudify.relationships.load_from_config:
     derived_from: cloudify.relationships.depends_on

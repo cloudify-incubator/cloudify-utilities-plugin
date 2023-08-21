@@ -49,6 +49,6 @@ setup(
               'cloudify_resources'],
     license='LICENSE',
     install_requires=[
-        'cloudify-utilities-plugins-sdk>=0.0.92',
+        # 'cloudify-utilities-plugins-sdk>=0.0.92',
         'ruamel.yaml']  # cloudinit
 )
