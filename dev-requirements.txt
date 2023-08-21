@@ -4,7 +4,7 @@ paramiko>=2.7.1
 cryptography==3.3.2
 ruamel.yaml.clib==0.2.0
 # cloudify-types
-git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=cloudify_types
+git+https://github.com/cloudify-cosmo/cloudify-manager@7.0.0-build#egg=cloudify-mgmtworker\&subdirectory=mgmtworker
 
 https://github.com/cloudify-cosmo/cloudify-manager/tree/7.0.0-build/rest-service
 git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build
