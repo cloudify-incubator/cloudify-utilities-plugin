@@ -39,6 +39,7 @@ setup(
               'cloudify_terminal',
               'cloudify_configuration',
               'cloudify_hooks_workflow',
+              'cloudify_iso',
               'cloudify_custom_workflow',
               'cloudify_suspend',
               'cloudify_cloudinit',
