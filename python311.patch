@@ -1,0 +1,11 @@
+diff --git a/setup.py b/setup.py
+index 1de9e53..9f991f7 100644
+--- a/setup.py
++++ b/setup.py
+@@ -50,5 +50,5 @@ setup(
+     license='LICENSE',
+     install_requires=[
+         'cloudify-utilities-plugins-sdk>=0.0.92',
+-        'ruamel.yaml']  # cloudinit
++        'ruamel.yaml==0.17.32']  # cloudinit
+ )
