@@ -1,3 +1,28 @@
+diff --git a/constraints.txt b/constraints.txt
+index 8ef3b5e..4a5fe6f 100644
+--- a/constraints.txt
++++ b/constraints.txt
+@@ -9,7 +9,7 @@ cffi==1.14.5
+ git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_ty
+pes
+ 
+ # networkx
+-ruamel.yaml<=0.15
++ruamel.yaml==0.17.32
+ paramiko>=2.7.1
+ cryptography==40.0.2
+ ruamel.yaml.clib==0.2.7
+diff --git a/dev-requirements.txt b/dev-requirements.txt
+index 3ec1f41..8099d91 100644
+--- a/dev-requirements.txt
++++ b/dev-requirements.txt
+@@ -1,5 +1,5 @@
+ networkx
+-ruamel.yaml<=0.15
++ruamel.yaml==0.17.32
+ paramiko>=2.7.1
+ cryptography==40.0.2
+ ruamel.yaml.clib==0.2.7
 diff --git a/setup.py b/setup.py
 index 1de9e53..9f991f7 100644
 --- a/setup.py
