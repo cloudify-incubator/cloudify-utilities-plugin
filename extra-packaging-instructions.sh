@@ -7,4 +7,5 @@ def get_doc(*args):
     return ''
 EOF
     git apply python311.patch
+    echo patch applied
 fi
