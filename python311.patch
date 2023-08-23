@@ -3,9 +3,7 @@ index 8ef3b5e..4a5fe6f 100644
 --- a/constraints.txt
 +++ b/constraints.txt
 @@ -9,7 +9,7 @@ cffi==1.14.5
- git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_ty
-pes
- 
+ git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
  # networkx
 -ruamel.yaml<=0.15
 +ruamel.yaml==0.17.32
