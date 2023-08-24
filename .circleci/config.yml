@@ -66,19 +66,19 @@ commands:
 
   run_cloudinit_test:
     steps:
-      - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/utilities-examples/cloudify_cloudinit/simple.yaml --test-id=cloudify_cloudinit --on-failure=uninstall-force
+      - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/utilities-examples/cloudify_cloudinit/simple.yaml --test-id=cloudify_cloudinit-$CIRCLE_BUILD_NUM --on-failure=uninstall-force
 
   run_ssh_key_test:
     steps:
-      - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/utilities-examples/cloudify_ssh_key/create-secret-agent-key.yaml --test-id=cloudify_ssh_key --on-failure=uninstall-force
+      - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/utilities-examples/cloudify_ssh_key/create-secret-agent-key.yaml --test-id=cloudify_ssh_key-$CIRCLE_BUILD_NUM --on-failure=uninstall-force
 
   run_secrets_test:
       steps:
-        - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/utilities-examples/cloudify_secrets/write-secret-blueprint.yaml --test-id=cloudify_secrets --on-failure=uninstall-force
+        - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/utilities-examples/cloudify_secrets/write-secret-blueprint.yaml --test-id=cloudify_secrets-$CIRCLE_BUILD_NUM --on-failure=uninstall-force
 
   run_rest_test:
       steps:
-        - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/utilities-examples/cloudify_rest/example-github-status.yaml --test-id=cloudify_rest --on-failure=uninstall-force
+        - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/utilities-examples/cloudify_rest/example-github-status.yaml --test-id=cloudify_rest-$CIRCLE_BUILD_NUM --on-failure=uninstall-force
 
 jobs:
 
