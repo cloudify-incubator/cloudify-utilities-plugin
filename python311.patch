@@ -1,5 +1,5 @@
 diff --git a/constraints.txt b/constraints.txt
-index 8d6c3a3..1d351fd 100644
+index 0b60575..f7520ab 100644
 --- a/constraints.txt
 +++ b/constraints.txt
 @@ -1,4 +1,4 @@
@@ -18,27 +18,28 @@ index 8d6c3a3..1d351fd 100644
  
  # networkx
 -ruamel.yaml<=0.15
-+ruamel.yaml<=0.17.32
++ruamel.yaml==0.17.32
  paramiko>=2.7.1
- cryptography==40.0.2
+ cryptography==39.0.2
  ruamel.yaml.clib==0.2.7
 diff --git a/dev-requirements.txt b/dev-requirements.txt
-index 3ec1f41..2adb8ce 100644
+index 2ac431e..0bc2c47 100644
 --- a/dev-requirements.txt
 +++ b/dev-requirements.txt
 @@ -1,7 +1,8 @@
  networkx
 -ruamel.yaml<=0.15
-+ruamel.yaml<=0.17.32
++ruamel.yaml==0.17.32
  paramiko>=2.7.1
- cryptography==40.0.2
+ cryptography==39.0.2
  ruamel.yaml.clib==0.2.7
  # cloudify-types
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
 +git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
 +git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
+\ No newline at end of file
 diff --git a/setup.py b/setup.py
-index 1de9e53..f49db87 100644
+index 1de9e53..9f991f7 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -50,5 +50,5 @@ setup(
@@ -46,5 +47,6 @@ index 1de9e53..f49db87 100644
      install_requires=[
          'cloudify-utilities-plugins-sdk>=0.0.92',
 -        'ruamel.yaml']  # cloudinit
-+        'ruamel.yaml0.17.32']  # cloudinit
++        'ruamel.yaml==0.17.32']  # cloudinit
  )
+ 
