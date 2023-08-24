@@ -1,3 +1,7 @@
+1.26.1:
+  - add new circleci context
+  - py311 wagon
+  - moved test to remote manager
 1.26.0:
   - RND-555-deprecate-utils-types:
     - load_from_config relationship
