@@ -11,6 +11,6 @@ git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloud
 # networkx
 ruamel.yaml<=0.15
 paramiko>=2.7.1
-cryptography==40.0.2
+cryptography==39.0.2
 ruamel.yaml.clib==0.2.7
 setuptools==59.6.0
