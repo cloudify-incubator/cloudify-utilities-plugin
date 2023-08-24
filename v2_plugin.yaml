@@ -2,7 +2,7 @@ plugins:
   cfy_util: &id001
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.26.0'
+    package_version: 1.26.1
   cfy_files: *id001
   cfy_ftp: *id001
   cloudify_custom_workflow: *id001
@@ -213,21 +213,9 @@ node_types:
               default: uninstall
             resource_config:
               default:
-                blueprint:
-                  get_property:
-                  - SELF
-                  - resource_config
-                  - blueprint
-                deployment:
-                  get_property:
-                  - SELF
-                  - resource_config
-                  - deployment
-                reexecute:
-                  get_property:
-                  - SELF
-                  - resource_config
-                  - reexecute
+                blueprint: { get_property: [SELF, resource_config, blueprint] }
+                deployment: { get_property: [SELF, resource_config, deployment] }
+                reexecute: { get_property: [SELF, resource_config, reexecute] }
                 executions_start_args:
                   allow_custom_parameters: true
                   parameters:
@@ -240,7 +228,6 @@ node_types:
       resource_config:
         type: cloudify.datatypes.NodeInstanceProxy
         default: {}
-    interfaces: {}
   cloudify.nodes.CloudInit.CloudConfig:
     derived_from: cloudify.nodes.Root
     properties:
@@ -273,16 +260,11 @@ node_types:
           implementation: configuration.cloudify_configuration.tasks.load_configuration
           inputs:
             parameters:
-              default:
-                get_property:
-                - SELF
-                - parameters_json
+              default: { get_property: [SELF, parameters_json] }
             merge_dicts:
               default: false
   configuration_loader:
     derived_from: cloudify.nodes.ConfigurationLoader
-    properties: {}
-    interfaces: {}
   cloudify.nodes.keys.RSAKey:
     derived_from: cloudify.nodes.Root
     properties:
@@ -313,8 +295,6 @@ node_types:
           implementation: keys.cloudify_ssh_key.operations.delete
   cloudify.keys.nodes.RSAKey:
     derived_from: cloudify.nodes.keys.RSAKey
-    properties: {}
-    interfaces: {}
   cloudify.nodes.terminal.Raw:
     derived_from: cloudify.nodes.Root
     properties:
@@ -339,8 +319,6 @@ node_types:
           inputs: {}
   cloudify.terminal.raw:
     derived_from: cloudify.nodes.terminal.Raw
-    properties: {}
-    interfaces: {}
   cloudify.nodes.File:
     derived_from: cloudify.nodes.Root
     properties:
@@ -369,28 +347,16 @@ node_types:
           implementation: cfy_ftp.cloudify_ftp.tasks.create
           inputs:
             resource_config:
-              default:
-                get_property:
-                - SELF
-                - resource_config
+              default: { get_property: [SELF, resource_config] }
             raw_files:
-              default:
-                get_property:
-                - SELF
-                - raw_files
+              default: { get_property: [SELF, raw_files] }
             files:
-              default:
-                get_property:
-                - SELF
-                - files
+              default: { get_property: [SELF, files] }
         delete:
           implementation: cfy_ftp.cloudify_ftp.tasks.delete
           inputs:
             resource_config:
-              default:
-                get_property:
-                - SELF
-                - resource_config
+              default: { get_property: [SELF, resource_config] }
   cloudify.nodes.rest.Requests:
     derived_from: cloudify.nodes.Root
     properties:
@@ -481,8 +447,6 @@ node_types:
             retry_sleep: *id009
   cloudify.rest.Requests:
     derived_from: cloudify.nodes.rest.Requests
-    properties: {}
-    interfaces: {}
   cloudify.nodes.rest.BunchRequests:
     derived_from: cloudify.nodes.Root
     properties:
@@ -545,8 +509,6 @@ node_types:
               default: {}
   cloudify.rest.BunchRequests:
     derived_from: cloudify.nodes.rest.BunchRequests
-    properties: {}
-    interfaces: {}
   cloudify.nodes.secrets.Writer:
     derived_from: cloudify.nodes.Root
     properties:
@@ -624,7 +586,6 @@ node_types:
       cloudify.interfaces.lifecycle:
         create: resources.cloudify_resources.tasks.create_list_item
         delete: resources.cloudify_resources.tasks.delete_list_item
-    properties: {}
 relationships:
   cloudify.relationships.load_from_config:
     derived_from: cloudify.relationships.depends_on
@@ -634,10 +595,7 @@ relationships:
           implementation: configuration.cloudify_configuration.tasks.load_configuration_to_runtime_properties
           inputs:
             source_config:
-              default:
-                get_attribute:
-                - TARGET
-                - params
+              default: { get_attribute: [TARGET, params] }
   load_from_config:
     derived_from: cloudify.relationships.load_from_config
   cloudify.relationships.resources.reserve_list_item:
@@ -656,7 +614,7 @@ workflows:
     mapping: configuration.cloudify_configuration.tasks.update
     availability_rules:
       node_instances_active:
-      - all
+        - all
     parameters:
       params: {}
       configuration_node_id:
@@ -666,33 +624,30 @@ workflows:
         default: false
       node_types_to_update:
         default:
-        - juniper_node_config
-        - fortinet_vnf_type
+          - juniper_node_config
+          - fortinet_vnf_type
   suspend:
     mapping: suspend.cloudify_suspend.workflows.suspend
     availability_rules:
       node_instances_active:
-      - all
-    parameters: {}
+        - all
   resume:
     mapping: suspend.cloudify_suspend.workflows.resume
     availability_rules:
       node_instances_active:
-      - all
-      - partial
-    parameters: {}
+        - all
+        - partial
   statistics:
     mapping: suspend.cloudify_suspend.workflows.statistics
     availability_rules:
       node_instances_active:
-      - all
-    parameters: {}
+        - all
   backup:
     mapping: suspend.cloudify_suspend.workflows.backup
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       snapshot_name:
         default: ''
@@ -706,8 +661,8 @@ workflows:
     mapping: suspend.cloudify_suspend.workflows.restore
     availability_rules:
       node_instances_active:
-      - partial
-      - none
+        - partial
+        - none
     parameters:
       snapshot_name:
         default: ''
@@ -724,8 +679,8 @@ workflows:
     mapping: scalelist.cloudify_scalelist.workflows.scaleuplist
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       scalable_entity_properties:
         default: {}
@@ -752,8 +707,8 @@ workflows:
     mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       scale_compute:
         default: false
@@ -786,8 +741,8 @@ workflows:
     mapping: scalelist.cloudify_scalelist.workflows.execute_operation
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       operation:
         type: string
@@ -858,8 +813,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.start
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       operation_parms:
         default: {}
@@ -877,8 +832,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.stop
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       operation_parms:
         default: {}
@@ -898,8 +853,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.precreate
     availability_rules:
       node_instances_active:
-      - partial
-      - none
+        - partial
+        - none
     parameters:
       operation_parms:
         default: {}
@@ -919,8 +874,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.create
     availability_rules:
       node_instances_active:
-      - partial
-      - none
+        - partial
+        - none
     parameters:
       operation_parms:
         default: {}
@@ -940,8 +895,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.configure
     availability_rules:
       node_instances_active:
-      - partial
-      - none
+        - partial
+        - none
     parameters:
       operation_parms:
         default: {}
@@ -961,8 +916,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.poststart
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       operation_parms:
         default: {}
@@ -982,8 +937,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.prestop
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       operation_parms:
         default: {}
@@ -1003,8 +958,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.delete
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       operation_parms:
         default: {}
@@ -1024,8 +979,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.postdelete
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       operation_parms:
         default: {}
@@ -1045,8 +1000,8 @@ workflows:
     mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.rollback
     availability_rules:
       node_instances_active:
-      - all
-      - partial
+        - all
+        - partial
     parameters:
       type_names:
         type: list
@@ -1063,7 +1018,7 @@ workflows:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy_and_install
     availability_rules:
       node_instances_active:
-      - none
+        - none
     parameters:
       blueprint_id:
         type: string
@@ -1088,7 +1043,7 @@ workflows:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy
     availability_rules:
       node_instances_active:
-      - none
+        - none
     parameters:
       blueprint_id:
         type: string
@@ -1110,17 +1065,15 @@ workflows:
     mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_install
     availability_rules:
       node_instances_active:
-      - none
+        - none
     parameters:
       group_id:
         type: string
-
-
 blueprint_labels:
   obj-type:
     values:
-      - utilities
+      - cfy_util
 labels:
   obj-type:
     values:
-      - utilities
+      - cfy_util
