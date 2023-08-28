@@ -15,5 +15,3 @@ paramiko>=2.7.1
 cryptography==39.0.2
 ruamel.yaml.clib==0.2.7
 setuptools==59.6.0
-git+https://github.com/mateuszmizer/cloudify-utilities-plugins-sdk.git@master
-
