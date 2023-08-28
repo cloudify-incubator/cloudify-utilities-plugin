@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '1.26.1'
+    package_version: '1.26.2'
 
   cfy_files: *utilities_plugin
 
@@ -32,6 +32,8 @@ plugins:
   lifecycle_operations: *utilities_plugin
 
   resources: *utilities_plugin
+
+  iso: *utilities_plugin
 
 data_types:
 
@@ -820,6 +822,45 @@ node_types:
       cloudify.interfaces.lifecycle:
         create: resources.cloudify_resources.tasks.create_list_item
         delete: resources.cloudify_resources.tasks.delete_list_item
+
+  cloudify.nodes.resources.ModifiedIso:
+    derived_from: cloudify.nodes.Root
+    properties:
+      iso_path:
+        type: string
+        required: true
+        description: >
+          The manager path to original iso
+      output_iso_path:
+        type: string
+        required: false
+        description: >
+          The manager path to output iso
+      new_directories:
+        default: [ ]
+        description: >
+          The list of new directories which should be added to file system.
+          https://clalancette.github.io/pycdlib/example-walking-iso-filesystem.html
+          Must including keys:
+            iso_path, rr_name (only for rocky ridge iso), joliet_path (only for joliet iso),
+            file_mode (only for rocky ridge iso), udf_path (only for udf iso)
+      new_files:
+        default: [ ]
+        description: >
+          The list of new directories which should be added to file system.
+          https://clalancette.github.io/pycdlib/example-walking-iso-filesystem.html
+          Must including keys:
+            iso_path, file_context(context of file),
+            rr_name (only for rocky ridge iso), joliet_path (only for joliet iso),
+            file_mode (only for rocky ridge iso), udf_path (only for udf iso)
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: iso.cloudify_iso.tasks.modify_iso
+          inputs: { }
+        delete:
+          implementation: iso.cloudify_iso.tasks.delete_iso
+          inputs: { }
 
 
 relationships:
