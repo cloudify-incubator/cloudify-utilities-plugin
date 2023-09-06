@@ -14,16 +14,7 @@
 
 import base64
 import json
-try:
-    import ruamel.yaml
-except ImportError:
-    # hack for import namespaced modules
-    from cloudify_common_sdk import importer
-    importer.register_callback(
-        base_dir="/opt/mgmtworker/env/plugins",
-        package_name="ruamel.yaml")
-    import ruamel.yaml
-
+import yaml
 from cloudify import ctx
 
 
@@ -78,8 +69,8 @@ class CloudInit(object):
     def __str__(self):
         """Override the string implementation of object."""
 
-        cloud_init = ruamel.yaml.dump(
-            self.config, Dumper=ruamel.yaml.RoundTripDumper)
+        cloud_init = yaml.dump(
+            self.config, default_flow_style=False, sort_keys=False)
         cloud_init_string = str(cloud_init).replace('!!python/unicode ', '')
         header = ctx.node.properties.get('header')
         if header:
