@@ -1,13 +1,11 @@
+git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
+
 cloudify-common>=6.3.1
-decorator==4.4.2
 urllib3===1.24.3
-networkx==1.9.1
+networkx>=1.9.1
 smmap==3.0.5
 cffi==1.14.5
-# cloudify-types
-git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
-git+https://github.com/cloudify-cosmo/cfy-lint.git@0.0.34-build
-# networkx
+
 paramiko>=2.7.1
 cryptography==39.0.2
 setuptools==59.6.0
