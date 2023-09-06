@@ -1,3 +1,6 @@
+1.26.2:
+  - add cloudify.nodes.resources.ModifiedIso to modify iso in place
+  - RND-1245 remove-ruamel
 1.26.1:
   - add new circleci context
   - py311 wagon
