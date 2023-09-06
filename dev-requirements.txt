@@ -5,3 +5,4 @@ cryptography==39.0.2
 ruamel.yaml.clib==0.2.7
 # cloudify-types
 git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
+git+https://github.com/cloudify-cosmo/cfy-lint.git@0.0.34-build
