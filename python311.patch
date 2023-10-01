@@ -1,25 +1,48 @@
 diff --git a/constraints.txt b/constraints.txt
-index af51e8a..1518048 100644
+index fbbe530..c5667bf 100644
 --- a/constraints.txt
 +++ b/constraints.txt
 @@ -1,6 +1,7 @@
--git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
+-git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 +git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
 +git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
  
--cloudify-common>=6.3.1
+ 
+-cloudify-common>=6.4.2,<=7.0.0
 +cloudify-common>=7.0.0
- urllib3===1.24.3
- networkx>=1.9.1
- smmap==3.0.5
+ 
+ networkx>=1.9.1,<=3.1
 diff --git a/dev-requirements.txt b/dev-requirements.txt
-index 76de404..019bb4b 100644
+index 19732bb..efa1317 100644
 --- a/dev-requirements.txt
 +++ b/dev-requirements.txt
-@@ -1,4 +1,5 @@
--git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
+@@ -1 +1,2 @@
+-git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 +git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
 +git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
+diff --git a/setup.py b/setup.py
+index 70451e5..41d59d8 100644
+--- a/setup.py
++++ b/setup.py
+@@ -50,7 +50,7 @@ setup(
+               'cloudify_resources'],
+     license='LICENSE',
+     install_requires=[
+-        'cloudify-types>=6.3.1',
++        'cloudify-mgmtworker',
+         'cloudify-utilities-plugins-sdk>=0.0.124'
+     ]
+ )
+diff --git a/test-requirements.txt b/test-requirements.txt
+index ffd3a14..177bc17 100644
+--- a/test-requirements.txt
++++ b/test-requirements.txt
+@@ -9,5 +9,6 @@ pylint
+ flake8
+ requests-mock
  
- paramiko>=2.7.1
- cryptography==39.0.2
+-git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
++git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
++git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
+  
+\ No newline at end of file
