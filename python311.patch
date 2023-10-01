@@ -1,10 +1,11 @@
 diff --git a/constraints.txt b/constraints.txt
-index fbbe530..bcacad1 100644
+index fbbe530..c5667bf 100644
 --- a/constraints.txt
 +++ b/constraints.txt
-@@ -1,6 +1,6 @@
+@@ -1,6 +1,7 @@
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 +git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
++git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
  
  
 -cloudify-common>=6.4.2,<=7.0.0
@@ -12,40 +13,15 @@ index fbbe530..bcacad1 100644
  
  networkx>=1.9.1,<=3.1
 diff --git a/dev-requirements.txt b/dev-requirements.txt
-index 19732bb..a236f05 100644
+index 19732bb..efa1317 100644
 --- a/dev-requirements.txt
 +++ b/dev-requirements.txt
-@@ -1 +1 @@
+@@ -1 +1,2 @@
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 +git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
-diff --git a/plugin.yaml b/plugin.yaml
-index ab8df7c..0d8f508 100644
---- a/plugin.yaml
-+++ b/plugin.yaml
-@@ -2,7 +2,7 @@ plugins:
-   cfy_util: &id001
-     executor: central_deployment_agent
-     package_name: cloudify-utilities-plugin
--    package_version: 1.26.2
-+    package_version: 2.0.0
-   cfy_files: *id001
-   cfy_ftp: *id001
-   cloudify_custom_workflow: *id001
-diff --git a/plugin_1_4.yaml b/plugin_1_4.yaml
-index 7c79e58..2254ada 100644
---- a/plugin_1_4.yaml
-+++ b/plugin_1_4.yaml
-@@ -3,7 +3,7 @@ plugins:
-   cfy_util: &utilities_plugin
-     executor: central_deployment_agent
-     package_name: cloudify-utilities-plugin
--    package_version: '1.26.2'
-+    package_version: '2.0.0'
- 
-   cfy_files: *utilities_plugin
- 
++git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
 diff --git a/setup.py b/setup.py
-index 70451e5..92eb4ee 100644
+index 70451e5..41d59d8 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -50,7 +50,7 @@ setup(
@@ -53,32 +29,20 @@ index 70451e5..92eb4ee 100644
      license='LICENSE',
      install_requires=[
 -        'cloudify-types>=6.3.1',
-+        'cloudify-mgmtworker>=7.0.0',
++        'cloudify-mgmtworker',
          'cloudify-utilities-plugins-sdk>=0.0.124'
      ]
  )
 diff --git a/test-requirements.txt b/test-requirements.txt
-index ffd3a14..982205e 100644
+index ffd3a14..177bc17 100644
 --- a/test-requirements.txt
 +++ b/test-requirements.txt
-@@ -9,5 +9,5 @@ pylint
+@@ -9,5 +9,6 @@ pylint
  flake8
  requests-mock
  
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 +git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
++git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
   
 \ No newline at end of file
-diff --git a/v2_plugin.yaml b/v2_plugin.yaml
-index bab8188..bce26e8 100644
---- a/v2_plugin.yaml
-+++ b/v2_plugin.yaml
-@@ -2,7 +2,7 @@ plugins:
-   cfy_util: &id001
-     executor: central_deployment_agent
-     package_name: cloudify-utilities-plugin
--    package_version: 1.26.2
-+    package_version: 2.0.0
-   cfy_files: *id001
-   cfy_ftp: *id001
-   cloudify_custom_workflow: *id001
