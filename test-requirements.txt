@@ -8,4 +8,6 @@ nose-cov
 pylint
 flake8
 requests-mock
-git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
+git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
+git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
+ 

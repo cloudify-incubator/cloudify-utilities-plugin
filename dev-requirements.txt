@@ -1,4 +1,5 @@
-git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.3.1-build#egg=cloudify-types&subdirectory=cloudify_types
+git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
+git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
 
 paramiko>=2.7.1
-cryptography==39.0.2
+cryptography==41.0.4

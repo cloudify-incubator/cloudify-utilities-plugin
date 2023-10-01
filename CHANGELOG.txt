@@ -1,3 +1,5 @@
+2.0.0:
+  - removed support of python 3.6, plugin now only supports python 3.11
 1.26.2:
   - add cloudify.nodes.resources.ModifiedIso to modify iso in place
   - RND-1245 remove-ruamel
