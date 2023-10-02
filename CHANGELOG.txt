@@ -1,3 +1,5 @@
+2.0.1:
+  - Fix 2.0.0 Release
 2.0.0:
   - removed support of python 3.6, plugin now only supports python 3.11
 1.26.2:
@@ -31,9 +33,9 @@
   - Add ignored instance states in scalelist.
   - Add availabilty states to workflows.
 1.25.8: V2 Plugin YAML types.
-1.25.7: 
+1.25.7:
   - RD-4587 Handle empty ssh secrets
-  - Add reserve/return operations to cloudify.nodes.resources.List 
+  - Add reserve/return operations to cloudify.nodes.resources.List
         (allow to use it in SharedResource with no relationship)
 1.25.6: Make some changes to support 6.3 in batch deploy.
 1.25.5: RD-3794-Copy File Method
