@@ -1,0 +1,1569 @@
+plugins:
+
+  cfy_util: &utilities_plugin
+    executor: central_deployment_agent
+    package_name: cloudify-utilities-plugin
+    package_version: '1.26.2'
+
+  cfy_files: *utilities_plugin
+
+  cfy_ftp: *utilities_plugin
+
+  cloudify_custom_workflow: *utilities_plugin
+
+  cloudify_hooks_workflow: *utilities_plugin
+
+  cloudinit: *utilities_plugin
+
+  configuration: *utilities_plugin
+
+  keys: *utilities_plugin
+
+  suspend: *utilities_plugin
+
+  terminal: *utilities_plugin
+
+  rest: *utilities_plugin
+
+  scalelist: *utilities_plugin
+
+  secrets: *utilities_plugin
+
+  lifecycle_operations: *utilities_plugin
+
+  resources: *utilities_plugin
+
+  iso: *utilities_plugin
+
+data_types:
+
+  cloudify.datatypes.Blueprint:
+    properties:
+      external_resource:
+        description: >
+          Use external resource.
+        default: false
+      id:
+        type: blueprint_id
+        description: >
+          This is the blueprint that the deployment node is a proxy to.
+        required: false
+      main_file_name:
+        description: >
+          The application blueprint filename. If the blueprint consists many
+          imported files this is the main blueprint.
+        default: blueprint.yaml
+      blueprint_archive:
+        description: >
+          The URL of a .zip to upload to the manager.
+          (Can be skipped if external_resource == True)
+        default: ""
+        required: true
+
+  cloudify.datatypes.Deployment:
+    properties:
+      external_resource:
+        description: >
+          Use external resource.
+        default: false
+      id:
+        type: deployment_id
+        description: >
+          This is the deployment that the node is a proxy to.
+        required: false
+      inputs:
+        description: >
+          The inputs to the deployment.
+        default: {}
+      outputs:
+        description: >
+          A dictionary of "{ key: value, key: value }".
+          Get "key" the deployment.
+          Set "value" runtime property to the value of the output.
+        required: false
+      all_outputs:
+        description: >
+          Ignored if "outputs" is specified.
+          Otherwise, if true (the default), then all outputs from the remote
+          deployment are exposed. If false, then no output is exposed.
+        type: boolean
+        required: false
+        default: true
+      logs:
+        description: >
+          Logs redirect settings, by default {redirect: true}
+        required: false
+
+  cloudify.datatypes.Node:
+    properties:
+      id:
+        type: node_id
+
+  cloudify.datatypes.NodeInstance:
+    properties:
+      node:
+        type: cloudify.datatypes.Node
+        required: false
+      id:
+        type: node_instance
+        required: false
+
+  cloudify.datatypes.DeploymentProxy:
+    properties:
+      blueprint:
+        type: cloudify.datatypes.Blueprint
+        required: true
+      deployment:
+        type: cloudify.datatypes.Deployment
+        required: true
+      executions_start_args:
+        default: {}
+        description: >
+          Optional parems for executions
+      reexecute:
+        default: false
+        description: >
+          Reexecte workflows, on external deployment
+
+  cloudify.datatypes.NodeInstanceProxy:
+    properties:
+      blueprint:
+        type: cloudify.datatypes.Blueprint
+        required: true
+      deployment:
+        type: cloudify.datatypes.Deployment
+        required: true
+      executions_start_args:
+        default: {}
+        description: >
+          Optional params for executions
+      reexecute:
+        default: false
+        description: >
+          Reexecte workflows, on external deployment
+      node_instance:
+        type: cloudify.datatypes.NodeInstance
+
+  cloudify.datatypes.key:
+    properties:
+      private_key_path:
+        type: string
+        required: false
+      public_key_path:
+        type: string
+        default: '~/.ssh/id_rsa.pub'
+      key_name:
+        type: string
+        required: false
+      algorithm:
+        type: string
+        default: 'RSA'
+      bits:
+        type: integer
+        default: 2048
+      comment:
+        type: string
+        required: false
+      passphrase:
+        type: string
+        required: false
+      openssh_format:
+        type: boolean
+        required: false
+      unvalidated:
+        description: >
+          Unvalidated parameters.
+        required: false
+
+  cloudify.datatypes.ftp_auth:
+    properties:
+      user:
+        description: >
+          The login credentials for ftp server.
+        default: ''
+      password:
+        description: >
+          optional, ftp password
+        default: ''
+      ip:
+        description: >
+          optional, device ip
+        default: ''
+      port:
+        description: >
+          optional, ftp port
+        default: 21
+      ignore_host:
+        description: >
+          optional, ignore host in ftp response
+        default: false
+      tls:
+        description: >
+          optional, use tls connection to ftp
+        default: false
+
+  cloudify.datatypes.terminal_auth:
+    properties:
+      user:
+        description: >
+          The login credentials for ssh server.
+        default: ''
+      password:
+        description: >
+          optional, ssh password
+        default: ''
+      ip:
+        description: >
+          optional, device ip
+        default: ''
+      key_content:
+        description: >
+          optional, ssh user key
+        default: ''
+      port:
+        description: >
+          optional, ssh port
+        default: 22
+      store_logs:
+        description: >
+          optional, save communication logs
+        default: false
+      promt_check:
+        description: >
+          optional, list of prompts accepted from device, default is "#/$"
+        default: []
+      warnings:
+        description: >
+          optional, list of possible warnings without new line
+        default: []
+      errors:
+        description: >
+          optional, list of possible errors without new line
+        default: []
+      criticals:
+        description: >
+          optional, list of possible criticals without new line
+        default: []
+      exit_command:
+        description: >
+          optional, command for close connection, default 'exit'
+        default: exit
+      smart_device:
+        description: >
+          optional, use shell extension
+        default: false
+
+  cloudify.datatypes.File:
+    properties:
+      resource_path:
+        type: string
+        description: >
+          The path relative to the blueprint where the file is stored.
+          Currently this must be packaged in the blueprint. An external URI is
+          not valid.
+        required: true
+      file_path:
+        type: string
+        description: >
+          The path on the machine where the file should be saved.
+        required: true
+      owner:
+        type: string
+        description: >
+          The owner string, such as "centos:wheel"
+        required: true
+      mode:
+        type: integer
+        description: >
+          The file permissions, such as 777. Must be provided as an integer.
+          "0777" and 0777 are not valid. Only 777.
+        required: true
+      template_variables:
+        description: >
+          Variables to render Jinja templates.
+        required: false
+      use_sudo:
+        type: boolean
+        description: >
+          Whether or not to use sudo to move, rename, delete, chown, chmod,
+          the file.
+        default: false
+      allow_failure:
+        type: boolean
+        description: >
+          If the download fails, log the error and continue.
+        default: false
+
+node_types:
+
+
+  cloudify.nodes.DeploymentProxy:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        type: cloudify.datatypes.DeploymentProxy
+        default: {}
+      client:
+        description: >
+          Client configuration, if empty will be reused manager client:
+            host: Host of Cloudify's management machine.
+            port: Port of REST API service on management machine.
+            protocol: Protocol of REST API service on management machine,
+                      defaults to http.
+            api_version: version of REST API service on management machine.
+            headers: Headers to be added to request.
+            query_params: Query parameters to be added to the request.
+            cert: Path to a copy of the server's self-signed certificate.
+            trust_all: if `False`, the server's certificate
+                       (self-signed or not) will be verified.
+            username: Cloudify User username.
+            password: Cloudify User password.
+            token: Cloudify User token.
+            tenant: Cloudify Tenant name.
+        default: {}
+      plugins:
+        description: >
+          Optional, list of plugins for upload.
+            wagon_path: Url for plugin wagon file.
+            plugin_yaml_path: Url for plugin yaml file.
+        default: []
+      secrets:
+        description: >
+          Optional, dictionary of secrets for set before run deployments.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.upload_blueprint
+        configure:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.create_deployment
+        start:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id:
+              type: string
+              default: install
+            timeout:
+              type: integer
+              description: How long (in seconds) to wait for execution to finish before timing out
+              default: 1800
+            interval:
+              type: integer
+              description: Polling interval (seconds)
+              default: 10
+        stop:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            workflow_id:
+              default: uninstall
+            resource_config:
+              default:
+                blueprint: { get_property: [ SELF, resource_config, blueprint ] }
+                deployment: { get_property: [ SELF, resource_config, deployment ] }
+                reexecute: { get_property: [ SELF, resource_config, reexecute ] }
+                executions_start_args:
+                  allow_custom_parameters: true
+                  parameters:
+                    ignore_failure: true
+        delete:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.delete_deployment
+
+  cloudify.nodes.NodeInstanceProxy:
+    derived_from: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        type: cloudify.datatypes.NodeInstanceProxy
+        default: {}
+
+  cloudify.nodes.CloudInit.CloudConfig:
+    derived_from: cloudify.nodes.Root
+    properties:
+      header:
+        default: '#cloud-config'
+      encode_base64:
+        default: false
+      resource_config:
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        configure:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        start:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        stop:
+          implementation: cloudinit.cloudify_cloudinit.tasks.update
+        delete:
+          implementation: cloudinit.cloudify_cloudinit.tasks.delete
+
+  cloudify.nodes.ConfigurationLoader:
+    derived_from: cloudify.nodes.ApplicationServer
+    properties:
+      parameters_json:
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: configuration.cloudify_configuration.tasks.load_configuration
+          inputs:
+            parameters:
+              default: { get_property: [SELF, parameters_json] }
+            merge_dicts:
+              default: false
+
+  configuration_loader:
+    derived_from: cloudify.nodes.ConfigurationLoader
+
+  cloudify.nodes.keys.RSAKey:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_secret_store:
+        type: boolean
+        default: true
+      use_secrets_if_exist:
+        type: boolean
+        description: >
+          this flag is able to be true only if use_secret_store is true
+          if this property is false the secret for the key value will be
+          created, if true then the existing secrets of an existing node
+          with same key_name will be used as a key, if this property is true
+          and the secrets does not exist they will be created.
+        default: false
+      key_name:
+        type: string
+        description: Deprecated. Use resource_config.key_name.
+        required: false
+      resource_config:
+        description: >
+          A dictionary of values to pass to configure the key.
+        type: cloudify.datatypes.key
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: keys.cloudify_ssh_key.operations.create
+          inputs:
+            store_public_key_material:
+              description: >
+                Allow the public key material to be stored as a runtime
+                property. Recommended.
+              type: boolean
+              default: true
+            store_private_key_material:
+              description: >
+                Allow the private key material to be stored as a runtime
+                property. Not recommended for manager deployments.
+              type: boolean
+              default: false
+        delete:
+          implementation: keys.cloudify_ssh_key.operations.delete
+
+  cloudify.keys.nodes.RSAKey:
+    derived_from: cloudify.nodes.keys.RSAKey
+
+  cloudify.nodes.terminal.Raw:
+    derived_from: cloudify.nodes.Root
+    properties:
+      terminal_auth:
+        description: >
+          terminal credentials, like example:
+            user: <user name>
+            password: <user password>
+            ip: <host name>
+        type: cloudify.datatypes.terminal_auth
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        configure:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        start:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        stop:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+        delete:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs: {}
+
+  cloudify.terminal.raw:
+    derived_from: cloudify.nodes.terminal.Raw
+
+  cloudify.nodes.File:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        type: cloudify.datatypes.File
+        required: true
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_files.cloudify_files.tasks.create
+        delete:
+          implementation: cfy_files.cloudify_files.tasks.delete
+
+  cloudify.nodes.ftp:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        type: cloudify.datatypes.ftp_auth
+        required: true
+      raw_files:
+        default: {}
+        description: >
+          list files from blueprint to upload
+      files:
+        default: {}
+        description: >
+          list files with content from blueprint to upload
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cfy_ftp.cloudify_ftp.tasks.create
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+            raw_files:
+              default: { get_property: [ SELF, raw_files ] }
+            files:
+              default: { get_property: [ SELF, files ] }
+        delete:
+          implementation: cfy_ftp.cloudify_ftp.tasks.delete
+          inputs:
+            resource_config:
+              default: { get_property: [ SELF, resource_config ] }
+
+  cloudify.nodes.rest.Requests:
+    derived_from: cloudify.nodes.Root
+    properties:
+      hosts:
+        description: >
+          list of hosts name or IP addresses of Rest Servers
+        default: []
+      host:
+        description: >
+          host name or IP addresses of Rest Servers
+          if list of hosts is not needed single host can be provided by this
+          property. NOTE: the 'hosts' property overwirte the 'host' property
+        default: []
+      port:
+        description: >
+          port number. When -1 default ports are used
+          (80 for ssl = false and 443 for ssl = true)
+        type: integer
+        default: -1
+      ssl:
+        description: >
+          http or https
+        type: boolean
+        default: false
+      verify:
+        description: >
+          A boolean which controls whether we verify the server's TLS
+          certificate. Supported such values:
+          * `True`: default value, check certificaties,
+          * `False`: ignore server certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: true
+      cert:
+        description: >
+          Supported such values:
+          * `None`: default value, ignore client certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: null
+      timeout:
+        description: >
+          Timeout value for requests.
+        default: null
+      proxies:
+        description: >
+          List of proxies.
+        default: {}
+      params:
+        description: >
+          Template parameters. Default is empty dictionary.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs: &rest_template_inputs
+            params:
+              description: >
+                Template parameters. Default is empty dictionary. Merged
+                with params from node properties and has 'ctx' key for
+                current action context.
+              default: {}
+            template_file:
+              description: >
+                Template path in blueprint directory
+              default: ''
+            save_path:
+              description: >
+                Save result to runtime properties key. Default is directly
+                save to runtime properties.
+              default: false
+            prerender:
+              description: >
+                Prerender template before run calls jinja render=>yaml parse.
+                Default is yaml parse=>jinja render.
+              default: false
+            remove_calls:
+              description: >
+                Remove calls list from results. Default: save calls in
+                runtime properties.
+              default: false
+            force_rerun:
+              description: >
+                Rerun operation if on next operation rerun
+              default: false
+            retry_count:
+              description: >
+                Rerun count on warning on catched warnigs
+              default: 1
+            retry_sleep:
+              description: >
+                Sleep between rerun
+              default: 15
+        configure:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs: *rest_template_inputs
+        start:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs: *rest_template_inputs
+        stop:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs: *rest_template_inputs
+        delete:
+          implementation: rest.cloudify_rest.tasks.execute
+          inputs: *rest_template_inputs
+
+  cloudify.rest.Requests:
+    derived_from: cloudify.nodes.rest.Requests
+
+  cloudify.nodes.rest.BunchRequests:
+    derived_from: cloudify.nodes.Root
+    properties:
+      hosts:
+        description: >
+          list of hosts name or IP addresses of Rest Servers
+        default: []
+      host:
+        description: >
+          host name or IP addresses of Rest Servers
+          if list of hosts is not needed single host can be provided by this
+          property. NOTE: the 'hosts' property overwirte the 'host' property
+        default: []
+      port:
+        description: >
+          port number. When -1 default ports are used
+          (80 for ssl = false and 443 for ssl = true)
+        type: integer
+        default: -1
+      ssl:
+        description: >
+          http or https
+        type: boolean
+        default: false
+      verify:
+        description: >
+          A boolean which controls whether we verify the server's TLS
+          certificate. Supported such values:
+          * `True`: default value, check certificaties,
+          * `False`: ignore server certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: true
+      cert:
+        description: >
+          Supported such values:
+          * `None`: default value, ignore client certificates,
+          * `<file path>`: path to certificate on local system,
+          * `<certificate content>`: certificate content.
+        default: null
+      timeout:
+        description: >
+          Timeout value for requests.
+        default: null
+      proxies:
+        description: >
+          List of proxies.
+        default: {}
+      params:
+        description: >
+          Template parameters. Default is empty dictionary.
+        default: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+        configure:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+        start:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+        stop:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+        delete:
+          implementation: rest.cloudify_rest.tasks.bunch_execute
+          inputs:
+            auth:
+              default: {}
+            templates:
+              default: {}
+
+  cloudify.rest.BunchRequests:
+    derived_from: cloudify.nodes.rest.BunchRequests
+
+  cloudify.nodes.secrets.Writer:
+    derived_from: cloudify.nodes.Root
+    properties:
+      entries:
+        default: {}
+      do_not_delete:
+        type: boolean
+        default: false
+      variant:
+        type: string
+        required: false
+      separator:
+        type: string
+        required: false
+      logs_secrets:
+        type: boolean
+        default: false
+        required: false
+      update_if_exists:
+        type: boolean
+        default: false
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: secrets.cloudify_secrets.tasks.create
+        delete:
+          implementation: secrets.cloudify_secrets.tasks.delete
+      cloudify.interfaces.operations:
+        update:
+          implementation: secrets.cloudify_secrets.tasks.update
+
+  cloudify.nodes.secrets.Reader:
+    derived_from: cloudify.nodes.Root
+    properties:
+      keys:
+        default: []
+      variant:
+        type: string
+        required: false
+      separator:
+        type: string
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: secrets.cloudify_secrets.tasks.read
+      cloudify.interfaces.operations:
+        update:
+          implementation: secrets.cloudify_secrets.tasks.read
+
+  # cloudify.nodes.resources.Manager
+  cloudify.nodes.resources.List:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        default: []
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: resources.cloudify_resources.tasks.create_list
+        delete: resources.cloudify_resources.tasks.delete_list
+      cloudify.interfaces.operations:
+        reserve:
+          implementation: resources.cloudify_resources.tasks.reserve_list_item
+          inputs:
+            reservation_id:
+              type: string
+              default: ''
+        return:
+          implementation: resources.cloudify_resources.tasks.return_list_item
+          inputs:
+            reservation_id:
+              type: string
+              default: ''
+
+  # cloudify.nodes.resources.List
+  cloudify.nodes.resources.ListItem:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: resources.cloudify_resources.tasks.create_list_item
+        delete: resources.cloudify_resources.tasks.delete_list_item
+
+  cloudify.nodes.resources.ModifiedIso:
+    derived_from: cloudify.nodes.Root
+    properties:
+      iso_path:
+        type: string
+        required: true
+        description: >
+          The manager path to original iso
+      output_iso_path:
+        type: string
+        required: false
+        description: >
+          The manager path to output iso
+      new_directories:
+        default: [ ]
+        description: >
+          The list of new directories which should be added to file system.
+          https://clalancette.github.io/pycdlib/example-walking-iso-filesystem.html
+          Must including keys:
+            iso_path, rr_name (only for rocky ridge iso), joliet_path (only for joliet iso),
+            file_mode (only for rocky ridge iso), udf_path (only for udf iso)
+      new_files:
+        default: [ ]
+        description: >
+          The list of new directories which should be added to file system.
+          https://clalancette.github.io/pycdlib/example-walking-iso-filesystem.html
+          Must including keys:
+            iso_path, file_context(context of file),
+            rr_name (only for rocky ridge iso), joliet_path (only for joliet iso),
+            file_mode (only for rocky ridge iso), udf_path (only for udf iso)
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: iso.cloudify_iso.tasks.modify_iso
+          inputs: { }
+        delete:
+          implementation: iso.cloudify_iso.tasks.delete_iso
+          inputs: { }
+
+
+relationships:
+
+  cloudify.relationships.load_from_config:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: configuration.cloudify_configuration.tasks.load_configuration_to_runtime_properties
+          inputs:
+            source_config:
+              default: { get_attribute: [TARGET , params ]  }
+  
+  load_from_config:
+    derived_from: cloudify.relationships.load_from_config
+
+  # reserve/return_item
+  cloudify.relationships.resources.reserve_list_item:
+    derived_from: cloudify.relationships.connected_to
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: 
+          implementation: resources.cloudify_resources.tasks.reserve_list_item
+          inputs:
+            resources_list_node_id:
+              type: string
+              default: ''
+        unlink: resources.cloudify_resources.tasks.return_list_item
+
+
+workflows:
+
+  configuration_update:
+    mapping: configuration.cloudify_configuration.tasks.update
+    availability_rules:
+      node_instances_active: [ 'all']
+    parameters:
+      params:
+        description: json string
+      configuration_node_id:
+        type: node_id
+        default: configuration_loader
+      merge_dict:
+        default: false
+      node_types_to_update:
+        default:
+          - juniper_node_config
+          - fortinet_vnf_type
+
+  # suspend/wake up/resume
+  suspend:
+    mapping: suspend.cloudify_suspend.workflows.suspend
+    availability_rules:
+      node_instances_active: [ 'all']
+
+  resume:
+    mapping: suspend.cloudify_suspend.workflows.resume
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+
+  # force to dump native usage by cloud providers
+  statistics:
+    mapping: suspend.cloudify_suspend.workflows.statistics
+    availability_rules:
+      node_instances_active: [ 'all']
+
+  # backup related workflows
+  backup:
+    mapping: suspend.cloudify_suspend.workflows.backup
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      snapshot_name:
+        description: >
+          Backup name/tag.
+        default: ""
+      snapshot_incremental:
+        description: >
+          Create incremental snapshots or full backup.
+          By default created snapshots.
+        default: true
+      snapshot_type:
+        description: >
+          The backup type, like 'daily' or 'weekly'.
+        default: irregular
+      snapshot_rotation:
+        description: >
+          How many backups to keep around.
+        default: 1
+
+  restore:
+    mapping: suspend.cloudify_suspend.workflows.restore
+    availability_rules:
+      node_instances_active: ['partial', 'none']
+    parameters:
+      snapshot_name:
+        description: >
+          Backup name/tag.
+        default: ""
+      snapshot_incremental:
+        description: >
+          Create incremental snapshots or full backup.
+          By default created snapshots.
+        default: true
+
+  # some cloud's parially lock vm's reconfigure if we have backup
+  # so better remove before reconfigure
+  remove_backup:
+    mapping: suspend.cloudify_suspend.workflows.remove_backup
+    parameters:
+      snapshot_name:
+        description: >
+          Backup name/tag.
+        default: ""
+      snapshot_incremental:
+        description: >
+          Create incremental snapshots or full backup.
+          By default created snapshots.
+        default: true
+
+  scaleuplist:
+    mapping: scalelist.cloudify_scalelist.workflows.scaleuplist
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      scalable_entity_properties:
+        description: >
+          List properties for nodes
+        default: {}
+      scale_compute:
+        description: >
+            If a node name is passed as the `scalable_entity_properties` parameter
+            and that node is contained (transitively) within a compute node
+            and this property is 'true', operate on the compute node instead
+            of the specified node.
+        default: false
+      ignore_failure:
+        default: false
+        type: boolean
+      ignore_rollback_failure:
+        default: true
+        type: boolean
+      scale_transaction_field:
+        type: string
+        default: _transaction_id
+        description: >
+           Place to save transaction id created in same transaction.
+      scale_transaction_value:
+        type: string
+        default: ""
+        description: >
+           Optional, transaction value.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
+      rollback_on_failure:
+        default: true
+        type: boolean
+        description: >
+          Optional, rollback the deployment modification on failure.
+
+  scaledownlist:
+    mapping: scalelist.cloudify_scalelist.workflows.scaledownlist
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      scale_compute:
+        description: >
+            If a node name is passed as the `scale_node_name` parameter
+            and that node is contained (transitively) within a compute node
+            and this property is 'true', operate on the compute node instead
+            of the specified node.
+        default: false
+      ignore_failure:
+        default: false
+        type: boolean
+      scale_transaction_field:
+        type: string
+        default: _transaction_id
+        description: >
+           Place to save transaction id created in same transaction.
+           Optional, can be skiped if we need to remove instance without
+           relation to initial transaction.
+      scale_node_name:
+        type: string
+        default: ""
+        description: >
+          A list of node ids. The operation will be executed only on node
+          instances which are instances of these nodes. An empty list means
+          no filtering will take place and all nodes are valid (Default: "").
+      scale_node_field:
+        default: ""
+        description: >
+          Node runtime properties field name for search value, supported search
+          by ['a', 'b'] on {'a': {'b': 'c'}} return 'c'
+      scale_node_field_value:
+        default: ""
+        description: >
+          Node runtime properties field value for search. Can be provided
+          as list of possible values.
+      force_db_cleanup:
+        default: false
+        description: >
+          Run DB cleanup directly if instances can't be deleted in one
+          transaction.
+          **This flag will do nothing as of 1.11.0. Deprecated feature.**
+      all_results:
+        default: false
+        description: >
+          Get all instances for filter. Required 4.3+ manager.
+      node_sequence:
+        default: false
+        description: >
+          Optional, sequence of nodes for run for override relationships.
+      force_remove:
+        default: true
+        type: boolean
+        description: >
+          Optional, force remove node instances set for scale down based on
+          transaction field.
+      rollback_on_failure:
+        default: true
+        type: boolean
+        description: >
+          Optional, rollback the deployment modification on failure.
+
+  update_operation_filtered:
+    mapping: scalelist.cloudify_scalelist.workflows.execute_operation
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      operation:
+        type: string
+        default: cloudify.interfaces.lifecycle.update
+        description: >
+          The name of the operation to execute
+          (Default: cloudify.interfaces.lifecycle.update).
+      operation_kwargs:
+        default: {}
+        description: >
+          A dictionary of keyword arguments that will be passed to the
+          operation invocation (Default: {}).
+      allow_kwargs_override:
+        default: null
+        description: >
+          A boolean describing whether overriding operations inputs defined in
+          the blueprint by using inputs of the same name in the
+          operation_kwargs parameter is allowed or not (Default: null [means
+          that the default behavior, as defined by the workflows
+          infrastructure, will be used]).
+      run_by_dependency_order:
+        default: false
+        description: >
+          A boolean describing whether the operation should execute on the
+          relevant nodes according to the order of their relationships
+          dependencies or rather execute on all relevant nodes in parallel
+          (Default: false).
+      type_names:
+        default: []
+        description: >
+          A list of type names. The operation will be executed only on node
+          instances which are of these types or of types which (recursively)
+          derive from them. An empty list means no filtering will take place
+          and all type names are valid (Default: []).
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+        description: >
+          A list of node ids. The operation will be executed only on node
+          instances which are instances of these nodes. An empty list means
+          no filtering will take place and all nodes are valid (Default: []).
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+        description: >
+          A list of node instance ids. The operation will be executed only on
+          the node instances specified. An empty list means no filtering will
+          take place and all node instances are valid (Default: []).
+      node_field:
+        default: ""
+        description: >
+          Node runtime properties field name for search value, supported search
+          by ['a', 'b'] on {'a': {'b': 'c'}} return 'c'
+      node_field_value:
+        default: ""
+        description: >
+         Node runtime properties field value for search. Can be provided as
+         list of possible values.
+
+  hook_workflow_run_filtered:
+    mapping: cloudify_hooks_workflow.cloudify_hooks_workflow.tasks.run_workflow
+    parameters:
+      inputs:
+        description: >
+          Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+          cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+        default: {}
+      logger_file:
+        description: >
+          duplicate logger output to separate file
+        default: ""
+      client_config:
+        description: >
+          custom credentials for manager, by default is not required for use
+        default: {}
+      filter_by:
+        description: >
+          key-value list, where:
+            path is path to field for validate,
+            values is list of possible values
+          example:
+          - path: ["workflow_id"]
+            values: ["install"]
+          - path: ["deployment_capabilities", "autouninstall", "value"]
+            values: [true, "yes"]
+      workflow_for_run:
+        description: >
+          name workflow to run on deployment
+        default: uninstall
+      workflow_params:
+        description: >
+          additional workflow parameters
+        default: {}
+
+  hook_workflow_rest:
+    mapping: rest.cloudify_rest.tasks.execute_as_workflow
+    parameters:
+      inputs:
+        description: >
+          Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+          cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+        default: {}
+      logger_file:
+        description: >
+          duplicate logger output to separate file
+        default: ""
+      properties:
+        description: >
+          connection properties(same as properties in `cloudify.nodes.rest.Requests`)
+        default: {}
+      params:
+        description: >
+          Template parameters. Default is empty dictionary. Merged
+          with params from node properties and has 'ctx' key for
+          current action context.
+        default: {}
+      template_file:
+        description: >
+          Absolute path to template file
+        default: ''
+      save_path:
+        description: >
+          Save result to runtime properties key. Default is directly
+          save to runtime properties.
+        default: false
+      prerender:
+        description: >
+          Prerender template before run calls jinja render=>yaml parse.
+          Default is yaml parse=>jinja render.
+        default: false
+      remove_calls:
+        description: >
+          Remove calls list from results. Default: save calls in
+          runtime properties.
+        default: false
+
+  hook_workflow_terminal:
+    mapping: terminal.cloudify_terminal.tasks.run_as_workflow
+    parameters:
+      inputs:
+        description: >
+          Inputs for hook, e.g: deployment_id, workflow_id. Automaticly passed from
+          cloudify hooks: https://docs.cloudify.co/5.0.5/working_with/manager/actionable-events/
+        default: {}
+      logger_file:
+        description: >
+          duplicate logger output to separate file
+        default: ""
+      terminal_auth:
+        description: >
+          terminal credentials, like example:
+            user: <user name>
+            password: <user password>
+            ip: <host name>
+        type: cloudify.datatypes.terminal_auth
+      calls:
+        description: >
+          List of calls to run
+        default: []
+
+  alt_start:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.start
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+
+  alt_stop:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.stop
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+      ignore_failure:
+        default: false
+
+  alt_precreate:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.precreate
+    availability_rules:
+      node_instances_active: ['partial', 'none']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+      ignore_failure:
+        default: false
+
+  alt_create:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.create
+    availability_rules:
+      node_instances_active: ['partial', 'none']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+      ignore_failure:
+        default: false
+
+  alt_configure:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.configure
+    availability_rules:
+      node_instances_active: ['partial', 'none']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+      ignore_failure:
+        default: false
+
+  alt_poststart:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.poststart
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+      ignore_failure:
+        default: false
+
+  alt_prestop:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.prestop
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+      ignore_failure:
+        default: false
+
+  alt_delete:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.delete
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+      ignore_failure:
+        default: false
+
+  alt_postdelete:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.postdelete
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      operation_parms:
+        default: { }
+      run_by_dependency_order:
+        default: true
+      type_names:
+        default: [ ]
+      node_ids:
+        type: list
+        item_type: node_id
+        default: []
+      node_instance_ids:
+        type: list
+        item_type: node_instance
+        default: []
+      ignore_failure:
+        default: false
+
+  rollback_deprecated:
+    mapping: lifecycle_operations.cloudify_rollback_workflow.workflows.rollback
+    availability_rules:
+      node_instances_active: [ 'all', 'partial']
+    parameters:
+      type_names:
+        type: list
+        item_type: node_type
+        default: [ ]
+        description: >
+          A list of type names. The operation will be executed
+          only on node instances which are of these types or of types which
+          (recursively) derive from them. An empty list means no filtering
+          will take place and all type names are valid.
+      node_ids:
+        type: list
+        item_type: node_id
+        default: [ ]
+        description: >
+          A list of node ids. The operation will be executed only on node
+          instances which are instances of these nodes. An empty list means
+          no filtering will take place and all nodes are valid.
+      node_instance_ids:
+        type: list
+        item_type: node_id
+        default: [ ]
+        description: >
+          A list of node instance ids. The operation will be executed only on
+          the node instances specified. An empty list means no filtering will
+          take place and all node instances are valid (Default: [ ]).
+      full_rollback:
+        default: false
+        description: >
+          Whether rollback to resolved state or full uninstall.
+
+  batch_deploy_and_install:
+    mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy_and_install
+    availability_rules:
+      node_instances_active: ['none']
+    parameters:
+      blueprint_id:
+        type: blueprint_id
+        description: The name of an already uploaded blueprint.
+      parent_deployments:
+        type: list
+        item_type: deployment_id
+        description: A list of deployments, which will be parents to the new deployments. One new deployment will be create from blueprint_id per parent deployment that is provided.
+      group_id:
+        type: string
+        description: The new group ID.
+        default: ''
+      new_deployment_ids:
+        type: list
+        description: The new new_deployment_ids.
+        default: []
+      inputs:
+        type: list
+        description: An ordered list of inputs that will be provided per new deployment.
+        default: []
+      add_parent_labels:
+        type: boolean
+        description: Whether to automatically add parent csys-parent-id label.
+        default: false
+      labels:
+        type: list
+        description: An ordered list of labels that will be provided per new deployment.
+        default: []
+
+  batch_deploy:
+    mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_deploy
+    availability_rules:
+      node_instances_active: ['none']
+    parameters:
+      blueprint_id:
+        type: blueprint_id
+        description: The name of an already uploaded blueprint.
+      parent_deployments:
+        type: list
+        item_type: deployment_id
+        description: A list of deployments, which will be parents to the new deployments. One new deployment will be create from blueprint_id per parent deployment that is provided.
+      group_id:
+        type: string
+        description: The new group ID.
+        default: ''
+      new_deployment_ids:
+        type: list
+        description: The new new_deployment_ids.
+        default: []
+      inputs:
+        type: list
+        description: An ordered list of inputs that will be provided per new deployment.
+        default: []
+      labels:
+        type: list
+        description: An ordered list of labels that will be provided per new deployment.
+        default: []
+
+  batch_install:
+    mapping: cloudify_custom_workflow.cloudify_custom_workflow.tasks.batch_install
+    availability_rules:
+      node_instances_active: ['none']
+    parameters:
+      group_id:
+        type: string
+        description: The new group ID.
+
+blueprint_labels:
+  obj-type:
+    values:
+      - utilities
+
+labels:
+  obj-type:
+    values:
+      - utilities
+
