@@ -2,7 +2,7 @@ plugins:
   cfy_util: &id001
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: 2.0.0
+    package_version: 2.0.1
   cfy_files: *id001
   cfy_ftp: *id001
   cloudify_custom_workflow: *id001
@@ -19,18 +19,6 @@ plugins:
   resources: *id001
   iso: *id001
 data_types:
-  cloudify.datatypes.Blueprint:
-    properties:
-      external_resource:
-        default: false
-      id:
-        type: string
-        required: false
-      main_file_name:
-        default: blueprint.yaml
-      blueprint_archive:
-        default: ''
-        required: true
   cloudify.datatypes.Deployment:
     properties:
       external_resource:

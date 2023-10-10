@@ -3,7 +3,7 @@ plugins:
   cfy_util: &utilities_plugin
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: '2.0.0'
+    package_version: '2.0.1'
 
   cfy_files: *utilities_plugin
 
@@ -36,29 +36,6 @@ plugins:
   iso: *utilities_plugin
 
 data_types:
-
-  cloudify.datatypes.Blueprint:
-    properties:
-      external_resource:
-        description: >
-          Use external resource.
-        default: false
-      id:
-        type: blueprint_id
-        description: >
-          This is the blueprint that the deployment node is a proxy to.
-        required: false
-      main_file_name:
-        description: >
-          The application blueprint filename. If the blueprint consists many
-          imported files this is the main blueprint.
-        default: blueprint.yaml
-      blueprint_archive:
-        description: >
-          The URL of a .zip to upload to the manager.
-          (Can be skipped if external_resource == True)
-        default: ""
-        required: true
 
   cloudify.datatypes.Deployment:
     properties:
@@ -874,7 +851,7 @@ relationships:
           inputs:
             source_config:
               default: { get_attribute: [TARGET , params ]  }
-  
+
   load_from_config:
     derived_from: cloudify.relationships.load_from_config
 
@@ -883,7 +860,7 @@ relationships:
     derived_from: cloudify.relationships.connected_to
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        preconfigure: 
+        preconfigure:
           implementation: resources.cloudify_resources.tasks.reserve_list_item
           inputs:
             resources_list_node_id:
