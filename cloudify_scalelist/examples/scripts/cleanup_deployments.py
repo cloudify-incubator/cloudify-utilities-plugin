@@ -3,9 +3,9 @@ import sys
 from copy import deepcopy
 
 from manager_rest.flask_utils import setup_flask_app
-from manager_rest.storage import get_storage_manager, models
 from manager_rest.manager_exceptions import NotFoundError
 from manager_rest.resource_manager import ResourceManager
+from manager_rest.storage import get_storage_manager, models
 
 
 def cleanup_deployment(depl_id, get_all):
@@ -83,6 +83,14 @@ def cleanup_deployment(depl_id, get_all):
                          .format(repr(scaling_groups)))
 
 
+def validate_dep_id(item):
+    if not isinstance(item, str):
+        return False
+    elif not item[0].isdigit() and not len(item) > 36:
+        return False
+    return True
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 2 or len(sys.argv) > 3:
         sys.stderr.write(
@@ -92,6 +100,8 @@ if __name__ == '__main__':
         )
         sys.exit(1)
     depl_id = sys.argv[1]
+    if not validate_dep_id(depl_id):
+        sys.exit(1)
     get_all = False
     if len(sys.argv) == 3 and sys.argv[2] == 'all':
         get_all = True

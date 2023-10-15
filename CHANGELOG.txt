@@ -1,3 +1,4 @@
+2.0.2: Validate inputs in test.
 2.0.1:
   - removed data_type override for central Blueprint type.
 2.0.0:
