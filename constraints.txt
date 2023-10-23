@@ -1,6 +1,5 @@
 git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 
-
 cloudify-common>=6.4.2,<=7.0.0
 cryptography>=41.0.4
 networkx>=1.9.1,<=3.1
