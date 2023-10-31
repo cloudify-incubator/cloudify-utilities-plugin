@@ -4,12 +4,12 @@ index 2dfe9a8..18aec82 100644
 +++ b/constraints.txt
 @@ -1,6 +1,7 @@
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
-+git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
-+git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
++git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.3-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
++git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.3-build#egg=cloudify-agent
  
  
 -cloudify-common>=6.4.2,<=7.0.0
-+cloudify-common>=7.0.0
++cloudify-common>=7.0.3
  cryptography>=41.0.4
  networkx>=1.9.1,<=3.1
 diff --git a/dev-requirements.txt b/dev-requirements.txt
@@ -18,8 +18,8 @@ index 19732bb..efa1317 100644
 +++ b/dev-requirements.txt
 @@ -1 +1,2 @@
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
-+git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
-+git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
++git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.3-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
++git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.3-build#egg=cloudify-agent
 diff --git a/setup.py b/setup.py
 index 70451e5..0359514 100644
 --- a/setup.py
@@ -42,7 +42,7 @@ index ffd3a14..177bc17 100644
  requests-mock
  
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
-+git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
-+git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
++git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.3-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
++git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.3-build#egg=cloudify-agent
   
 \ No newline at end of file
