@@ -30,7 +30,7 @@ index 70451e5..41d59d8 100644
      license='LICENSE',
      install_requires=[
 -        'cloudify-types>=6.3.1',
-+        'cloudify-mgmtworker',
++        'cloudify-mgmtworker>=7.0.3',
          'cloudify-utilities-plugins-sdk>=0.0.124'
      ]
  )
