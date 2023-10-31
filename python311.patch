@@ -1,14 +1,13 @@
 diff --git a/constraints.txt b/constraints.txt
-index 2dfe9a8..86b8c58 100644
+index 2dfe9a8..18aec82 100644
 --- a/constraints.txt
 +++ b/constraints.txt
 @@ -1,6 +1,7 @@
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 +git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
 +git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
-+ 
  
--
+ 
 -cloudify-common>=6.4.2,<=7.0.0
 +cloudify-common>=7.0.0
  cryptography>=41.0.4
@@ -22,7 +21,7 @@ index 19732bb..efa1317 100644
 +git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.0-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
 +git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.0-build#egg=cloudify-agent
 diff --git a/setup.py b/setup.py
-index 70451e5..41d59d8 100644
+index 70451e5..0359514 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -50,7 +50,7 @@ setup(
