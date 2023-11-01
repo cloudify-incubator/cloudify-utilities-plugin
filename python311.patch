@@ -1,15 +1,16 @@
 diff --git a/constraints.txt b/constraints.txt
-index 2dfe9a8..ae0fce0 100644
+index 2dfe9a8..8c27368 100644
 --- a/constraints.txt
 +++ b/constraints.txt
-@@ -1,6 +1,3 @@
+@@ -1,6 +1,6 @@
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
--
--
--cloudify-common>=6.4.2,<=7.0.0
--cryptography>=41.0.4
 +cloudify-agent[fabric,kerberos]  @ git+https://github.com/cloudify-cosmo/cloudify-agent@7.0.3-build
 +cloudify-manager @ git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.3-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
+ 
+-
+-cloudify-common>=6.4.2,<=7.0.0
++cloudify-common>=7.0.3
+ cryptography>=41.0.4
  networkx>=1.9.1,<=3.1
 diff --git a/dev-requirements.txt b/dev-requirements.txt
 index 19732bb..dea802e 100644
@@ -19,33 +20,32 @@ index 19732bb..dea802e 100644
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 +cloudify-agent[fabric,kerberos]  @ git+https://github.com/cloudify-cosmo/cloudify-agent@7.0.3-build
 +cloudify-manager @ git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.3-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
-diff --git a/python311.patch b/python311.patch
-index 84accb2..e69de29 100644
---- a/python311.patch
-+++ b/python311.patch
-@@ -1,50 +0,0 @@
--diff --git a/constraints.txt b/constraints.txt
--index 2dfe9a8..a515b9b 100644
----- a/constraints.txt
--+++ b/constraints.txt
--@@ -1,6 +1,6 @@
---git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
--+git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.3-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
--+git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.3-build#egg=cloudify-agent
-- 
---
---cloudify-common>=6.4.2,<=7.0.0
--+cloudify-common>=7.0.3
-- cryptography>=41.0.4
-- networkx>=1.9.1,<=3.1
--diff --git a/dev-requirements.txt b/dev-requirements.txt
--index 19732bb..1af5f6e 100644
----- a/dev-requirements.txt
--+++ b/dev-requirements.txt
--@@ -1 +1,2 @@
---git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
--+git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.3-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
--+git+https://github.com/cloudify-cosmo/cloudify-agent.git@7.0.3-build#egg=cloudify-agent
+diff --git a/setup.py b/setup.py
+index 70451e5..0359514 100644
+--- a/setup.py
++++ b/setup.py
+@@ -50,7 +50,7 @@ setup(
+               'cloudify_resources'],
+     license='LICENSE',
+     install_requires=[
+-        'cloudify-types>=6.3.1',
++        'cloudify-mgmtworker>=7.0.3',
+         'cloudify-utilities-plugins-sdk>=0.0.124'
+     ]
+ )
+diff --git a/test-requirements.txt b/test-requirements.txt
+index ffd3a14..c4f7610 100644
+--- a/test-requirements.txt
++++ b/test-requirements.txt
+@@ -9,5 +9,6 @@ pylint
+ flake8
+ requests-mock
+ 
+-git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
++cloudify-agent[fabric,kerberos]  @ git+https://github.com/cloudify-cosmo/cloudify-agent@7.0.3-build
++cloudify-manager @ git+https://github.com/cloudify-cosmo/cloudify-manager.git@7.0.3-build#egg=cloudify-mgmtworker&subdirectory=mgmtworker
+  
+\ No newline at end of fileoudify-cosmo/cloudify-agent.git@7.0.3-build#egg=cloudify-agent
 -\ No newline at end of file
 -diff --git a/setup.py b/setup.py
 -index 70451e5..0359514 100644
