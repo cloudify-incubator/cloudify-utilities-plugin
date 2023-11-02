@@ -1,25 +1,23 @@
 diff --git a/constraints.txt b/constraints.txt
-index 2dfe9a8..c05955d 100644
+index 2dfe9a8..4f27f66 100644
 --- a/constraints.txt
 +++ b/constraints.txt
-@@ -1,6 +1,6 @@
+@@ -1,6 +1,3 @@
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
-+cloudify-mgmtworker @ https://github.com/cloudify-cosmo/cloudify-manager/archive/7.0.3-build.zip#subdirectory=mgmtworker
-+cloudify-agent @ https://github.com/cloudify-cosmo/cloudify-agent/archive/7.0.3-build.zip
- 
+-
 -
 -cloudify-common>=6.4.2,<=7.0.0
 +cloudify-common>=7.0.3
  cryptography>=41.0.4
  networkx>=1.9.1,<=3.1
 diff --git a/dev-requirements.txt b/dev-requirements.txt
-index 19732bb..cdf95a5 100644
+index 19732bb..64b386c 100644
 --- a/dev-requirements.txt
 +++ b/dev-requirements.txt
 @@ -1 +1,2 @@
 -git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.2-build#egg=cloudify-types&subdirectory=cloudify_types
 +cloudify-mgmtworker @ https://github.com/cloudify-cosmo/cloudify-manager/archive/7.0.3-build.zip#subdirectory=mgmtworker
-+cloudify-agent @ https://github.com/cloudify-cosmo/cloudify-agent/archive/7.0.3-build.zip 
++cloudify-agent[celery,fabric,kerberos] @ https://github.com/cloudify-cosmo/cloudify-agent/archive/7.0.3-build.zip 
 \ No newline at end of file
 diff --git a/setup.py b/setup.py
 index 70451e5..0359514 100644
@@ -35,7 +33,7 @@ index 70451e5..0359514 100644
      ]
  )
 diff --git a/test-requirements.txt b/test-requirements.txt
-index ffd3a14..ff50caa 100644
+index ffd3a14..f1d2502 100644
 --- a/test-requirements.txt
 +++ b/test-requirements.txt
 @@ -9,5 +9,5 @@ pylint
@@ -46,5 +44,5 @@ index ffd3a14..ff50caa 100644
 - 
 \ No newline at end of file
 +cloudify-mgmtworker @ https://github.com/cloudify-cosmo/cloudify-manager/archive/7.0.3-build.zip#subdirectory=mgmtworker
-+cloudify-agent @ https://github.com/cloudify-cosmo/cloudify-agent/archive/7.0.3-build.zip 
++cloudify-agent[celery,fabric,kerberos] @ https://github.com/cloudify-cosmo/cloudify-agent/archive/7.0.3-build.zip  
 \ No newline at end of file
