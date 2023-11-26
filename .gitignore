@@ -70,3 +70,7 @@ local-storage/
 plugin_docs
 
 *.wgn
+fusion-agent
+fusion-common
+fusion-manager
+cloudify-utilities-plugins-sdk
