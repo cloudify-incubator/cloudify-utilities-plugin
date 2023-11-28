@@ -65,8 +65,6 @@ cloudify-types @ git+https://github.com/cloudify-cosmo/cloudify-manager.git@6.4.
     #   cloudify-utilities-plugin (setup.py)
 cloudify-utilities-plugins-sdk==0.0.129
     # via cloudify-utilities-plugin (setup.py)
-colorama==0.4.5
-    # via click
 cryptography==40.0.2
     # via
     #   -r requirements-3.6.in
@@ -96,10 +94,8 @@ idna==3.6
     #   yarl
 idna-ssl==1.1.0
     # via aiohttp
-importlib-metadata==4.2.0
-    # via
-    #   -r requirements-3.6.in
-    #   click
+importlib-metadata==4.8.3
+    # via click
 isodate==0.6.1
     # via msrest
 jinja2==2.11.3
@@ -153,7 +149,9 @@ portalocker==2.7.0
 proxy_tools==0.1.0
     # via cloudify-common
 psutil==5.9.6
-    # via cloudify-utilities-plugins-sdk
+    # via
+    #   -r requirements-3.6.in
+    #   cloudify-utilities-plugins-sdk
 pyasn1==0.5.1
     # via
     #   pyasn1-modules
@@ -179,8 +177,6 @@ python-dateutil==2.8.2
     #   kubernetes
 pytz==2021.3
     # via cloudify-common
-pywin32==305
-    # via portalocker
 pyyaml==6.0
     # via
     #   cfy-lint
