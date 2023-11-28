@@ -1,3 +1,4 @@
+2.0.5: Release with requirements.txt.
 2.0.4: Fix import.
 2.0.3: update cryptography.
 2.0.2: Validate inputs in test.
