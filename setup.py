@@ -59,8 +59,8 @@ if sys.version_info.major == 3 and sys.version_info.minor == 6:
 else:
     # This is for anything else, in practice it will be Python 3.11.
     install_requires += [
-        'fusion-mgmtworker[mgmtworker]',
-        'fusion-common'
+        'fusion-common',
+        'fusion-mgmtworker'
     ]
     packages=find_packages()
 
