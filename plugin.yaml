@@ -2,7 +2,7 @@ plugins:
   cfy_util: &id001
     executor: central_deployment_agent
     package_name: cloudify-utilities-plugin
-    package_version: 2.0.6
+    package_version: 2.0.7
   cfy_files: *id001
   cfy_ftp: *id001
   cloudify_custom_workflow: *id001
